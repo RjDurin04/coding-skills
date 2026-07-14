@@ -1,0 +1,4 @@
+interface:
+  display_name: "Engineering Leadership"
+  short_description: "Lead technical work, reviews, and alignment"
+  default_prompt: "Use $engineering-leadership to structure this technical decision, review, delegation, and stakeholder alignment."

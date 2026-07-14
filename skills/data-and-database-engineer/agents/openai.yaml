@@ -1,0 +1,4 @@
+interface:
+  display_name: "Data & Database Engineer"
+  short_description: "Design safe data models and database behavior"
+  default_prompt: "Use $data-and-database-engineer to design or review this schema, query path, and transaction model."

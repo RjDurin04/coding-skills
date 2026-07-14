@@ -1,0 +1,4 @@
+interface:
+  display_name: "Distributed Systems Engineer"
+  short_description: "Reason about distributed state and failures"
+  default_prompt: "Use $distributed-systems-engineer to design this distributed workflow and its failure semantics."

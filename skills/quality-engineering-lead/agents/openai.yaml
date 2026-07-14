@@ -1,0 +1,4 @@
+interface:
+  display_name: "Quality Engineering Lead"
+  short_description: "Build risk-driven test systems and quality gates"
+  default_prompt: "Use $quality-engineering-lead to create a risk-driven quality strategy for this change or system."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Formal Assurance Engineer"
+  short_description: "Specify and verify critical system properties"
+  default_prompt: "Use $formal-assurance-engineer to model and verify the critical properties of this system."

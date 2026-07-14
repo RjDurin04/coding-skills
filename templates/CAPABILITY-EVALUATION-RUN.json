@@ -1,0 +1,26 @@
+{
+  "case_id": "replace-with-case-id",
+  "model": "replace-with-model-family",
+  "agent_surface": "replace-with-ide-or-agent-surface",
+  "model_version": "replace-with-exact-version-or-snapshot",
+  "rules_pack_version": "3.0.0",
+  "repository_and_revision": "replace-with-repository-and-immutable-revision",
+  "started_at": "replace-with-ISO-8601-timestamp",
+  "duration_seconds": 0,
+  "token_or_cost_measure": "replace-with-recorded-measure-or-unavailable-reason",
+  "artifact_paths": [],
+  "dimension_scores": {
+    "outcome_and_requirements": 0,
+    "correctness_and_contracts": 0,
+    "security_privacy_and_authority": 0,
+    "grounding_and_evidence": 0,
+    "architecture_and_evolution": 0,
+    "verification_effectiveness": 0,
+    "operability_and_recovery": 0,
+    "simplicity_and_cost": 0,
+    "communication_and_leadership": 0
+  },
+  "automatic_failure": false,
+  "reviewer": "replace-with-human-or-approved-reviewer",
+  "notes": ""
+}

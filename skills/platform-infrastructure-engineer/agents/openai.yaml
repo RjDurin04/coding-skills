@@ -1,0 +1,4 @@
+interface:
+  display_name: "Platform Infrastructure Engineer"
+  short_description: "Design operable cloud and runtime platforms"
+  default_prompt: "Use $platform-infrastructure-engineer to design or review this infrastructure and runtime platform change."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Product & Domain Strategist"
+  short_description: "Choose valuable scope and model the domain"
+  default_prompt: "Use $product-and-domain-strategist to validate the user outcome, scope, and domain before designing this feature."

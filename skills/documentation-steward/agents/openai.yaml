@@ -1,0 +1,4 @@
+interface:
+  display_name: "Documentation Steward"
+  short_description: "Keep technical knowledge accurate and usable"
+  default_prompt: "Use $documentation-steward to update and verify the documentation affected by this change."

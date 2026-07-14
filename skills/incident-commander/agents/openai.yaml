@@ -1,0 +1,4 @@
+interface:
+  display_name: "Incident Commander"
+  short_description: "Coordinate safe, evidence-led incident response"
+  default_prompt: "Use $incident-commander to coordinate this incident, contain impact, and drive verified recovery."

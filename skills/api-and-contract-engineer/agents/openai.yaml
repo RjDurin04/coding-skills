@@ -1,0 +1,4 @@
+interface:
+  display_name: "API & Contract Engineer"
+  short_description: "Design durable APIs and consumer contracts"
+  default_prompt: "Use $api-and-contract-engineer to design or review this API contract and its compatibility plan."

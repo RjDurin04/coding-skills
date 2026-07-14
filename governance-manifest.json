@@ -1,0 +1,342 @@
+{
+  "schema_version": 1,
+  "pack_version": "3.0.0",
+  "entrypoints": [
+    "AGENTS.md",
+    "GEMINI.md"
+  ],
+  "project_profile": "PROJECT-AGENT-PROFILE.md",
+  "project_profile_template": "templates/PROJECT-AGENT-PROFILE.md",
+  "capability_evaluations": {
+    "catalog": "tests/capability-evaluations.json",
+    "validator": "tests/validate-capability-evaluations.ps1",
+    "scorer": "tests/score-capability-run.ps1",
+    "run_template": "templates/CAPABILITY-EVALUATION-RUN.json",
+    "minimum_cases": 50
+  },
+  "unified_delivery_fields": [
+    "Outcome",
+    "Risk and routing",
+    "Changed files",
+    "Key decision",
+    "Checks run",
+    "Not verified",
+    "Residual risks",
+    "Human approval required"
+  ],
+  "risk_order": [
+    "trivial",
+    "standard",
+    "structural",
+    "critical"
+  ],
+  "confirmation_order": [
+    "none",
+    "explicit_authorization",
+    "fresh_confirmation"
+  ],
+  "rules": [
+    { "name": "adversarial-self-review", "path": "rules/adversarial-self-review.md" },
+    { "name": "agent-operation-safety", "path": "rules/agent-operation-safety.md" },
+    { "name": "ai-provenance-disclosure", "path": "rules/ai-provenance-disclosure.md" },
+    { "name": "ai-system-safety", "path": "rules/ai-system-safety.md" },
+    { "name": "algorithmic-efficiency-gate", "path": "rules/algorithmic-efficiency-gate.md" },
+    { "name": "complexity-budget", "path": "rules/complexity-budget.md" },
+    { "name": "context-budget", "path": "rules/context-budget.md" },
+    { "name": "data-integrity-and-migrations", "path": "rules/data-integrity-and-migrations.md" },
+    { "name": "evolutionary-stewardship", "path": "rules/evolutionary-stewardship.md" },
+    { "name": "failure-mode-catalog", "path": "rules/failure-mode-catalog.md" },
+    { "name": "governance-router", "path": "rules/governance-router.md" },
+    { "name": "implementation-execution-protocol", "path": "rules/implementation-execution-protocol.md" },
+    { "name": "observability-by-design", "path": "rules/observability-by-design.md" },
+    { "name": "operational-resilience", "path": "rules/operational-resilience.md" },
+    { "name": "production-readiness-gate", "path": "rules/production-readiness-gate.md" },
+    { "name": "requirements-precision-gate", "path": "rules/requirements-precision-gate.md" },
+    { "name": "security-and-privacy-gate", "path": "rules/security-and-privacy-gate.md" },
+    { "name": "testing-strategy", "path": "rules/testing-strategy.md" }
+  ],
+  "skills": [
+    { "name": "adversarial-test-forge", "path": "skills/adversarial-test-forge/SKILL.md" },
+    { "name": "api-and-contract-engineer", "path": "skills/api-and-contract-engineer/SKILL.md", "ui_metadata": "skills/api-and-contract-engineer/agents/openai.yaml" },
+    { "name": "code-archaeologist", "path": "skills/code-archaeologist/SKILL.md" },
+    { "name": "cognitive-primitives", "path": "skills/cognitive-primitives/SKILL.md" },
+    { "name": "data-and-database-engineer", "path": "skills/data-and-database-engineer/SKILL.md", "ui_metadata": "skills/data-and-database-engineer/agents/openai.yaml" },
+    { "name": "debugging-strategist", "path": "skills/debugging-strategist/SKILL.md" },
+    { "name": "distributed-systems-engineer", "path": "skills/distributed-systems-engineer/SKILL.md", "ui_metadata": "skills/distributed-systems-engineer/agents/openai.yaml" },
+    { "name": "documentation-steward", "path": "skills/documentation-steward/SKILL.md", "ui_metadata": "skills/documentation-steward/agents/openai.yaml" },
+    { "name": "drift-guardian", "path": "skills/drift-guardian/SKILL.md" },
+    { "name": "engineering-leadership", "path": "skills/engineering-leadership/SKILL.md", "ui_metadata": "skills/engineering-leadership/agents/openai.yaml" },
+    { "name": "formal-assurance-engineer", "path": "skills/formal-assurance-engineer/SKILL.md", "ui_metadata": "skills/formal-assurance-engineer/agents/openai.yaml" },
+    { "name": "graceful-sunset-steward", "path": "skills/graceful-sunset-steward/SKILL.md" },
+    { "name": "incident-commander", "path": "skills/incident-commander/SKILL.md", "ui_metadata": "skills/incident-commander/agents/openai.yaml" },
+    { "name": "interface-designer", "path": "skills/interface-designer/SKILL.md" },
+    { "name": "observability-detective", "path": "skills/observability-detective/SKILL.md" },
+    { "name": "performance-engineer", "path": "skills/performance-engineer/SKILL.md" },
+    { "name": "platform-infrastructure-engineer", "path": "skills/platform-infrastructure-engineer/SKILL.md", "ui_metadata": "skills/platform-infrastructure-engineer/agents/openai.yaml" },
+    { "name": "product-and-domain-strategist", "path": "skills/product-and-domain-strategist/SKILL.md", "ui_metadata": "skills/product-and-domain-strategist/agents/openai.yaml" },
+    { "name": "quality-engineering-lead", "path": "skills/quality-engineering-lead/SKILL.md", "ui_metadata": "skills/quality-engineering-lead/agents/openai.yaml" },
+    { "name": "refactoring-mechanic", "path": "skills/refactoring-mechanic/SKILL.md" },
+    { "name": "requirements-crystallizer", "path": "skills/requirements-crystallizer/SKILL.md" },
+    { "name": "risk-radar-scout", "path": "skills/risk-radar-scout/SKILL.md" },
+    { "name": "safe-release-conductor", "path": "skills/safe-release-conductor/SKILL.md" },
+    { "name": "security-reviewer", "path": "skills/security-reviewer/SKILL.md" },
+    { "name": "staff-architect", "path": "skills/staff-architect/SKILL.md" },
+    { "name": "tech-stack-preference", "path": "skills/tech-stack-preference/SKILL.md" }
+  ],
+  "risk_overlays": [
+    {
+      "minimum_risk": "standard",
+      "rules": [],
+      "skills": ["cognitive-primitives"]
+    }
+  ],
+  "routing_signals": {
+    "durable_task": {
+      "minimum_risk": "trivial",
+      "rules": [
+        "governance-router",
+        "implementation-execution-protocol",
+        "context-budget",
+        "adversarial-self-review",
+        "agent-operation-safety"
+      ],
+      "skills": [],
+      "confirmation": "none"
+    },
+    "existing_unfamiliar_code": {
+      "minimum_risk": "standard",
+      "rules": ["evolutionary-stewardship"],
+      "skills": ["code-archaeologist"],
+      "confirmation": "none"
+    },
+    "vague_material_requirement": {
+      "minimum_risk": "standard",
+      "rules": ["requirements-precision-gate"],
+      "skills": ["requirements-crystallizer"],
+      "confirmation": "none"
+    },
+    "behavior_change": {
+      "minimum_risk": "standard",
+      "rules": ["testing-strategy"],
+      "skills": [],
+      "confirmation": "none"
+    },
+    "bug_or_regression": {
+      "minimum_risk": "standard",
+      "rules": ["testing-strategy", "failure-mode-catalog"],
+      "skills": ["debugging-strategist"],
+      "confirmation": "none"
+    },
+    "architecture_or_public_boundary": {
+      "minimum_risk": "structural",
+      "rules": ["complexity-budget", "evolutionary-stewardship"],
+      "skills": ["staff-architect", "drift-guardian"],
+      "confirmation": "none"
+    },
+    "new_durable_boundary": {
+      "minimum_risk": "structural",
+      "rules": ["complexity-budget"],
+      "skills": ["drift-guardian", "staff-architect"],
+      "confirmation": "none"
+    },
+    "dependency_change": {
+      "minimum_risk": "structural",
+      "rules": ["complexity-budget", "security-and-privacy-gate"],
+      "skills": ["drift-guardian", "security-reviewer"],
+      "confirmation": "none"
+    },
+    "security_sensitive": {
+      "minimum_risk": "critical",
+      "rules": ["security-and-privacy-gate"],
+      "skills": ["security-reviewer", "adversarial-test-forge"],
+      "confirmation": "none"
+    },
+    "persisted_data": {
+      "minimum_risk": "standard",
+      "rules": ["data-integrity-and-migrations"],
+      "skills": [],
+      "confirmation": "none"
+    },
+    "schema_or_migration": {
+      "minimum_risk": "structural",
+      "rules": ["data-integrity-and-migrations"],
+      "skills": ["drift-guardian"],
+      "confirmation": "none"
+    },
+    "critical_data_integrity": {
+      "minimum_risk": "critical",
+      "rules": ["data-integrity-and-migrations", "security-and-privacy-gate"],
+      "skills": ["security-reviewer", "adversarial-test-forge"],
+      "confirmation": "none"
+    },
+    "algorithmic_efficiency": {
+      "minimum_risk": "standard",
+      "rules": ["algorithmic-efficiency-gate"],
+      "skills": ["performance-engineer"],
+      "confirmation": "none"
+    },
+    "production_runtime_flow": {
+      "minimum_risk": "standard",
+      "rules": ["observability-by-design", "operational-resilience"],
+      "skills": [],
+      "confirmation": "none"
+    },
+    "running_system_symptom": {
+      "minimum_risk": "standard",
+      "rules": ["observability-by-design", "failure-mode-catalog"],
+      "skills": ["observability-detective", "debugging-strategist"],
+      "confirmation": "none"
+    },
+    "user_interface": {
+      "minimum_risk": "standard",
+      "rules": [],
+      "skills": ["interface-designer"],
+      "confirmation": "none"
+    },
+    "user_interface_with_data": {
+      "minimum_risk": "standard",
+      "rules": ["security-and-privacy-gate"],
+      "skills": ["interface-designer"],
+      "confirmation": "none"
+    },
+    "ai_product_behavior": {
+      "minimum_risk": "structural",
+      "rules": ["ai-system-safety", "security-and-privacy-gate", "observability-by-design"],
+      "skills": ["security-reviewer", "adversarial-test-forge"],
+      "confirmation": "none"
+    },
+    "nontrivial_ai_assisted_work": {
+      "minimum_risk": "trivial",
+      "rules": ["ai-provenance-disclosure"],
+      "skills": [],
+      "confirmation": "none"
+    },
+    "release_or_shared_environment": {
+      "minimum_risk": "critical",
+      "rules": [
+        "production-readiness-gate",
+        "operational-resilience",
+        "ai-provenance-disclosure",
+        "agent-operation-safety"
+      ],
+      "skills": ["safe-release-conductor"],
+      "confirmation": "fresh_confirmation"
+    },
+    "deprecation_or_replacement": {
+      "minimum_risk": "structural",
+      "rules": ["data-integrity-and-migrations", "evolutionary-stewardship"],
+      "skills": ["graceful-sunset-steward"],
+      "confirmation": "none"
+    },
+    "external_side_effect": {
+      "minimum_risk": "standard",
+      "rules": ["agent-operation-safety"],
+      "skills": [],
+      "confirmation": "explicit_authorization"
+    },
+    "destructive_or_irreversible_action": {
+      "minimum_risk": "critical",
+      "rules": ["agent-operation-safety", "data-integrity-and-migrations"],
+      "skills": ["security-reviewer"],
+      "confirmation": "fresh_confirmation"
+    },
+    "credential_permission_financial_or_legal_action": {
+      "minimum_risk": "critical",
+      "rules": ["agent-operation-safety", "security-and-privacy-gate"],
+      "skills": ["security-reviewer"],
+      "confirmation": "fresh_confirmation"
+    },
+    "production_incident_change": {
+      "minimum_risk": "critical",
+      "rules": [
+        "observability-by-design",
+        "operational-resilience",
+        "production-readiness-gate",
+        "agent-operation-safety"
+      ],
+      "skills": ["incident-commander", "observability-detective", "safe-release-conductor"],
+      "confirmation": "fresh_confirmation"
+    },
+    "product_domain_discovery": {
+      "minimum_risk": "standard",
+      "rules": ["requirements-precision-gate"],
+      "skills": ["product-and-domain-strategist"],
+      "confirmation": "none"
+    },
+    "major_project_uncertainty": {
+      "minimum_risk": "structural",
+      "rules": ["requirements-precision-gate", "complexity-budget"],
+      "skills": ["product-and-domain-strategist", "risk-radar-scout"],
+      "confirmation": "none"
+    },
+    "api_contract": {
+      "minimum_risk": "structural",
+      "rules": [
+        "testing-strategy",
+        "security-and-privacy-gate",
+        "complexity-budget",
+        "evolutionary-stewardship"
+      ],
+      "skills": ["api-and-contract-engineer", "drift-guardian"],
+      "confirmation": "none"
+    },
+    "database_design": {
+      "minimum_risk": "structural",
+      "rules": ["data-integrity-and-migrations", "algorithmic-efficiency-gate"],
+      "skills": ["data-and-database-engineer", "performance-engineer"],
+      "confirmation": "none"
+    },
+    "distributed_system": {
+      "minimum_risk": "structural",
+      "rules": ["testing-strategy", "observability-by-design", "operational-resilience"],
+      "skills": ["distributed-systems-engineer", "adversarial-test-forge"],
+      "confirmation": "none"
+    },
+    "platform_infrastructure": {
+      "minimum_risk": "structural",
+      "rules": [
+        "operational-resilience",
+        "security-and-privacy-gate",
+        "complexity-budget",
+        "agent-operation-safety"
+      ],
+      "skills": ["platform-infrastructure-engineer", "drift-guardian"],
+      "confirmation": "none"
+    },
+    "quality_strategy": {
+      "minimum_risk": "structural",
+      "rules": ["testing-strategy", "complexity-budget"],
+      "skills": ["quality-engineering-lead"],
+      "confirmation": "none"
+    },
+    "active_incident_coordination": {
+      "minimum_risk": "critical",
+      "rules": [
+        "observability-by-design",
+        "failure-mode-catalog",
+        "operational-resilience",
+        "agent-operation-safety"
+      ],
+      "skills": ["incident-commander", "observability-detective"],
+      "confirmation": "none"
+    },
+    "cross_team_technical_leadership": {
+      "minimum_risk": "structural",
+      "rules": ["complexity-budget", "evolutionary-stewardship"],
+      "skills": ["engineering-leadership"],
+      "confirmation": "none"
+    },
+    "documentation_stewardship": {
+      "minimum_risk": "trivial",
+      "rules": [],
+      "skills": ["documentation-steward"],
+      "confirmation": "none"
+    },
+    "formal_assurance": {
+      "minimum_risk": "critical",
+      "rules": ["testing-strategy"],
+      "skills": ["formal-assurance-engineer", "adversarial-test-forge"],
+      "confirmation": "none"
+    }
+  }
+}
