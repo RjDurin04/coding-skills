@@ -1,12 +1,32 @@
 ---
 name: failure-mode-catalog
 trigger: model_decision
-description: Reuse project-specific failures as mandatory review/test inputs.
+description: Reuse recurring or high-consequence project failures as review, detection, and regression inputs.
 ---
 
 # Failure Mode Catalog
 
-Worst bugs are project-specific. Capture failures this system must not repeat.
+Some project failures deserve durable organizational memory. Catalog only a
+recurring class, a high-consequence incident/near miss, a subtle systemic
+failure likely to recur, or a failure needed by a runbook/compliance control.
+Ordinary one-off bugs still need appropriate regression evidence but do not
+automatically need a catalog entry.
+
+## Entry Decision
+
+An entry is warranted when at least one is true:
+
+- the failure recurred or represents a reusable class across code paths;
+- impact is material security, privacy, data integrity, money, outage, safety,
+  or compliance harm;
+- detection/prevention spans more than the local regression test;
+- incident learning or an accepted-risk record must remain visible.
+
+Otherwise keep the finding in the issue/test/change record. In `REVIEW`,
+`DIAGNOSE`, or `DESIGN`, report or propose the entry without creating it.
+Create or update a repository record only in an authorized `IMPLEMENT` cycle;
+writing an external tracker or runbook service requires the corresponding
+authorized `OPERATE` cycle.
 
 ## Storage
 
@@ -24,6 +44,7 @@ Impact: [data loss | money | security | outage | UX | compliance]
 Detection: [test | metric | log | alert | support]
 Prevention: [constraint | transaction | idempotency | authz | validation | retry | runbook]
 Status: ACTIVE | MITIGATED | ACCEPTED
+Accepted risk: [valid accepted-risk record/reference | N/A]
 ```
 
 ## Use
@@ -44,6 +65,10 @@ to the unified delivery record in `GEMINI.md`.
 
 ## Hard Rules
 
-- Known project failure modes are mandatory context.
-- Bug fix should add/cite a failure mode.
+- Related known high-consequence/recurring failure modes are mandatory context.
+- A bug fix adds/cites a catalog entry only when the entry decision applies.
+- `Status: ACCEPTED` is invalid without a current accepted-risk record containing
+  the owner, approval source, exact scope, worst credible outcome, compensating
+  controls, evidence, expiry/review date, and rollback/remediation required by
+  `GEMINI.md`.
 - Prevention by memory is not prevention.

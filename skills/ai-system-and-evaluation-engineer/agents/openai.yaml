@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI System and Evaluation Engineer"
+  short_description: "Evaluate AI behavior, safety, drift, and cost"
+  default_prompt: "Use $ai-system-and-evaluation-engineer to design an evidence-based evaluation and rollout plan for this AI feature."

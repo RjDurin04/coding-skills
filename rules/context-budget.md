@@ -15,10 +15,12 @@ inspection, correctness, or evidence.
 | Trivial | tiny 1-2 file edit, no contract risk | target file + local convention | none/1 line | cheap check or disclose |
 | Standard | one feature area/bug | entry point, touched files, nearby tests/helpers | brief | focused tests/checks |
 | Structural | cross-module/refactor/dep/API | callers, contracts, boundaries, tests, docs/ADRs | explicit trade-offs | integration/static/regression |
-| Critical | auth/PII/payments/migration/prod/irreversible | full flow, threats, rollback, tests | explicit; ask on material ambiguity | adversarial checks; disclose gaps |
+| Critical | high-consequence authz/sensitive-data/data-integrity/production/irreversible risk | full flow, threats, recovery, tests | explicit; ask on material ambiguity | adversarial checks; disclose target gaps |
 
-Use `rules/governance-router.md` for the risk floor. Context budget can raise
-rigor when discovery reveals risk; it cannot lower a router floor.
+Use the manifest through `rules/governance-router.md` for the risk floor.
+Discovery may change matching signals and therefore the effective floor, but
+must not downshift while a higher-floor trigger remains. Task mode still limits
+allowed actions regardless of how much context is loaded.
 
 ## Expand Context When
 
@@ -39,6 +41,7 @@ outcome to the unified delivery record in `GEMINI.md`.
 
 - Tiny tasks should not become architecture exercises.
 - Risky tasks should not become drive-by edits.
-- Context budget cannot downgrade a governance-router risk floor.
+- Context budget cannot remove or downgrade a matching routing signal.
 - If more context would likely change the fix, keep reading.
-- Do not treat "prototype" or "MVP" as permission to skip context unless the user explicitly requested disposable spike work.
+- An MVP does not reduce assurance. Only an explicitly requested, isolated
+  disposable spike may reduce non-safety ceremony, with limits disclosed.

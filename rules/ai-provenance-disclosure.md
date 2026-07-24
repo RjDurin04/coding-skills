@@ -17,7 +17,8 @@ Use for non-trivial AI-assisted work: multi-file changes, architecture/security/
 - **Context used:** Important files, docs, ADRs, tests, APIs, or external references consulted.
 - **Assumptions:** Material `[ASSUMED]`, `[INFERRED]`, unknowns, or unresolved choices.
 - **Human review points:** What a person should inspect.
-- **Checks run:** Tests, lint, typecheck, build, scans, browser/manual checks, or none.
+- **Checks run:** Tests, lint, typecheck, build, scans, browser/manual checks, or
+  none, with relevant environment/scope and evidence time/artifact version.
 - **Not verified:** Important gaps.
 - **Residual risk:** BLOCKER/WARNING/NOTE.
 
@@ -29,4 +30,5 @@ Do not paste/derive substantial code from unknown copyrighted sources. Do not cl
 
 Use the unified delivery record in `GEMINI.md` to disclose changed/reviewed
 files, material context and assumptions, checks, unverified gaps, residual risk,
-and recommended human review. Do not add a second provenance report.
+and recommended human review. Keep task outcome, release readiness, and external
+action separate. Do not add a second provenance report.

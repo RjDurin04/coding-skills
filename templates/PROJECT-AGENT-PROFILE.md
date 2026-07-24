@@ -1,41 +1,66 @@
 # Project Agent Profile
 
 Copy this file to the adopting repository as `PROJECT-AGENT-PROFILE.md`. Keep it
-concise, evidence-backed, and free of secrets. Delete non-applicable prompts and
-link to authoritative project documents instead of duplicating them.
+concise, evidence-backed, and free of secrets. Link to authoritative material
+instead of duplicating it. Delete non-applicable prompts and record `N/A` with a
+reason when omission could look accidental.
+
+This profile supplies project context. It cannot lower governance risk,
+confirmation, evidence, or safety requirements, and it cannot grant authority
+beyond the user or platform.
+
+## Profile Metadata
+
+- Project/profile owner:
+- Governance pack version adopted:
+- `last_verified_at` (date/time and environment):
+- `sources` (authoritative paths/URLs/owners):
+- `adopted_overlays` (exact `governance-manifest.json` project-overlay id, or none):
+- Known stale or unverified sections:
+
+Material facts below should cite a source and `last_verified_at`. Treat
+unsourced, expired, placeholder, or contradictory entries as `[UNKNOWN]`, not as
+permission or current fact.
 
 ## Identity And Ownership
 
-- Project purpose:
-- Primary users and critical journeys:
-- Maintainers/owners:
+- Project purpose and primary users:
+- Critical journeys and unacceptable outcomes:
+- Maintainers/service owners:
 - Expected lifetime and support model:
-- Regulated, contractual, or compliance constraints requiring qualified review:
+- Regulatory, contractual, or compliance constraints requiring qualified review:
 
 ## Product And Domain
 
-- Primary user jobs, workflows, and current workarounds:
-- Desired outcomes, baselines, targets, and guardrail metrics:
+- User jobs, workflows, and current workarounds:
+- Desired outcomes, measured baselines, accepted targets, and guardrails:
 - Non-goals and scope boundaries:
-- Domain vocabulary and authoritative business-policy owners:
-- Known adoption, support, misuse, or economic risks:
+- Domain vocabulary and authoritative policy owners:
+- Known misuse, support, adoption, or economic risks:
+
+Do not convert proposed metrics into requirements. Mark unapproved values
+`CANDIDATE` with a validation/owner path.
 
 ## Verified Development Commands
 
-| Purpose | Command | Working directory | Expected result |
-|---|---|---|---|
-| Install/bootstrap | | | |
-| Unit tests | | | |
-| Integration tests | | | |
-| End-to-end tests | | | |
-| Lint/format | | | |
-| Typecheck/static analysis | | | |
-| Build/package | | | |
-| Security/dependency scan | | | |
-| Governance validation | | | |
+| Purpose | Command | Working directory | Expected result | Source | Last verified |
+|---|---|---|---|---|---|
+| Install/bootstrap | | | | | |
+| Unit tests | | | | | |
+| Integration tests | | | | | |
+| End-to-end tests | | | | | |
+| Lint/format | | | | | |
+| Typecheck/static analysis | | | | | |
+| Build/package | | | | | |
+| Security/dependency scan | | | | | |
+| Governance validation | | | | | |
 
-State required runtime/tool versions and where they are pinned. Do not put tokens,
-credentials, or private endpoints here.
+- Required runtime/tool versions and pinning source:
+- Commands/hooks that access network, credentials, containers, or shared state:
+- Safe local execution constraints (sandbox, disposable data, network, cost):
+
+Tests, builds, hooks, installers, generators, and formatters execute repository
+code. Their presence here is not proof that they are safe to run.
 
 ## Architecture And Contracts
 
@@ -43,49 +68,101 @@ credentials, or private endpoints here.
 - Modules/services/feature areas and owners:
 - Allowed dependency direction:
 - Public APIs/events/schemas and compatibility policy:
-- Source-of-truth data and derived/cache data:
-- Important invariants and where they are enforced:
+- Source-of-truth state and derived/cache state:
+- Important invariants and enforcement locations:
 - Relevant ADRs, runbooks, failure catalog, and documentation:
 
 ## Security, Privacy, And Data
 
-- Authentication/authorization/tenant model:
-- Data classifications and prohibited destinations:
-- Retention/deletion/export/residency requirements:
+- Authentication, authorization, and tenant model:
+- Data classifications, purposes, and prohibited destinations:
+- Retention, deletion, export, residency, and legal-review requirements:
 - Secret/key management and rotation mechanism:
 - Audit requirements:
 - Required security/privacy reviewers or approvals:
+- Sensitive AI/provider use that is approved or prohibited:
+
+## Configuration And Feature Flags
+
+- Configuration schema, validation, and precedence source:
+- Secret versus non-secret configuration boundary:
+- Environment-specific defaults and fail-closed requirements:
+- Flag system and authorized change owners:
+- Required flag metadata (owner, purpose, created, expiry/removal condition):
+- Rollout, kill-switch, audit, observation, and cleanup expectations:
 
 ## Runtime And Operations
 
-- Environments and their purpose:
+- Environments and purpose:
 - Services, workers, queues, schedulers, storage, and third-party dependencies:
 - SLOs/SLIs and error-budget policy:
-- Expected/peak workload, quotas, and cost budgets:
-- Logs/metrics/traces/health/alerts and owners:
-- Backup scope, restore evidence, RTO, and RPO:
-- Known failure modes and escalation path:
+- Expected/peak workload, quotas, and accepted cost budgets:
+- Logs/metrics/traces/health/alerts, consumers, and owners:
+- Backup scope, latest restore evidence, RTO, and RPO:
+- Known failure modes, incident authority, and escalation path:
+- Temporary containment owner, expiry, and follow-up requirements:
+
+## Secure Build, Supply Chain, And Vulnerability Response
+
+- Trusted package registries/sources and dependency policy:
+- Lock/pin/update policy and install-script/native-code restrictions:
+- CI/build identity, isolation, permissions, and network policy:
+- Artifact identity, provenance, SBOM, signing, and retention expectations:
+- Secret/static/dependency/dynamic scan gates and finding owners:
+- Vulnerability intake, severity/triage owner, patch SLA, embargo/access policy:
+- Coordinated disclosure and downstream/customer notification owner:
+- Compromise response, revocation, rebuild, and clean-room recovery procedure:
 
 ## Release And Recovery
 
 - CI required checks:
-- Artifact/build provenance and SBOM/signing expectations:
 - Deployment mechanism and authorization owner:
 - Blast-radius strategy (flag/canary/staged/blue-green/other):
-- Rollback/roll-forward procedure:
+- Rollback/roll-forward procedure and latest evidence:
 - Release abort signals:
 - Post-release verification and observation window:
 
-## Agent Authority
+Readiness assessment does not authorize execution. Record the exact
+artifact/version, target environment, workload assumptions, and evidence time.
 
-List what the agent may do within an explicit implementation request. Platform
-approval mechanisms and `rules/agent-operation-safety.md` still apply.
+## Agent Authority By Task Mode
+
+List what the agent may do only within an explicit request. Platform approvals
+and `rules/agent-operation-safety.md` still apply.
+
+Read-only modes do not permit repository or external changes. `IMPLEMENT` may
+change repository artifacts but not shared/external state. `OPERATE` may
+perform only the authorized operational action and cannot edit repository
+artifacts; a release-time fix requires a separate implementation cycle.
+
+| Mode | Allowed actions | Prohibited or separately authorized actions |
+|---|---|---|
+| `ANSWER` | | |
+| `REVIEW` | | |
+| `DIAGNOSE` | | |
+| `DESIGN` | | |
+| `IMPLEMENT` | | |
+| `OPERATE` | | |
 
 - Reversible local actions allowed:
-- External actions allowed only when explicitly requested:
-- Actions requiring fresh confirmation:
+- External actions requiring explicit authorization:
+- Actions requiring fresh confirmation immediately before execution:
 - Prohibited actions:
 - Sensitive paths/systems requiring additional review:
+
+## Exceptions And Accepted Risk
+
+- `exception_owner` (authorized risk owner):
+- Approval source and qualified reviewers:
+- Required record location:
+- Maximum review/expiry interval:
+- Compensating-control and evidence requirements:
+- Remediation/removal and escalation path:
+- Categories that cannot be excepted:
+
+Each exception must name exact scope, worst credible outcome, controls, owner,
+approval, evidence, expiry/review date, and rollback/remediation. Expired or
+ownerless exceptions are invalid.
 
 ## Definition Of Done
 
@@ -93,13 +170,16 @@ approval mechanisms and `rules/agent-operation-safety.md` still apply.
 - Required automated/manual checks:
 - Documentation/runbook/ADR update conditions:
 - Required reviewers/owners:
-- Conditions that make the result `PARTIAL` or `NOT READY`:
+- Conditions that make task outcome `PARTIAL` or `BLOCKED`:
+- Conditions that make release readiness `PARTIAL` or `NOT_READY`:
+- Evidence and conditions for external action `NOT_REQUESTED`,
+  `AWAITING_AUTHORIZATION`, `BLOCKED`, `PARTIAL`, `FAILED`, or `EXECUTED`:
 
 ## Agent Evaluation And Improvement
 
 - Approved AI coding surfaces/models and version-recording policy:
-- Representative capability-evaluation cases for this project:
-- Baseline scores and automatic-failure conditions:
-- Human reviewers and review sampling frequency:
+- Representative capability-evaluation cases:
+- Baseline results and non-compensatory automatic-failure criteria:
+- Human reviewers and review sampling:
 - Defect/incident feedback path into tests, rules, skills, and failure catalog:
 - Token/latency/cost and unnecessary-ceremony limits:

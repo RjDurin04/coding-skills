@@ -1,33 +1,66 @@
 ---
 name: debugging-strategist
-description: Use when investigating any bug, test failure, unexpected behavior, or regression. Activates during VERIFY phase, in observability work, or when user says "this is broken", "tests are failing", "it worked before". Replaces guess-and-check with disciplined hypothesis-driven diagnosis.
+description: Use when diagnosing a bug, failing test, regression, unexpected result, or intermittent behavior. Build and test causal hypotheses, automate reproduction when feasible, and report calibrated confidence instead of guessing or demanding impossible exhaustive falsification.
 ---
 
 # Debugging Strategist
 
-Engage when: expected ≠ actual behavior; you have a stack trace, failing test, or error message; you're tempted to change code "to see if it fixes it."
+Keep diagnosis separate from implementation unless the requested task includes a
+fix.
 
-**Prohibition:** Never commit a fix you cannot explain.
+## 1. Preserve The Observation
 
-## Execution Protocol
+Record expected and observed behavior, exact error text, environment, version,
+inputs, timing, scope, and the earliest known good and bad states. Distinguish a
+product defect from a misunderstood requirement, test defect, configuration
+drift, corrupt state, dependency change, or external failure.
 
-### Step 1: Minimal Reproduction
-Create the smallest automated reproduction (test, script, curl). Strip dependencies, data, and time until removing any single element makes the bug disappear. If you can't automate it, you don't understand it enough.
+If the symptom may be causing continuing security, privacy, financial,
+data-integrity, or availability harm, separate incident containment from root
+cause work. Escalate the impact, preserve evidence, and propose the smallest
+reversible observable containment under the applicable authority; urgency does
+not authorize production mutation or broad access to customer, provider, or
+financial records.
 
-### Step 2: Define the Possibility Space
-Map symptom to cause categories: code defect (logic, off-by-one), state corruption (race, stale cache), environment drift (dependency, config, infra), misunderstanding (code works as designed), external system (API, DB, network).
+## 2. Reproduce Proportionally
 
-### Step 3: Hypothesis-Driven Binary Search
-For each hypothesis, define: predicted evidence if TRUE, falsifying evidence if FALSE, exact test to perform. Run cheapest first; halve the possibility space each iteration. Differential diagnosis: if X were true I'd see A. I see ¬A. Therefore ¬X. Accept only when all competing hypotheses are falsified.
+Create the smallest automated reproduction when feasible and safe. If the issue
+depends on production-only state, timing, hardware, or an external system, use a
+controlled and authorized observation or representative harness and state what
+remains unreproduced. Lack of automation lowers confidence; it does not prove
+lack of understanding.
 
-### Step 4: Bisection for Regressions
-Identify known-good and known-bad commits; bisect (`git bisect` or manual) until first bad commit isolates the change. If regression correlates with a deployment, compare the delta.
+## 3. Test Causal Hypotheses
 
-### Step 5: State Inspection Strategy
-Snapshot at boundaries (input → intermediate → output). Diff expected vs actual to find first divergence. Check invariants — the first broken invariant is the fault line. For ordering bugs, log exact event sequence with timestamps.
+For each plausible hypothesis, state:
 
-### Step 6: Root Cause Definition
-Stop when you can answer: what exact line/state is wrong; why; how it propagated; systemic cause (Five Whys). Not done until you can write a regression test that fails before the fix and passes after.
+- the predicted evidence;
+- evidence that would weaken it;
+- the cheapest safe discriminating check;
+- the current confidence and basis.
 
-## Hard Rule
-Guessing is not debugging. If you change code without a falsifiable hypothesis, you are not debugging — you are hoping.
+Inspect boundaries to find the first meaningful divergence. Check code, data,
+configuration, permissions, dependency versions, concurrency, clocks, caches,
+deploy deltas, and external systems as relevant. Use history or bisection when a
+known-good range exists, without discarding unrelated work.
+
+## 4. Conclude Honestly
+
+Report causal confidence with the core certainty labels:
+
+- `[VERIFIED] cause`: direct evidence establishes the causal chain;
+- `[INFERRED] cause`: evidence strongly supports it but a material link remains;
+- `[UNKNOWN] cause`: evidence does not yet distinguish the leading hypotheses.
+
+Explain how the cause produced the symptom and any supported systemic
+contributor. Do not require Five Whys or claim every alternative was falsified.
+
+When fixing is authorized, add a regression test when feasible. If exact
+reproduction is impractical, test the violated invariant or closest controlled
+failure mode and disclose the gap.
+
+## Hard Rules
+
+- Do not change code merely to see whether the symptom disappears.
+- Do not call correlation a verified root cause.
+- Do not claim certainty beyond the reproduction and evidence.

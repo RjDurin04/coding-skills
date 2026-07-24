@@ -1,67 +1,69 @@
 ---
 name: safe-release-conductor
-description: Use when preparing to deploy code to any shared environment (staging, production). Activates on deploy scripts, CI/CD config, release PRs, or when user says "let's ship", "deploy to prod", or "push this live". Produces a progressive-delivery plan with rollback triggers, observability hooks, and blast-radius controls BEFORE the deploy happens.
+description: Use for release planning, release-readiness assessment, CI/CD or deployment design, shared-environment rollout execution, and post-release verification. Keep planning and read-only assessment distinct from execution; they never authorize mutation, and execution requires explicit authority.
 ---
 
 # Safe Release Conductor
 
-## Activation Procedure
+## 1. Classify The Governance Mode
 
-Before deploying, ask:
-1. Did the user say "deploy", "ship", "push to prod", "release", or "go live"?
-2. Am I generating deployment scripts, CI/CD config, or infrastructure code?
-3. Am I about to mutate a shared environment or execute a release action?
+Use the core task modes rather than inventing a release-specific authority:
 
-If ≥1 is YES → engage for the release-related portion. Merely editing code that
-may eventually run in production does not trigger deployment procedure. Local-only
-changes (unit tests, lint config) do not trigger.
+- release planning is `DESIGN`;
+- read-only readiness assessment and post-release observation are `REVIEW`;
+- repository changes to CI/CD, deployment code, or release configuration are
+  `IMPLEMENT`;
+- shared-environment rollout, promotion, flag changes, rollback, or other
+  mutation is `OPERATE`.
 
-## Execution Protocol
+Compound requests must cross these boundaries explicitly. Re-route before each
+transition. Planning, assessment, generated scripts, and readiness advice do not
+authorize execution; read-only observation becomes `OPERATE` before any
+corrective mutation.
 
-### Step 1: Pre-Flight Checklist
-All applicable boxes require evidence. Mark a box N/A with a reason; an unchecked
-applicable box blocks the release claim.
-```
-[ ] Required CI checks pass, or the unavailable CI evidence is a blocker
-[ ] Migrations are compatible and recoverable when schema/data changes exist
-[ ] Risky behavior has an appropriate blast-radius control (flag, canary, staged rollout, or equivalent)
-[ ] Rollback or roll-forward procedure is documented and tested proportionally
-[ ] Applicable logs, metrics, traces, health checks, and alerts are in place
-[ ] Runbook and escalation owner cover likely failure modes
-[ ] Blast radius identified
-[ ] Deploy timing and staffing fit the service's traffic and support model
-[ ] Config, secrets, state, and environment parity fit the system's architecture
-[ ] Human authority for the shared-environment mutation is verified
-```
+## 2. Identify The Release Unit
 
-### Step 2: Delivery Strategy
-| Risk Level | Strategy |
-|---|---|
-| Config/copy | Direct or staged deploy with a rollback plan; flag only when useful |
-| Non-critical | Progressive rollout sized to traffic, observability, and rollback speed |
-| Critical path | Canary, blue/green, shadowing, or equivalent evidence-based isolation |
-| Schema change | Expand-contract over releases |
-| Irreversible | Dry-run in staging with prod-shaped data |
+Resolve the exact artifact or commit, target environment, configuration and
+schema versions, included changes, owner, blast radius, dependencies, and
+reversible or irreversible steps. Prevent a successful build of one artifact
+from being mistaken for evidence about another.
 
-### Step 3: Rollback Triggers
-Declare abort conditions before deploy:
-```yaml
-rollback_if:
-  - error budget burns faster than the service threshold
-  - latency exceeds the declared SLO or approved baseline envelope
-  - a critical business/security invariant fails
-  - saturation, queue depth, or cost exceeds the declared limit
-```
+## 3. Plan And Assess Proportionally
 
-### Step 4: Post-Deploy Verification
-Do not claim success until applicable synthetic/end-to-end checks pass, key
-business and reliability signals are within their declared envelopes, and the
-predeclared observation window completes. When real traffic inspection is not
-available, say so and keep the release status partial.
+Check applicable evidence for:
 
-### Step 5: Handoff
-Generate handoff note: DEPLOYED [what, version, time], WATCH FOR [symptoms], ROLLBACK CMD [exact command], ESCALATION [who].
+- scoped CI, tests, static analysis, and security checks;
+- artifact integrity, provenance, dependency state, and reproducible build path;
+- configuration, secrets, permissions, feature flags, and environment drift;
+- migration compatibility, backups, reconciliation, and rollback or roll-forward;
+- capacity, cost, availability, observability, health checks, and alert coverage;
+- runbook, support window, escalation path, and likely failure modes.
 
-## Hard Rule
-Keep MTTR much smaller than MTBF. Optimize for prevention plus fast, safe
-recovery; rollback speed does not excuse weak pre-deploy evidence.
+Choose direct, rolling, canary, blue-green, shadow, flag-controlled, or other
+delivery based on consequence, traffic, observability, state compatibility, and
+recovery speed. Do not require a progressive pattern when a bounded direct
+release is safer, and give temporary flags an owner and removal condition.
+
+Predeclare stop or rollback criteria from approved SLOs, verified baselines, and
+business or security invariants. Proposed thresholds remain candidates until
+approved.
+
+## 4. Execute Only With Authority
+
+Before execution, verify the exact target and artifact, approved scope, expected
+effects, recovery path, and required confirmation. Preview or dry-run when
+supported. Stop on unexpected scope, partial mutation, failed health evidence,
+or changed assumptions; preserve evidence and report actual state.
+
+Do not infer permission to deploy, promote, toggle, migrate, scale, or roll back
+from requests to implement, prepare, review, or make something ready.
+
+## 5. Observe And Report
+
+Verify user-visible and system invariants over an observation window justified
+by traffic and failure latency. Record the released artifact, target, time,
+checks, signals, and any mutation or recovery performed.
+
+Report task outcome, release readiness, and execution state separately. A
+readiness pass is not proof that execution occurred; a successful command is not
+proof that the release is healthy.

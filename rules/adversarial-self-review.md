@@ -25,9 +25,11 @@ Before delivery, try to find the defect that will matter later.
 
 ## Evidence
 
-Support material claims with inspected code path, test/check result, type/lint/build,
-manual/browser check, query plan/benchmark/profile, security review/negative test,
-or explicit unverified gap. No evidence means weaken claim or run check.
+Support each material claim with an inspected code path, test/check result,
+type/lint/build, manual/browser check, query plan/benchmark/profile, security
+review/negative test, or explicit unverified gap. Record the relevant
+environment/scope and evidence time/version. No evidence means weaken the claim
+or run a check.
 
 ## Fix Or Disclose
 
@@ -47,4 +49,8 @@ transcript by default.
 - Missed applicable governance routing is a finding, not a pass.
 - Ungrounded APIs/packages/fields/routes/contracts are defects.
 - Happy-path-only tests are insufficient for critical logic.
-- Durable MVP/prototype shortcuts are findings, not acceptable trade-offs, unless explicitly requested and labeled.
+- MVP scope does not lower production assurance. Prototype shortcuts are
+  acceptable only for an explicitly requested, isolated disposable spike with
+  disposal criteria and must remain findings if promoted into durable work.
+- Accepted risk without exact scope, authorized owner, compensating controls,
+  evidence, and unexpired review/remediation date is a finding.

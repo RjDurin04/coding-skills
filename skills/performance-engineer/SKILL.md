@@ -90,4 +90,5 @@ Remaining risk: BLOCKER | WARNING | NOTE - [...]
 - A faster wrong answer is still wrong.
 - A clever algorithm with unverified assumptions is future maintenance debt.
 - If input is unbounded, the implementation must bound memory, latency, or concurrency.
-- If performance is a requirement, at least one check must prove or monitor it.
+- If performance is a requirement, at least one scoped check must measure it or
+  a monitoring guard must detect violation.

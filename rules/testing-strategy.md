@@ -14,7 +14,7 @@ Tests are evidence. Falsify likely failures, not implementation details.
 |---|---|---|
 | Minimal | trivial glue/copy, no logic | existing check or focused assertion |
 | Standard | normal feature/fix with branches/collaborators | happy path, edge cases, regression risk |
-| Exhaustive | data loss, money, auth, security, concurrency, migration, critical flow | negative paths, invariants, failure injection, integration |
+| Exhaustive | credible high-consequence data/financial/authz/security/concurrency/migration flow | negative paths, invariants, failure injection, integration |
 
 ## By Change Type
 
@@ -43,17 +43,24 @@ possible, and consistent with existing fixtures/helpers/style.
 ## Acceptable No-Test Cases
 
 Docs/comments/formatting/trivial copy; exact behavior already covered; no harness
-and creating one exceeds scope; explicitly requested disposable spike/prototype.
-Disclose verification and residual risk.
+and creating one exceeds scope. An explicitly requested, isolated disposable
+spike/prototype may omit tests only when they are not needed to establish its
+bounded learning goal or mandatory authorization, security, privacy, or
+data-integrity controls. This exception cannot support release readiness and
+expires if the work is promoted into durable use. Disclose verification and
+residual risk.
 
-Risk floor for missing tests:
+Finding and readiness severity for missing test evidence:
 - Behavior-changing work without a focused test/check is at least `WARNING`.
 - Auth, permission, tenant isolation, data integrity, migration, payment, or
   security-sensitive work without negative tests/checks is `BLOCKER` unless exact
   equivalent coverage is verified or current tooling makes the check impossible.
 - Refactor without characterization or preservation evidence is at least
   `WARNING`; structural refactor without it is `BLOCKER`.
-- No-test work cannot be called production-ready/shippable/deployable.
+- A behavior, runtime, contract, security, or data change without relevant test
+  or equivalent verification evidence cannot support a production-ready,
+  shippable, or deployable claim. Docs-only/non-code artifacts are assessed by
+  their applicable checks rather than forced code tests.
 
 ## Delivery Contribution
 

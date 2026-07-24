@@ -1,58 +1,64 @@
 ---
 name: requirements-crystallizer
-description: Use when transitioning from fuzzy idea to buildable specification. Activates when user has vague requirements, says "it should just work like X", "make it user-friendly", "add AI to it", or any unmeasurable requirement. Converts vibes into testable, traceable, architecturally-significant requirements.
+description: Use when a material requirement is vague, unmeasurable, internally inconsistent, or missing acceptance conditions, especially for quality attributes, AI behavior, public contracts, security, data, cost, or costly-to-reverse design. Convert uncertainty into scoped decisions and testable acceptance evidence without inventing targets.
 ---
 
 # Requirements Crystallizer
 
-You refuse durable commitments from vague requirements. You convert vibes into contracts.
+Clarify only ambiguity that can change correctness, safety, scope, cost, public
+behavior, or a durable design. Keep routine low-risk choices lightweight.
 
-## Activation Trigger
-Durable/high-stakes requirements containing: "nice", "fast", "user-friendly", "scalable", "secure", "modern", "AI-powered", "like [competitor]", or missing numbers/conditions.
+## 1. Separate Requirement From Solution
 
-## Execution Protocol
+Extract the user or business outcome, affected actors, in-scope and out-of-scope
+behavior, constraints, failure behavior, and acceptance evidence. Do not turn a
+preferred framework, pattern, or implementation idea into a requirement unless
+it is an actual constraint.
 
-### Step 1: Vibe-to-Spec Extraction
-For every fuzzy statement, produce a **Crystallized Requirement Card**:
+## 2. Track Decision Status
 
+Use these statuses for material requirement values:
+
+- `[APPROVED]`: an authoritative source or explicit owner decision establishes
+  the value;
+- `[CANDIDATE]`: a proposed value to evaluate or approve;
+- `[ASSUMED]`: a reversible low-risk default selected to continue;
+- `[UNKNOWN]`: no defensible value is available.
+
+Treat derived or proposed numeric targets as `[CANDIDATE]`, or `[UNKNOWN]` when
+there is no basis, until an authorized owner or authoritative contract approves
+them. Do not convert a benchmark, industry heuristic, or model suggestion into
+an approved SLO, retention period, capacity target, accuracy threshold, or
+deadline.
+
+## 3. Create A Proportional Requirement Record
+
+For an architecturally significant requirement, capture:
+
+```text
+ID/source: [...]
+Outcome and scope: [...]
+Decision status: APPROVED | CANDIDATE | ASSUMED | UNKNOWN
+Acceptance evidence: [...]
+Quality attributes and constraints: [...]
+Failure and edge behavior: [...]
+Open decision/owner: [...]
 ```
-ID: REQ-001
-Vibe: "It should be fast"
-Crystallized: "p95 API response < 200ms for read endpoints under 1000 RPS"
-Type: [Functional | Quality Attribute | Constraint]
-Architecturally Significant? [Y/N + why]
-Testable How: [concrete test method]
-Source: [who said it, when]
-```
 
-### Step 2: Quality Attribute Pass
-For serious builds, surface relevant quality attributes:
-- **Performance**: latency p50/p95/p99 targets
-- **Scalability**: current vs 12-month load projection
-- **Availability**: uptime SLO (and what "down" means)
-- **Security**: threat model scope, data classification
-- **Maintainability**: team size, expected lifetime
-- **Usability**: primary user persona, accessibility level
-- **Observability**: what must be debuggable in production
+Use the project's existing issue, specification, ADR, or test mechanism when it
+will remain maintained. A local note is enough for a small decision; do not
+create traceability artifacts for their own sake.
 
-For low-stakes ambiguity, do not ask all seven. Pick sensible `[ASSUMED]`
-defaults only when they do not affect correctness, data, security, cost, public
-API, or irreversible design. Prototype/spike defaults require an explicit
-disposable-work request.
+## 4. Decide Whether To Proceed
 
-### Step 3: Ownership And Boundary Partitioning
-Use the adopting project's architecture vocabulary. Extract the responsible
-module, subsystem, service, feature area, or bounded context. Apply DDD concepts
-only when domain complexity and local conventions justify them; do not force a
-glossary or multiple bounded contexts onto a small system.
+Ask for a decision when the unknown changes security, privacy, data integrity,
+material cost, public compatibility, user harm, or an expensive-to-reverse
+design. Otherwise choose the smallest reversible assumption, label it, and
+verify behavior against it.
 
-### Step 4: Traceability Seed
-For material requirements, use the project's existing issue, requirement, ADR,
-or test naming mechanism. Create a lightweight local tag only when it will be
-maintained. Avoid duplicative code comments whose only purpose is traceability.
+## Hard Rules
 
-## Output Rule
-Do NOT write durable application code until Crystallized Requirement Cards exist
-for architecturally significant requirements. Write exploratory spike code with
-`[ASSUMED]` defaults only when the user explicitly requests disposable exploratory
-work, and label it as not production-ready.
+- Do not manufacture specificity.
+- Do not claim an acceptance criterion is approved merely because it is
+  testable.
+- Do not block unrelated safe work on an immaterial ambiguity.

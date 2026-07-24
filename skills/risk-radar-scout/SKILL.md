@@ -1,88 +1,71 @@
 ---
 name: risk-radar-scout
-description: Use during new project or significant feature inception to surface project-killing risks before implementation. Produces a ranked risk scan and smallest-valid experiment without over-blocking small work.
+description: Use at the inception or material reshaping of a project or major feature when feasibility, adoption, dependency, cost, compliance, sensitive-data, AI, or operational assumptions could change the decision. Rank uncertainty with a defined scoring method and propose the smallest decision-relevant experiment.
 ---
 
 # Risk Radar Scout
 
-Engage when at least two are true:
+Do not use for routine bug fixes, small local changes, or a narrowly scoped
+disposable prototype unless a material external or safety risk remains.
 
-- The user is describing a new project, major feature, or materially new domain.
-- Scope appears larger than a small local change.
-- The work introduces external dependencies, money flow, sensitive data, compliance, AI automation, or production operations.
-- No risk scan has been done for this project or the scope has materially changed.
+## 1. Extract Decision-Critical Claims
 
-Do not engage for ordinary bug fixes, small UI tweaks, straightforward tests, or
-explicitly requested local disposable prototypes.
+Capture the business, workflow, technical feasibility, scale, cost, timeline,
+trust, dependency, and operational claims that could invalidate the plan. Mark
+the evidence and confidence for each; omit dimensions that cannot affect the
+decision.
 
-## Step 1: Extract Claims
+## 2. Score Consistently
 
-Identify:
+Score inherent risk before proposed controls and residual risk after them.
 
-- Business claim: who uses/pays and why.
-- Technical claim: what must be possible.
-- Scale claim: users, requests, data, latency, cost.
-- Timeline claim: when it must work.
-- Trust claim: what data, permissions, or external systems are involved.
+```text
+Likelihood:
+1 = rare under stated conditions
+3 = plausible or seen in comparable conditions
+5 = expected, recurring, or already observed
 
-Mark unsupported claims as `[ASSUMED]`, `[INFERRED]`, or `[UNKNOWN]`.
+Impact:
+1 = local and readily reversible
+3 = material user, operational, or financial harm with a recovery path
+5 = severe or irreversible safety, legal, security, privacy, data, or business harm
 
-## Step 2: Seven-Vector Risk Scan
-
-For each relevant vector, record:
-
+Priority score = Likelihood x Impact
+1-4 low | 5-9 moderate | 10-16 high | 17-25 critical
 ```
-Risk | Likelihood H/M/L | Impact H/M/L | Detection | Mitigation | Kill criterion
+
+Use 2 or 4 only when evidence falls between anchors. Add `confidence:
+high|medium|low`; a low-confidence score is a discovery signal, not false
+precision. The score prioritizes investigation and mitigation but never lowers a
+governance risk floor or grants authority.
+
+For each high or critical item, state:
+
+```text
+Risk/cause/consequence: [...]
+Evidence and confidence: [...]
+Inherent L/I/score: [...]
+Control and owner: [...]
+Residual L/I/score: [...]
+Detection and kill criterion: [...]
 ```
 
-Vectors:
+## 3. Choose The Smallest Valid Experiment
 
-- Regulatory/compliance.
-- Technical feasibility.
-- Economic/API/infrastructure cost.
-- Dependency and supply chain.
-- Adoption and workflow fit.
-- Competitive or replacement pressure.
-- Team, operational, and maintenance fit.
+Select the least costly safe experiment that could change the decision:
+prototype, integration proof, user workflow study, threat review, load test,
+cost model, data-quality sample, or migration dry run. Size it by the evidence
+needed, decision deadline, safety, and expected information gain, not by an
+arbitrary number of hours or days.
 
-Skip irrelevant vectors for small work.
+## 4. Recommend Action
 
-## Step 3: Smallest Valid Experiment
-
-Recommend the cheapest experiment that could falsify the riskiest assumption:
-
-- Prototype.
-- Spike.
-- Load test.
-- Security review.
-- User workflow test.
-- Integration proof.
-- Data migration dry run.
-
-The experiment should be scoped in hours or days, not weeks, unless the project itself is critical.
-
-## Step 4: Decide Whether To Block
-
-Only block implementation when a blocker risk affects correctness, security, data safety, legal/compliance exposure, irreversible design, or major cost.
-
-For non-blocking risks:
-
-- Proceed with `[ASSUMED]` defaults.
-- Record the watchlist.
-- Add tests, flags, or scope limits that reduce blast radius.
-
-## Output
-
-```
-Risk scan: PASS | WATCHLIST | BLOCKED
-Blockers: [...]
-Watchlist: [...]
-Smallest valid experiment: [...]
-Proceed recommendation: proceed | spike first | reshape scope | ask user
-```
+Block only when a credible unresolved risk prevents correct, lawful, safe, or
+economically authorized progress, or would lock in an irreversible design.
+Otherwise recommend proceeding with explicit limits, controls, and a watchlist.
 
 ## Hard Rules
 
-- Do not turn every new idea into a heavyweight planning ceremony.
-- Do not start critical work with unexamined project-killing assumptions.
-- A risk scan should reduce uncertainty or scope, not merely sound smart.
+- Do not use scoring to disguise missing evidence.
+- Do not enumerate risks that cannot affect the decision.
+- A risk scan must change scope, evidence, controls, or the decision.

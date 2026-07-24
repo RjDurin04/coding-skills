@@ -1,16 +1,17 @@
 [CmdletBinding()]
 param(
-    [string] $Root = (Split-Path -Parent $PSScriptRoot)
+    [string] $Root
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+if ([string]::IsNullOrWhiteSpace($Root)) {
+    $scriptDirectory = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
+    $Root = [System.IO.Path]::GetDirectoryName($scriptDirectory)
+}
+
 $rootPath = [System.IO.Path]::GetFullPath($Root)
-$manifestPath = Join-Path $rootPath 'governance-manifest.json'
-$manifest = Get-Content -Raw -Encoding UTF8 -LiteralPath $manifestPath | ConvertFrom-Json
-$catalogPath = Join-Path $rootPath ([string] $manifest.capability_evaluations.catalog -replace '/', [System.IO.Path]::DirectorySeparatorChar)
-$catalog = Get-Content -Raw -Encoding UTF8 -LiteralPath $catalogPath | ConvertFrom-Json
 $failures = New-Object 'System.Collections.Generic.List[string]'
 
 function Add-Failure {
@@ -18,211 +19,610 @@ function Add-Failure {
     $failures.Add($Message)
 }
 
-if (($catalog.PSObject.Properties.Name -notcontains 'schema_version') -or ([int] $catalog.schema_version -ne 1)) {
-    Add-Failure "Capability catalog schema_version must be 1."
-}
+function Read-JsonObject {
+    param(
+        [string] $Path,
+        [string] $Label
+    )
 
-$cases = @($catalog.cases)
-$minimumCases = [int] $manifest.capability_evaluations.minimum_cases
-if (($cases.Count -lt $minimumCases) -or ($cases.Count -gt 100)) {
-    Add-Failure "Expected $minimumCases-100 capability cases, found $($cases.Count)."
-}
-
-$duplicateIds = @($cases | Group-Object -Property id | Where-Object Count -gt 1)
-foreach ($duplicate in $duplicateIds) {
-    Add-Failure "Duplicate capability evaluation id: $($duplicate.Name)"
-}
-
-$riskValues = @($manifest.risk_order | ForEach-Object { [string] $_ })
-$skillNames = @($manifest.skills | ForEach-Object { [string] $_.name })
-$requiredCaseProperties = @(
-    'id',
-    'category',
-    'risk',
-    'primary_skill',
-    'prompt',
-    'must_demonstrate',
-    'must_avoid',
-    'required_evidence'
-)
-
-foreach ($case in $cases) {
-    $caseProperties = @($case.PSObject.Properties.Name)
-    $caseId = if (($caseProperties -contains 'id') -and (-not [string]::IsNullOrWhiteSpace([string] $case.id))) {
-        [string] $case.id
+    try {
+        $value = Get-Content -Raw -Encoding UTF8 -LiteralPath $Path | ConvertFrom-Json
+        if ($value -isnot [pscustomobject]) {
+            Add-Failure "$Label must be a JSON object."
+            return $null
+        }
+        return $value
     }
-    else {
-        '<missing-id>'
+    catch {
+        Add-Failure "$Label is not valid JSON: $($_.Exception.Message)"
+        return $null
     }
-    $missingProperties = @()
-    foreach ($property in $requiredCaseProperties) {
-        if ($caseProperties -notcontains $property) {
-            Add-Failure "Case '$caseId' is missing property: $property"
-            $missingProperties += $property
+}
+
+function Assert-ObjectShape {
+    param(
+        $Value,
+        [string[]] $Required,
+        [string[]] $Allowed,
+        [string] $Context
+    )
+
+    if ($Value -isnot [pscustomobject]) {
+        Add-Failure "$Context must be an object."
+        return $false
+    }
+
+    $names = @($Value.PSObject.Properties.Name)
+    foreach ($name in $Required) {
+        if ($names -notcontains $name) {
+            Add-Failure "$Context is missing property '$name'."
         }
     }
-    if ($missingProperties.Count -gt 0) {
-        continue
-    }
-
-    if ($riskValues -notcontains [string] $case.risk) {
-        Add-Failure "Case '$caseId' has invalid risk: $($case.risk)"
-    }
-    if ($skillNames -notcontains [string] $case.primary_skill) {
-        Add-Failure "Case '$caseId' references unknown primary skill: $($case.primary_skill)"
-    }
-    if ($caseId -notmatch '^[a-z0-9]+(?:-[a-z0-9]+)*$') {
-        Add-Failure "Case '$caseId' id must use lowercase kebab-case."
-    }
-    if ([string]::IsNullOrWhiteSpace([string] $case.category)) {
-        Add-Failure "Case '$caseId' category cannot be blank."
-    }
-    if ([string]::IsNullOrWhiteSpace([string] $case.prompt) -or ([string] $case.prompt).Length -lt 40) {
-        Add-Failure "Case '$caseId' needs a concrete prompt of at least 40 characters."
-    }
-    if (($case.must_demonstrate -is [string]) -or (@($case.must_demonstrate).Count -lt 2)) {
-        Add-Failure "Case '$caseId' needs at least two must_demonstrate criteria."
-    }
-    elseif (@($case.must_demonstrate | Where-Object { [string]::IsNullOrWhiteSpace([string] $_) }).Count -gt 0) {
-        Add-Failure "Case '$caseId' must_demonstrate criteria cannot be blank."
-    }
-    if (($case.must_avoid -is [string]) -or (@($case.must_avoid).Count -lt 1)) {
-        Add-Failure "Case '$caseId' needs at least one must_avoid criterion."
-    }
-    elseif (@($case.must_avoid | Where-Object { [string]::IsNullOrWhiteSpace([string] $_) }).Count -gt 0) {
-        Add-Failure "Case '$caseId' must_avoid criteria cannot be blank."
-    }
-    if (($case.required_evidence -is [string]) -or (@($case.required_evidence).Count -lt 1)) {
-        Add-Failure "Case '$caseId' needs at least one required_evidence item."
-    }
-    elseif (@($case.required_evidence | Where-Object { [string]::IsNullOrWhiteSpace([string] $_) }).Count -gt 0) {
-        Add-Failure "Case '$caseId' required_evidence items cannot be blank."
-    }
-}
-
-$categories = @($cases | ForEach-Object { [string] $_.category } | Sort-Object -Unique)
-if ($categories.Count -lt 10) {
-    Add-Failure "Capability catalog needs at least 10 categories, found $($categories.Count)."
-}
-
-$newSpecialists = @(
-    'product-and-domain-strategist',
-    'api-and-contract-engineer',
-    'data-and-database-engineer',
-    'distributed-systems-engineer',
-    'platform-infrastructure-engineer',
-    'quality-engineering-lead',
-    'incident-commander',
-    'engineering-leadership',
-    'documentation-steward',
-    'formal-assurance-engineer'
-)
-foreach ($skillName in $newSpecialists) {
-    $coverage = @($cases | Where-Object { [string] $_.primary_skill -eq $skillName }).Count
-    if ($coverage -lt 3) {
-        Add-Failure "New specialist '$skillName' needs at least three primary evaluation cases, found $coverage."
-    }
-}
-
-$dimensions = @($catalog.rubric.dimensions)
-$dimensionNames = @($dimensions | ForEach-Object { [string] $_.name })
-$duplicateDimensions = @($dimensions | Group-Object -Property name | Where-Object Count -gt 1)
-foreach ($duplicate in $duplicateDimensions) {
-    Add-Failure "Duplicate rubric dimension: $($duplicate.Name)"
-}
-$weightTotal = 0
-foreach ($dimension in $dimensions) {
-    $dimensionProperties = @($dimension.PSObject.Properties.Name)
-    foreach ($property in @('name', 'weight', 'question')) {
-        if ($dimensionProperties -notcontains $property) {
-            Add-Failure "Rubric dimension is missing property: $property"
+    foreach ($name in $names) {
+        if ($Allowed -notcontains $name) {
+            Add-Failure "$Context contains unknown property '$name'."
         }
     }
-    if (($dimensionProperties -notcontains 'name') -or ($dimensionProperties -notcontains 'weight') -or ($dimensionProperties -notcontains 'question')) {
-        continue
+    return (@($Required | Where-Object { $names -notcontains $_ }).Count -eq 0)
+}
+
+function Test-JsonNumber {
+    param($Value)
+    $isNumeric = (
+        ($Value -is [byte]) -or
+        ($Value -is [int16]) -or
+        ($Value -is [int32]) -or
+        ($Value -is [int64]) -or
+        ($Value -is [single]) -or
+        ($Value -is [double]) -or
+        ($Value -is [decimal])
+    )
+    if (-not $isNumeric) {
+        return $false
     }
-    if ([string]::IsNullOrWhiteSpace([string] $dimension.name)) {
-        Add-Failure "Rubric dimension name cannot be blank."
+    if (($Value -is [single]) -or ($Value -is [double])) {
+        $number = [double] $Value
+        return (-not [double]::IsNaN($number)) -and
+            (-not [double]::IsInfinity($number))
     }
-    if (($dimension.weight -isnot [int]) -and ($dimension.weight -isnot [long]) -and ($dimension.weight -isnot [double]) -and ($dimension.weight -isnot [decimal])) {
-        Add-Failure "Rubric dimension '$($dimension.name)' weight must be numeric."
+    return $true
+}
+
+function Test-JsonInteger {
+    param($Value)
+    return (
+        ($Value -is [byte]) -or
+        ($Value -is [int16]) -or
+        ($Value -is [int32]) -or
+        ($Value -is [int64])
+    )
+}
+
+function Test-NonblankString {
+    param($Value)
+    return (($Value -is [string]) -and (-not [string]::IsNullOrWhiteSpace($Value)))
+}
+
+function Assert-UniqueStrings {
+    param(
+        [string[]] $Values,
+        [string] $Context
+    )
+
+    foreach ($duplicate in @($Values | Group-Object | Where-Object Count -gt 1)) {
+        Add-Failure "$Context contains duplicate '$($duplicate.Name)'."
     }
-    elseif (($dimension.weight -le 0) -or ($dimension.weight -gt 100)) {
-        Add-Failure "Rubric dimension '$($dimension.name)' weight must be 1-100."
+}
+
+$manifestPath = Join-Path $rootPath 'governance-manifest.json'
+$manifest = Read-JsonObject $manifestPath 'Governance manifest'
+if ($null -eq $manifest) {
+    Write-Host "Capability evaluation validation FAILED with $($failures.Count) finding(s)." -ForegroundColor Red
+    foreach ($failure in $failures) { Write-Host "- $failure" -ForegroundColor Red }
+    exit 1
+}
+
+if (($manifest.PSObject.Properties.Name -notcontains 'capability_evaluations') -or
+    ($manifest.capability_evaluations -isnot [pscustomobject])) {
+    Add-Failure 'Governance manifest capability_evaluations must be an object.'
+}
+if (($manifest.PSObject.Properties.Name -notcontains 'routing_signals') -or
+    ($manifest.routing_signals -isnot [pscustomobject])) {
+    Add-Failure 'Governance manifest routing_signals must be an object.'
+}
+if (($manifest.PSObject.Properties.Name -notcontains 'skills') -or
+    ($manifest.skills -isnot [System.Array])) {
+    Add-Failure 'Governance manifest skills must be an array.'
+}
+if ($failures.Count -gt 0) {
+    Write-Host "Capability evaluation validation FAILED with $($failures.Count) finding(s)." -ForegroundColor Red
+    foreach ($failure in $failures) { Write-Host "- $failure" -ForegroundColor Red }
+    exit 1
+}
+
+$catalogRelative = [string] $manifest.capability_evaluations.catalog
+$templateRelative = [string] $manifest.capability_evaluations.run_template
+$catalogPath = Join-Path $rootPath ($catalogRelative -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+$templatePath = Join-Path $rootPath ($templateRelative -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+$catalog = Read-JsonObject $catalogPath 'Capability catalog'
+$runTemplate = Read-JsonObject $templatePath 'Capability run template'
+if (($null -eq $catalog) -or ($null -eq $runTemplate)) {
+    Write-Host "Capability evaluation validation FAILED with $($failures.Count) finding(s)." -ForegroundColor Red
+    foreach ($failure in $failures) { Write-Host "- $failure" -ForegroundColor Red }
+    exit 1
+}
+
+$catalogFields = @('$schema', 'schema_version', 'rubric', 'skill_coverage', 'cases')
+[void](Assert-ObjectShape $catalog $catalogFields $catalogFields 'Capability catalog')
+if (($catalog.PSObject.Properties.Name -contains '$schema') -and
+    ([string] $catalog.'$schema' -ne '../schemas/capability-evaluations.schema.json')) {
+    Add-Failure "Capability catalog `$schema must be '../schemas/capability-evaluations.schema.json'."
+}
+if (($catalog.PSObject.Properties.Name -contains 'schema_version') -and
+    ((-not (Test-JsonInteger $catalog.schema_version)) -or (([int] $catalog.schema_version) -ne 2))) {
+    Add-Failure 'Capability catalog schema_version must be integer 2.'
+}
+if (($catalog.PSObject.Properties.Name -contains 'skill_coverage') -and
+    ($catalog.skill_coverage -isnot [System.Array])) {
+    Add-Failure 'Capability catalog skill_coverage must be an array.'
+}
+if (($catalog.PSObject.Properties.Name -contains 'cases') -and
+    ($catalog.cases -isnot [System.Array])) {
+    Add-Failure 'Capability catalog cases must be an array.'
+}
+
+$risks = @($manifest.risk_order | ForEach-Object { [string] $_ })
+$expectedRisks = @('trivial', 'standard', 'structural', 'critical')
+if (($risks.Count -ne $expectedRisks.Count) -or
+    (@(Compare-Object -ReferenceObject $expectedRisks -DifferenceObject $risks -SyncWindow 0).Count -gt 0)) {
+    Add-Failure "Manifest risk_order must be exactly: $($expectedRisks -join ', ')."
+}
+
+$rubricFields = @('dimensions', 'pass_score', 'critical_pass_score', 'automatic_failure_reasons')
+$rubricUsable = $false
+if (($catalog.PSObject.Properties.Name -contains 'rubric') -and
+    (Assert-ObjectShape $catalog.rubric $rubricFields $rubricFields 'Capability rubric')) {
+    $rubricUsable = $true
+}
+
+$dimensionNames = @()
+$dimensionWeightTotal = 0.0
+if ($rubricUsable) {
+    if ($catalog.rubric.dimensions -isnot [System.Array]) {
+        Add-Failure 'Capability rubric dimensions must be an array.'
     }
     else {
-        $weightTotal += [double] $dimension.weight
-    }
-    if ([string]::IsNullOrWhiteSpace([string] $dimension.question) -or ([string] $dimension.question).Length -lt 20) {
-        Add-Failure "Rubric dimension '$($dimension.name)' needs a concrete scoring question."
-    }
-}
-if ($weightTotal -ne 100) {
-    Add-Failure "Rubric weights must total 100, found $weightTotal."
-}
-if (($catalog.rubric.pass_score -lt 1) -or ($catalog.rubric.pass_score -gt 100)) {
-    Add-Failure "Rubric pass_score must be 1-100."
-}
-if (($catalog.rubric.critical_pass_score -lt $catalog.rubric.pass_score) -or ($catalog.rubric.critical_pass_score -gt 100)) {
-    Add-Failure "Rubric critical_pass_score must be between pass_score and 100."
-}
-if (@($catalog.rubric.automatic_failures).Count -lt 5) {
-    Add-Failure "Rubric needs at least five automatic-failure conditions."
-}
-$automaticFailures = @($catalog.rubric.automatic_failures | ForEach-Object { [string] $_ })
-if (@($automaticFailures | Where-Object { [string]::IsNullOrWhiteSpace($_) }).Count -gt 0) {
-    Add-Failure "Rubric automatic-failure conditions cannot be blank."
-}
-if (@($automaticFailures | Group-Object | Where-Object Count -gt 1).Count -gt 0) {
-    Add-Failure "Rubric automatic-failure conditions must be unique."
-}
+        $dimensionIndex = 0
+        foreach ($dimension in @($catalog.rubric.dimensions)) {
+            $dimensionIndex++
+            $context = "Rubric dimension #$dimensionIndex"
+            $fields = @('name', 'weight', 'question', 'minimum_scores')
+            if (-not (Assert-ObjectShape $dimension $fields $fields $context)) { continue }
 
-$requiredRunFields = @(
-    'case_id',
-    'model',
-    'agent_surface',
-    'model_version',
-    'rules_pack_version',
-    'repository_and_revision',
-    'artifact_paths',
-    'dimension_scores',
-    'automatic_failure',
-    'reviewer'
-)
-foreach ($field in $requiredRunFields) {
-    if (@($catalog.run_record_fields) -notcontains $field) {
-        Add-Failure "Run record is missing required field: $field"
-    }
-}
-$runRecordFields = @($catalog.run_record_fields | ForEach-Object { [string] $_ })
-if (@($runRecordFields | Where-Object { [string]::IsNullOrWhiteSpace($_) }).Count -gt 0) {
-    Add-Failure "Run record field names cannot be blank."
-}
-if (@($runRecordFields | Group-Object | Where-Object Count -gt 1).Count -gt 0) {
-    Add-Failure "Run record field names must be unique."
-}
-
-$runTemplatePath = Join-Path $rootPath ([string] $manifest.capability_evaluations.run_template -replace '/', [System.IO.Path]::DirectorySeparatorChar)
-try {
-    $runTemplate = Get-Content -Raw -Encoding UTF8 -LiteralPath $runTemplatePath | ConvertFrom-Json
-    foreach ($field in @($catalog.run_record_fields)) {
-        if ($runTemplate.PSObject.Properties.Name -notcontains [string] $field) {
-            Add-Failure "Capability run template is missing field: $field"
+            $name = [string] $dimension.name
+            if ((-not (Test-NonblankString $dimension.name)) -or
+                ($name -notmatch '^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$')) {
+                Add-Failure "$context name must use snake_case."
+            }
+            else {
+                $dimensionNames += $name
+            }
+            if ((-not (Test-JsonNumber $dimension.weight)) -or
+                (([double] $dimension.weight) -le 0) -or
+                (([double] $dimension.weight) -gt 100)) {
+                Add-Failure "$context weight must be a number greater than 0 and no greater than 100."
+            }
+            else {
+                $dimensionWeightTotal += [double] $dimension.weight
+            }
+            if ((-not (Test-NonblankString $dimension.question)) -or
+                ([string] $dimension.question).Length -lt 20) {
+                Add-Failure "$context question must be a concrete string of at least 20 characters."
+            }
+            if ($dimension.minimum_scores -isnot [pscustomobject]) {
+                Add-Failure "$context minimum_scores must be an object."
+            }
+            else {
+                [void](Assert-ObjectShape $dimension.minimum_scores $risks $risks "$context minimum_scores")
+                foreach ($risk in $risks) {
+                    if ($dimension.minimum_scores.PSObject.Properties.Name -contains $risk) {
+                        $minimum = $dimension.minimum_scores.$risk
+                        if ((-not (Test-JsonNumber $minimum)) -or
+                            (([double] $minimum) -lt 0) -or
+                            (([double] $minimum) -gt 100)) {
+                            Add-Failure "$context minimum score '$risk' must be a number from 0 to 100."
+                        }
+                    }
+                }
+            }
         }
     }
-    if (($runTemplate.PSObject.Properties.Name -notcontains 'dimension_scores') -or ($runTemplate.dimension_scores -isnot [pscustomobject])) {
-        Add-Failure "Capability run template dimension_scores must be an object."
+    Assert-UniqueStrings $dimensionNames 'Rubric dimensions'
+    if ([math]::Abs($dimensionWeightTotal - 100.0) -gt 0.000001) {
+        Add-Failure "Rubric weights must total 100, found $dimensionWeightTotal."
+    }
+
+    if ((-not (Test-JsonNumber $catalog.rubric.pass_score)) -or
+        (([double] $catalog.rubric.pass_score) -lt 1) -or
+        (([double] $catalog.rubric.pass_score) -gt 100)) {
+        Add-Failure 'Rubric pass_score must be a number from 1 to 100.'
+    }
+    if ((-not (Test-JsonNumber $catalog.rubric.critical_pass_score)) -or
+        (([double] $catalog.rubric.critical_pass_score) -lt 1) -or
+        (([double] $catalog.rubric.critical_pass_score) -gt 100)) {
+        Add-Failure 'Rubric critical_pass_score must be a number from 1 to 100.'
+    }
+    elseif ((Test-JsonNumber $catalog.rubric.pass_score) -and
+        (([double] $catalog.rubric.critical_pass_score) -lt ([double] $catalog.rubric.pass_score))) {
+        Add-Failure 'Rubric critical_pass_score cannot be below pass_score.'
+    }
+}
+
+$automaticReasonIds = @()
+if ($rubricUsable) {
+    if ($catalog.rubric.automatic_failure_reasons -isnot [System.Array]) {
+        Add-Failure 'Capability rubric automatic_failure_reasons must be an array.'
     }
     else {
-        foreach ($dimensionName in $dimensionNames) {
-            if ($runTemplate.dimension_scores.PSObject.Properties.Name -notcontains $dimensionName) {
-                Add-Failure "Capability run template is missing dimension: $dimensionName"
+        $reasonIndex = 0
+        foreach ($reason in @($catalog.rubric.automatic_failure_reasons)) {
+            $reasonIndex++
+            $context = "Automatic failure reason #$reasonIndex"
+            $fields = @('id', 'description')
+            if (-not (Assert-ObjectShape $reason $fields $fields $context)) { continue }
+            $id = [string] $reason.id
+            if ((-not (Test-NonblankString $reason.id)) -or
+                ($id -notmatch '^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$')) {
+                Add-Failure "$context id must use snake_case."
+            }
+            else {
+                $automaticReasonIds += $id
+            }
+            if ((-not (Test-NonblankString $reason.description)) -or
+                ([string] $reason.description).Length -lt 20) {
+                Add-Failure "$context description must be at least 20 characters."
             }
         }
     }
 }
-catch {
-    Add-Failure "Capability run template is invalid: $($_.Exception.Message)"
+Assert-UniqueStrings $automaticReasonIds 'Automatic failure reasons'
+$requiredAutomaticReasons = @(
+    'fabricated_evidence',
+    'unauthorized_action',
+    'critical_boundary_missed',
+    'unsupported_release_claim',
+    'unsafe_durable_shortcut'
+)
+foreach ($reasonId in $requiredAutomaticReasons) {
+    if ($automaticReasonIds -notcontains $reasonId) {
+        Add-Failure "Capability rubric is missing required automatic failure reason '$reasonId'."
+    }
+}
+
+$skillNames = @($manifest.skills | ForEach-Object { [string] $_.name })
+Assert-UniqueStrings $skillNames 'Manifest skills'
+$leadSkillNames = @(
+    $manifest.routing_signals.PSObject.Properties |
+        ForEach-Object { $_.Value } |
+        Where-Object { $null -ne $_.lead_skill } |
+        ForEach-Object { [string] $_.lead_skill } |
+        Sort-Object -Unique
+)
+$supportSkillNames = @(
+    $manifest.routing_signals.PSObject.Properties |
+        ForEach-Object { $_.Value } |
+        ForEach-Object { @($_.supporting_skills) } |
+        ForEach-Object { [string] $_ } |
+        Sort-Object -Unique
+)
+
+$coverageBySkill = @{}
+$coverageEntries = if ($catalog.skill_coverage -is [System.Array]) { @($catalog.skill_coverage) } else { @() }
+$coverageIndex = 0
+foreach ($coverage in $coverageEntries) {
+    $coverageIndex++
+    $context = "Skill coverage #$coverageIndex"
+    $fields = @('skill', 'role', 'minimum_cases', 'reason')
+    if (-not (Assert-ObjectShape $coverage $fields $fields $context)) { continue }
+    $skill = [string] $coverage.skill
+    if (-not (Test-NonblankString $coverage.skill)) {
+        Add-Failure "$context skill cannot be blank."
+        continue
+    }
+    if ($coverageBySkill.ContainsKey($skill)) {
+        Add-Failure "Skill coverage contains duplicate '$skill'."
+    }
+    else {
+        $coverageBySkill[$skill] = $coverage
+    }
+    if ($skillNames -notcontains $skill) {
+        Add-Failure "$context references unknown skill '$skill'."
+    }
+    if (@('primary', 'support_only') -notcontains [string] $coverage.role) {
+        Add-Failure "$context role must be primary or support_only."
+    }
+    if ((-not (Test-JsonInteger $coverage.minimum_cases)) -or (([int] $coverage.minimum_cases) -lt 0)) {
+        Add-Failure "$context minimum_cases must be a nonnegative integer."
+    }
+    if (-not (Test-NonblankString $coverage.reason)) {
+        Add-Failure "$context reason cannot be blank."
+    }
+}
+foreach ($skillName in $skillNames) {
+    if (-not $coverageBySkill.ContainsKey($skillName)) {
+        Add-Failure "Skill coverage is missing manifest skill '$skillName'."
+    }
+}
+if ($coverageBySkill.Count -ne $skillNames.Count) {
+    Add-Failure "Skill coverage must contain exactly one entry for each manifest skill ($($skillNames.Count)); found $($coverageBySkill.Count)."
+}
+
+$cases = if ($catalog.cases -is [System.Array]) { @($catalog.cases) } else { @() }
+$minimumCases = [int] $manifest.capability_evaluations.minimum_cases
+if (($cases.Count -lt $minimumCases) -or ($cases.Count -gt 150)) {
+    Add-Failure "Capability catalog must contain $minimumCases-150 cases; found $($cases.Count)."
+}
+
+$caseIds = @()
+$categoryNames = @()
+$caseCountsByRisk = @{}
+foreach ($risk in $risks) { $caseCountsByRisk[$risk] = 0 }
+$caseCountsBySkill = @{}
+foreach ($skillName in $skillNames) { $caseCountsBySkill[$skillName] = 0 }
+
+$caseIndex = 0
+foreach ($case in $cases) {
+    $caseIndex++
+    $context = "Capability case #$caseIndex"
+    $fields = @(
+        'id',
+        'category',
+        'risk',
+        'primary_skill',
+        'prompt',
+        'must_demonstrate',
+        'must_avoid',
+        'required_evidence'
+    )
+    if (-not (Assert-ObjectShape $case $fields $fields $context)) { continue }
+
+    $caseId = [string] $case.id
+    if ((-not (Test-NonblankString $case.id)) -or
+        ($caseId -notmatch '^[a-z0-9]+(?:-[a-z0-9]+)*$')) {
+        Add-Failure "$context id must use kebab-case."
+        $caseId = "<case-$caseIndex>"
+    }
+    else {
+        $caseIds += $caseId
+    }
+    $context = "Capability case '$caseId'"
+
+    $category = [string] $case.category
+    if ((-not (Test-NonblankString $case.category)) -or
+        ($category -notmatch '^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$')) {
+        Add-Failure "$context category must use kebab-case."
+    }
+    else {
+        $categoryNames += $category
+    }
+
+    $risk = [string] $case.risk
+    if ($risks -notcontains $risk) {
+        Add-Failure "$context has unknown risk '$risk'."
+    }
+    else {
+        $caseCountsByRisk[$risk] = [int] $caseCountsByRisk[$risk] + 1
+    }
+
+    $primarySkill = [string] $case.primary_skill
+    if ($leadSkillNames -notcontains $primarySkill) {
+        Add-Failure "$context primary_skill '$primarySkill' is not a routable lead skill."
+    }
+    if ($caseCountsBySkill.ContainsKey($primarySkill)) {
+        $caseCountsBySkill[$primarySkill] = [int] $caseCountsBySkill[$primarySkill] + 1
+    }
+
+    if ((-not (Test-NonblankString $case.prompt)) -or ([string] $case.prompt).Length -lt 40) {
+        Add-Failure "$context prompt must be a concrete string of at least 40 characters."
+    }
+
+    $criterionIds = @()
+    foreach ($criterionGroup in @(
+        [pscustomobject]@{ Name = 'must_demonstrate'; Minimum = 2 },
+        [pscustomobject]@{ Name = 'must_avoid'; Minimum = 1 },
+        [pscustomobject]@{ Name = 'required_evidence'; Minimum = 1 }
+    )) {
+        $groupName = [string] $criterionGroup.Name
+        $groupValue = $case.$groupName
+        if ($groupValue -isnot [System.Array]) {
+            Add-Failure "$context $groupName must be an array."
+            continue
+        }
+        $criteria = @($groupValue)
+        if ($criteria.Count -lt [int] $criterionGroup.Minimum) {
+            Add-Failure "$context $groupName needs at least $($criterionGroup.Minimum) criterion/criteria."
+        }
+        $criterionIndex = 0
+        foreach ($criterion in $criteria) {
+            $criterionIndex++
+            $criterionContext = "$context $groupName criterion #$criterionIndex"
+            $criterionFields = @('id', 'description')
+            if (-not (Assert-ObjectShape $criterion $criterionFields $criterionFields $criterionContext)) { continue }
+            $criterionId = [string] $criterion.id
+            if ((-not (Test-NonblankString $criterion.id)) -or
+                ($criterionId -notmatch '^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$')) {
+                Add-Failure "$criterionContext id must use snake_case."
+            }
+            else {
+                $criterionIds += $criterionId
+            }
+            if (-not (Test-NonblankString $criterion.description)) {
+                Add-Failure "$criterionContext description cannot be blank."
+            }
+        }
+    }
+    foreach ($duplicate in @($criterionIds | Group-Object | Where-Object Count -gt 1)) {
+        Add-Failure "$context reuses criterion id '$($duplicate.Name)' across criterion groups."
+    }
+}
+
+Assert-UniqueStrings $caseIds 'Capability cases'
+$categories = @($categoryNames | Sort-Object -Unique)
+if ($categories.Count -lt 10) {
+    Add-Failure "Capability catalog needs at least 10 categories; found $($categories.Count)."
+}
+
+$riskFloors = @{
+    trivial = 5
+    standard = 15
+    structural = 15
+    critical = 10
+}
+foreach ($risk in $risks) {
+    if (([int] $caseCountsByRisk[$risk]) -lt ([int] $riskFloors[$risk])) {
+        Add-Failure "Capability catalog needs at least $($riskFloors[$risk]) '$risk' cases; found $($caseCountsByRisk[$risk])."
+    }
+}
+$lowRiskCount = [int] $caseCountsByRisk.trivial + [int] $caseCountsByRisk.standard
+$minimumLowRiskCount = [int] [math]::Ceiling($cases.Count / 3.0)
+if ($lowRiskCount -lt $minimumLowRiskCount) {
+    Add-Failure "Trivial plus standard cases must be at least one-third of the catalog ($minimumLowRiskCount); found $lowRiskCount."
+}
+
+$requiredCaseIds = @(
+    'implementation-plan-only',
+    'review-must-remain-read-only',
+    'readiness-local-only-evidence',
+    'debugging-labeled-fabrication',
+    'bounded-task-policy-refusal',
+    'docs-punctuation-only',
+    'docs-local-link-fix',
+    'docs-code-fence-language',
+    'docs-static-heading',
+    'docs-whitespace-format',
+    'docs-comment-typo'
+)
+foreach ($requiredCaseId in $requiredCaseIds) {
+    if ($caseIds -notcontains $requiredCaseId) {
+        Add-Failure "Capability catalog is missing required anti-bypass or anti-ceremony case '$requiredCaseId'."
+    }
+}
+
+$minimumPerLead = [int] $manifest.capability_evaluations.minimum_cases_per_routable_skill
+foreach ($skillName in $skillNames) {
+    if (-not $coverageBySkill.ContainsKey($skillName)) { continue }
+    $coverage = $coverageBySkill[$skillName]
+    $actualCount = [int] $caseCountsBySkill[$skillName]
+    if ($leadSkillNames -contains $skillName) {
+        if ([string] $coverage.role -ne 'primary') {
+            Add-Failure "Routable lead skill '$skillName' must have coverage role primary."
+        }
+        if ((Test-JsonInteger $coverage.minimum_cases) -and
+            (([int] $coverage.minimum_cases) -lt $minimumPerLead)) {
+            Add-Failure "Routable lead skill '$skillName' minimum_cases must be at least $minimumPerLead."
+        }
+        if ((Test-JsonInteger $coverage.minimum_cases) -and
+            ($actualCount -lt [int] $coverage.minimum_cases)) {
+            Add-Failure "Routable lead skill '$skillName' declares $($coverage.minimum_cases) cases but has $actualCount."
+        }
+        if ($actualCount -lt $minimumPerLead) {
+            Add-Failure "Routable lead skill '$skillName' needs at least $minimumPerLead primary cases; found $actualCount."
+        }
+    }
+    else {
+        if ([string] $coverage.role -ne 'support_only') {
+            Add-Failure "Non-lead skill '$skillName' must have coverage role support_only."
+        }
+        if ((Test-JsonInteger $coverage.minimum_cases) -and (([int] $coverage.minimum_cases) -ne 0)) {
+            Add-Failure "Support-only skill '$skillName' minimum_cases must be 0."
+        }
+        if ($actualCount -ne 0) {
+            Add-Failure "Support-only skill '$skillName' cannot be a case primary_skill; found $actualCount case(s)."
+        }
+        if ($supportSkillNames -notcontains $skillName) {
+            Add-Failure "Non-lead skill '$skillName' is neither a manifest supporting skill nor a routable lead."
+        }
+    }
+}
+
+$templateFields = @(
+    '$schema',
+    'schema_version',
+    'case_id',
+    'rules_pack_version',
+    'model',
+    'execution',
+    'runner',
+    'reviewer',
+    'artifacts',
+    'dimension_scores',
+    'criterion_results',
+    'automatic_failure_reason_ids',
+    'notes'
+)
+$templateUsable = Assert-ObjectShape $runTemplate $templateFields $templateFields 'Capability run template'
+if ($templateUsable) {
+    if ([string] $runTemplate.'$schema' -ne '../schemas/capability-evaluation-run.schema.json') {
+        Add-Failure "Capability run template `$schema must be '../schemas/capability-evaluation-run.schema.json'."
+    }
+    if ((-not (Test-JsonInteger $runTemplate.schema_version)) -or (([int] $runTemplate.schema_version) -ne 2)) {
+        Add-Failure 'Capability run template schema_version must be integer 2.'
+    }
+    foreach ($objectSpec in @(
+        [pscustomobject]@{
+            Name = 'model'
+            Fields = @('provider', 'name', 'version', 'agent_surface')
+        },
+        [pscustomobject]@{
+            Name = 'runner'
+            Fields = @('id', 'type', 'organization')
+        },
+        [pscustomobject]@{
+            Name = 'reviewer'
+            Fields = @('id', 'type', 'organization')
+        }
+    )) {
+        [void](Assert-ObjectShape $runTemplate.($objectSpec.Name) $objectSpec.Fields $objectSpec.Fields "Capability run template $($objectSpec.Name)")
+    }
+    $executionFields = @('repository', 'revision', 'started_at', 'duration_seconds', 'token_measure')
+    if (Assert-ObjectShape $runTemplate.execution $executionFields $executionFields 'Capability run template execution') {
+        $tokenFields = @('unit', 'value')
+        [void](Assert-ObjectShape $runTemplate.execution.token_measure $tokenFields $tokenFields 'Capability run template token_measure')
+    }
+    if ($runTemplate.artifacts -isnot [System.Array]) {
+        Add-Failure 'Capability run template artifacts must be an array.'
+    }
+    elseif (@($runTemplate.artifacts).Count -lt 1) {
+        Add-Failure 'Capability run template artifacts cannot be empty.'
+    }
+    else {
+        $artifactFields = @('id', 'path', 'sha256', 'media_type', 'description')
+        foreach ($artifact in @($runTemplate.artifacts)) {
+            [void](Assert-ObjectShape $artifact $artifactFields $artifactFields 'Capability run template artifact')
+        }
+    }
+    if ($runTemplate.dimension_scores -isnot [pscustomobject]) {
+        Add-Failure 'Capability run template dimension_scores must be an object.'
+    }
+    else {
+        [void](Assert-ObjectShape $runTemplate.dimension_scores $dimensionNames $dimensionNames 'Capability run template dimension_scores')
+    }
+    if ($runTemplate.criterion_results -isnot [System.Array]) {
+        Add-Failure 'Capability run template criterion_results must be an array.'
+    }
+    else {
+        $criterionResultFields = @('criterion_id', 'status', 'evidence_artifact_ids', 'review_notes')
+        foreach ($criterionResult in @($runTemplate.criterion_results)) {
+            if (Assert-ObjectShape $criterionResult $criterionResultFields $criterionResultFields 'Capability run template criterion result') {
+                if (@('satisfied', 'violated', 'unverified') -notcontains [string] $criterionResult.status) {
+                    Add-Failure 'Capability run template criterion result status must be satisfied, violated, or unverified.'
+                }
+            }
+        }
+    }
+    if ($runTemplate.automatic_failure_reason_ids -isnot [System.Array]) {
+        Add-Failure 'Capability run template automatic_failure_reason_ids must be an array.'
+    }
 }
 
 if ($failures.Count -gt 0) {
@@ -233,5 +633,16 @@ if ($failures.Count -gt 0) {
     exit 1
 }
 
-Write-Host "Capability evaluation validation PASS: $($cases.Count) cases, $($categories.Count) categories, $($dimensions.Count) rubric dimensions, weights=$weightTotal." -ForegroundColor Green
+$summary = (
+    "Capability evaluation validation PASS: {0} cases; risks={1}; categories={2}; " +
+    "lead coverage={3}; dimensions={4}; weights={5}."
+) -f @(
+    $cases.Count,
+    (($risks | ForEach-Object { "$_=$($caseCountsByRisk[$_])" }) -join ','),
+    $categories.Count,
+    $leadSkillNames.Count,
+    $dimensionNames.Count,
+    $dimensionWeightTotal
+)
+Write-Host $summary -ForegroundColor Green
 exit 0

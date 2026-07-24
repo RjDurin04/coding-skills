@@ -8,9 +8,9 @@ Efficiency is a correctness constraint when input size, latency, cost, or resour
 
 ## Trigger
 
-Every durable loop, query, transform, search, sort, group, join, dedupe, queue,
-cache, pagination path, or collection/file/API processing step over user-sized
-or externally sized data must be classified `BOUNDED` or this gate applies.
+Durable processing whose input can grow independently of the code must have an
+evidenced bound or this gate applies. Fixed, small control-flow collections do
+not need a standalone classification record.
 
 Use when implementing or reviewing:
 - Loops over user records, files, events, messages, rows, graph nodes, or API results.
@@ -33,6 +33,10 @@ a disposable spike and the resource risk is disclosed.
 6. **Approach comparison:** Reject weaker algorithm/query shapes when a simple better fit exists. Do not keep accidental O(n^2), query-in-loop, or memory-unbounded work because it was quicker to code.
 7. **Measurement:** For non-obvious optimizations, prefer profiler/benchmark evidence. Do not add clever code for speculative speed.
 8. **Regression guard:** Add tests or benchmarks when performance is a requirement, a bug fix, or a likely future regression point.
+
+Use accepted performance/capacity requirements. Label a proposed threshold
+`CANDIDATE`; never invent a number and present it as a requirement or passing
+production evidence.
 
 ## Delivery Contribution
 

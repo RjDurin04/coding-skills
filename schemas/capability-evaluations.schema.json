@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:portable-agent-governance:schema:capability-evaluations:2",
+  "title": "Capability Evaluation Catalog v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "rubric",
+    "skill_coverage",
+    "cases"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "../schemas/capability-evaluations.schema.json"
+    },
+    "schema_version": {
+      "const": 2
+    },
+    "rubric": {
+      "$ref": "#/$defs/rubric"
+    },
+    "skill_coverage": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/skillCoverage"
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    }
+  },
+  "$defs": {
+    "rubric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dimensions",
+        "pass_score",
+        "critical_pass_score",
+        "automatic_failure_reasons"
+      ],
+      "properties": {
+        "dimensions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/dimension"
+          }
+        },
+        "pass_score": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "critical_pass_score": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "automatic_failure_reasons": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/automaticFailureReason"
+          }
+        }
+      }
+    },
+    "dimension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "weight",
+        "question",
+        "minimum_scores"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+        },
+        "weight": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100
+        },
+        "question": {
+          "type": "string",
+          "minLength": 20
+        },
+        "minimum_scores": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trivial",
+            "standard",
+            "structural",
+            "critical"
+          ],
+          "properties": {
+            "trivial": {
+              "$ref": "#/$defs/score"
+            },
+            "standard": {
+              "$ref": "#/$defs/score"
+            },
+            "structural": {
+              "$ref": "#/$defs/score"
+            },
+            "critical": {
+              "$ref": "#/$defs/score"
+            }
+          }
+        }
+      }
+    },
+    "automaticFailureReason": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "description"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 20
+        }
+      }
+    },
+    "skillCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skill",
+        "role",
+        "minimum_cases",
+        "reason"
+      ],
+      "properties": {
+        "skill": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "enum": [
+            "primary",
+            "support_only"
+          ]
+        },
+        "minimum_cases": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "category",
+        "risk",
+        "primary_skill",
+        "prompt",
+        "must_demonstrate",
+        "must_avoid",
+        "required_evidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "category": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+        },
+        "risk": {
+          "$ref": "#/$defs/risk"
+        },
+        "primary_skill": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 40
+        },
+        "must_demonstrate": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/criterion"
+          }
+        },
+        "must_avoid": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/criterion"
+          }
+        },
+        "required_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/criterion"
+          }
+        }
+      }
+    },
+    "criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "description"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "risk": {
+      "enum": [
+        "trivial",
+        "standard",
+        "structural",
+        "critical"
+      ]
+    }
+  }
+}

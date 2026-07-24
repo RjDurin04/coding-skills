@@ -1,35 +1,62 @@
 ---
 name: observability-detective
-description: Use during operations, incident response, and debugging of running systems. Activates on production bugs, performance issues, mysterious failures, or when user says "it's slow", "users are reporting X", "something's wrong in prod". Conducts disciplined hypothesis-driven diagnosis using logs, metrics, and traces — refuses to guess-and-patch.
+description: Use to diagnose symptoms in a running system, including errors, latency, throughput, saturation, stale or incorrect data, missing or duplicate work, cost anomalies, and security signals. Correlate telemetry with changes, propose containment, and check authority before executing any shared-system mutation.
 ---
 
 # Observability Detective
 
-## Activation Procedure
+## 1. Define The Symptom
 
-Before diagnosing, confirm:
-1. Is the user describing a failure, not a desired feature?
-2. Is there an error message, stack trace, unexpected output, or wrong behavior?
-3. Am I debugging EXISTING code, not writing NEW code?
+Record the affected behavior, population, region or tenant, endpoint or worker,
+start and end times, frequency, magnitude, baseline, and business consequence.
+Use synchronized time ranges and preserve exact query parameters or dashboard
+filters needed to reproduce the view.
 
-If all 3 are YES → engage. If requesting new functionality → DO NOT engage.
+If impact is active, propose bounded containment and evidence preservation. Use
+the incident skill for coordination when warranted. Do not roll back, restart,
+disable, scale, purge, or change a shared system unless the requested task and
+required authorization allow it.
 
-## Execution Protocol
+## 2. Check Telemetry Quality
 
-### Step 1: Stabilize
-If system is on fire: mitigate first (rollback, circuit break, disable feature flag), preserve evidence (snapshot logs, heap dumps, dashboards), communicate status. THEN investigate.
+Assess missing spans, sampling, aggregation, cardinality, clock skew, retention,
+scrubbing, delayed ingestion, and inconsistent identifiers before trusting a
+signal. Avoid queries that expose secrets or personal data.
 
-### Step 2: Define Symptom
-Extract: What | Where | When | Who | How Much. Example bad: "It's slow". Example good: "p95 latency on POST /api/orders rose from 180ms to 2400ms starting 14:32 UTC, affecting ~35% of requests in EU region".
+Triangulate relevant evidence across:
 
-### Step 3: Hypothesis Tree
-Generate 3-7 hypotheses, ranked by prior probability × cheap-to-test. For each: predicted evidence (if true), falsifying evidence (if false), exact check query/command.
+- user-visible and business outcomes;
+- rates, errors, duration, throughput, saturation, queues, and cost;
+- logs, traces, events, audit records, and data-store state;
+- deploys, feature flags, configuration, dependencies, traffic, and capacity.
 
-### Step 4: Five Whys
-Ask why recursively until you hit a systemic root cause (usually process/system, not a line of code).
+## 3. Test Hypotheses
 
-### Step 5: Postmortem
-If incident: output blameless postmortem with timeline, root cause (systemic), what went well/poorly/got lucky, and action items (P0 prevent recurrence, P1 improve detection, P2 improve response), each with owner + date.
+Rank plausible causes by consequence, prior evidence, and cost or risk of the
+next check. For each, state the expected signal, disconfirming signal, and exact
+read-only query or controlled experiment. Look for the earliest divergence and
+distinguish correlation from causation.
 
-## Hard Rule
-No "restart and hope" without a ticket. Incidents that "went away" always come back — worse.
+Use `[VERIFIED] cause`, `[INFERRED] cause`, or `[UNKNOWN] cause` to calibrate the
+result. A disappearing symptom is not proof of resolution; define the
+observation that would detect recurrence.
+
+## 4. Close The Diagnostic Loop
+
+Report:
+
+- symptom scope and timeline;
+- evidence and causal confidence;
+- proposed containment and permanent correction;
+- telemetry gaps and the smallest useful instrumentation change;
+- remaining risks and observation plan.
+
+Create a postmortem, Five Whys analysis, ticket, or owned follow-up only when the
+incident process or user request calls for it. Do not invent owners or dates.
+
+## Hard Rules
+
+- Do not restart and infer a root cause from symptom disappearance.
+- Do not execute containment merely because it is technically available.
+- Do not call a dashboard green when the user-visible invariant remains
+  unverified.

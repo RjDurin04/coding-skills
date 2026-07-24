@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:portable-agent-governance:schema:routing-evaluations:1",
+  "title": "Raw Request Routing Evaluations v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "scoring",
+    "cases"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "../schemas/routing-evaluations.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "scoring": {
+      "$ref": "#/$defs/scoring"
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    }
+  },
+  "$defs": {
+    "scoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pass_score",
+        "penalties"
+      ],
+      "properties": {
+        "pass_score": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "penalties": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "wrong_mode",
+            "missing_signal",
+            "unnecessary_signal",
+            "risk_underroute_per_level",
+            "risk_overroute_per_level",
+            "confirmation_underroute_per_level",
+            "confirmation_overroute_per_level",
+            "wrong_lead_skill",
+            "missing_supporting_skill",
+            "unnecessary_supporting_skill",
+            "critical_underroute"
+          ],
+          "properties": {
+            "wrong_mode": {
+              "$ref": "#/$defs/penalty"
+            },
+            "missing_signal": {
+              "$ref": "#/$defs/penalty"
+            },
+            "unnecessary_signal": {
+              "$ref": "#/$defs/penalty"
+            },
+            "risk_underroute_per_level": {
+              "$ref": "#/$defs/penalty"
+            },
+            "risk_overroute_per_level": {
+              "$ref": "#/$defs/penalty"
+            },
+            "confirmation_underroute_per_level": {
+              "$ref": "#/$defs/penalty"
+            },
+            "confirmation_overroute_per_level": {
+              "$ref": "#/$defs/penalty"
+            },
+            "wrong_lead_skill": {
+              "$ref": "#/$defs/penalty"
+            },
+            "missing_supporting_skill": {
+              "$ref": "#/$defs/penalty"
+            },
+            "unnecessary_supporting_skill": {
+              "$ref": "#/$defs/penalty"
+            },
+            "critical_underroute": {
+              "$ref": "#/$defs/penalty"
+            }
+          }
+        }
+      }
+    },
+    "penalty": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "request",
+        "rationale",
+        "expected"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "request": {
+          "type": "string",
+          "minLength": 20
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 20
+        },
+        "expected": {
+          "$ref": "#/$defs/decision"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "signals",
+        "risk",
+        "confirmation",
+        "lead_skill",
+        "supporting_skills"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "signals": {
+          "$ref": "#/$defs/stringSet"
+        },
+        "risk": {
+          "$ref": "#/$defs/risk"
+        },
+        "confirmation": {
+          "$ref": "#/$defs/confirmation"
+        },
+        "lead_skill": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "supporting_skills": {
+          "$ref": "#/$defs/stringSet"
+        }
+      }
+    },
+    "stringSet": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "risk": {
+      "enum": [
+        "trivial",
+        "standard",
+        "structural",
+        "critical"
+      ]
+    },
+    "confirmation": {
+      "enum": [
+        "none",
+        "explicit_authorization",
+        "fresh_confirmation"
+      ]
+    }
+  }
+}

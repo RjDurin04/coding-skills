@@ -20,7 +20,11 @@ duplicate, leak, or hide data.
 
 Name owner/context, sensitivity (public/internal/PII/financial/secret/regulated),
 lifecycle (source/cache/derived/audit/ephemeral), retention/deletion expectations,
-and invariants/constraints.
+scope/volume/tenancy, and invariants/constraints. Sensitivity alone does not
+determine risk: established bounded handling through an unchanged enforced
+boundary may be Standard; new authorization/sensitive boundaries, regulated or
+bulk handling, cross-tenant paths, destructive actions, and credible
+high-consequence loss/leakage/corruption are Critical.
 
 ## 2. Enforce Invariants
 
@@ -45,9 +49,18 @@ No unbounded all-at-once production-shaped scripts.
 
 ## 5. Destructive Ops
 
-Delete/truncate/overwrite/drop/re-key/mass-update needs explicit approval unless
-the user requested that exact action. Before doing it verify backup/restore,
-constrained scope, dry-run/count, auth/tenant scope, and audit/change log.
+Material or difficult-to-recover delete/truncate/overwrite/drop/re-key/
+mass-update needs fresh confirmation under
+`rules/agent-operation-safety.md`, even when the initial request named the exact
+operation. First resolve and show exact target/scope/count, auth/tenant scope,
+dry-run/preview, expected effect, audit trail, and a verified backup/restore or
+compensation path. Ask immediately before execution and ask again if any
+material fact changes.
+
+Scoped disposable local test data with verified isolation and a deterministic
+reset/recovery path may proceed under ordinary task authority. It must not share
+credentials, storage, or identifiers with valuable or shared data. Production,
+shared, user, regulated, or uncertain data is never covered by this exemption.
 
 ## 6. Checks
 
@@ -62,7 +75,8 @@ decisions, checks, gaps, and risks to the unified delivery record in `GEMINI.md`
 
 ## Hard Rules
 
-- No destructive data op without explicit approval.
+- No material or difficult-to-recover destructive data op without fresh
+  confirmation immediately before execution.
 - No schema change without compatibility and recovery thinking.
 - No multi-step state change without transaction/idempotency/compensation analysis.
 - No scoped data access without server-side scope enforcement.

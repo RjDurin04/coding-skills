@@ -1,0 +1,432 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:portable-agent-governance:schema:governance-manifest:2",
+  "title": "Codex Governance Manifest v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "pack_version",
+    "entrypoints",
+    "project_profile",
+    "project_profile_template",
+    "schemas",
+    "task_modes",
+    "capability_evaluations",
+    "routing_evaluations",
+    "unified_delivery_fields",
+    "risk_order",
+    "confirmation_order",
+    "rules",
+    "skills",
+    "project_overlays",
+    "risk_overlays",
+    "routing_signals"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "schemas/governance-manifest.schema.json"
+    },
+    "schema_version": {
+      "const": 2
+    },
+    "pack_version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "entrypoints": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/packPath"
+      }
+    },
+    "project_profile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "project_profile_template": {
+      "$ref": "#/$defs/packPath"
+    },
+    "schemas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "governance_manifest",
+        "governance_scenarios",
+        "routing_evaluations",
+        "routing_run",
+        "capability_evaluations",
+        "capability_run"
+      ],
+      "properties": {
+        "governance_manifest": {
+          "const": "schemas/governance-manifest.schema.json"
+        },
+        "governance_scenarios": {
+          "const": "schemas/governance-scenarios.schema.json"
+        },
+        "routing_evaluations": {
+          "const": "schemas/routing-evaluations.schema.json"
+        },
+        "routing_run": {
+          "const": "schemas/routing-evaluation-run.schema.json"
+        },
+        "capability_evaluations": {
+          "const": "schemas/capability-evaluations.schema.json"
+        },
+        "capability_run": {
+          "const": "schemas/capability-evaluation-run.schema.json"
+        }
+      }
+    },
+    "task_modes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "answer",
+        "review",
+        "diagnose",
+        "design",
+        "implement",
+        "operate"
+      ],
+      "properties": {
+        "answer": {
+          "$ref": "#/$defs/taskMode"
+        },
+        "review": {
+          "$ref": "#/$defs/taskMode"
+        },
+        "diagnose": {
+          "$ref": "#/$defs/taskMode"
+        },
+        "design": {
+          "$ref": "#/$defs/taskMode"
+        },
+        "implement": {
+          "$ref": "#/$defs/taskMode"
+        },
+        "operate": {
+          "$ref": "#/$defs/taskMode"
+        }
+      }
+    },
+    "capability_evaluations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "catalog",
+        "validator",
+        "scorer",
+        "scorer_tests",
+        "run_template",
+        "minimum_cases",
+        "minimum_cases_per_routable_skill"
+      ],
+      "properties": {
+        "catalog": {
+          "$ref": "#/$defs/packPath"
+        },
+        "validator": {
+          "$ref": "#/$defs/packPath"
+        },
+        "scorer": {
+          "$ref": "#/$defs/packPath"
+        },
+        "scorer_tests": {
+          "$ref": "#/$defs/packPath"
+        },
+        "run_template": {
+          "$ref": "#/$defs/packPath"
+        },
+        "minimum_cases": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minimum_cases_per_routable_skill": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "routing_evaluations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_catalog",
+        "scenario_runner",
+        "catalog",
+        "validator",
+        "scorer",
+        "scorer_tests",
+        "run_template",
+        "minimum_cases"
+      ],
+      "properties": {
+        "scenario_catalog": {
+          "$ref": "#/$defs/packPath"
+        },
+        "scenario_runner": {
+          "$ref": "#/$defs/packPath"
+        },
+        "catalog": {
+          "$ref": "#/$defs/packPath"
+        },
+        "validator": {
+          "$ref": "#/$defs/packPath"
+        },
+        "scorer": {
+          "$ref": "#/$defs/packPath"
+        },
+        "scorer_tests": {
+          "$ref": "#/$defs/packPath"
+        },
+        "run_template": {
+          "$ref": "#/$defs/packPath"
+        },
+        "minimum_cases": {
+          "type": "integer",
+          "minimum": 12
+        }
+      }
+    },
+    "unified_delivery_fields": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "risk_order": {
+      "const": [
+        "trivial",
+        "standard",
+        "structural",
+        "critical"
+      ]
+    },
+    "confirmation_order": {
+      "const": [
+        "none",
+        "explicit_authorization",
+        "fresh_confirmation"
+      ]
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/rule"
+      }
+    },
+    "skills": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/skill"
+      }
+    },
+    "project_overlays": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/projectOverlay"
+      }
+    },
+    "risk_overlays": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/riskOverlay"
+      }
+    },
+    "routing_signals": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/routingSignal"
+      }
+    }
+  },
+  "$defs": {
+    "packPath": {
+      "type": "string",
+      "pattern": "^(?!\\.{1,2}(?:/|$))(?!.*\\/\\.{1,2}(?:\\/|$))[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*$"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "taskMode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "description",
+        "allows_repository_changes",
+        "allows_external_effects",
+        "required_signals"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "allows_repository_changes": {
+          "type": "boolean"
+        },
+        "allows_external_effects": {
+          "type": "boolean"
+        },
+        "required_signals": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "path"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "path": {
+          "$ref": "#/$defs/packPath"
+        }
+      }
+    },
+    "skill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "path"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "path": {
+          "$ref": "#/$defs/packPath"
+        },
+        "ui_metadata": {
+          "$ref": "#/$defs/packPath"
+        }
+      }
+    },
+    "projectOverlay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "path",
+        "description"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "path": {
+          "$ref": "#/$defs/packPath"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "riskOverlay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum_risk",
+        "rules",
+        "supporting_skills"
+      ],
+      "properties": {
+        "minimum_risk": {
+          "$ref": "#/$defs/risk"
+        },
+        "rules": {
+          "$ref": "#/$defs/stringSet"
+        },
+        "supporting_skills": {
+          "$ref": "#/$defs/stringSet"
+        }
+      }
+    },
+    "routingSignal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "description",
+        "minimum_risk",
+        "rules",
+        "lead_skill",
+        "supporting_skills",
+        "confirmation"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minimum_risk": {
+          "$ref": "#/$defs/risk"
+        },
+        "rules": {
+          "$ref": "#/$defs/stringSet"
+        },
+        "lead_skill": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "supporting_skills": {
+          "$ref": "#/$defs/stringSet"
+        },
+        "confirmation": {
+          "$ref": "#/$defs/confirmation"
+        }
+      }
+    },
+    "stringSet": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "risk": {
+      "enum": [
+        "trivial",
+        "standard",
+        "structural",
+        "critical"
+      ]
+    },
+    "confirmation": {
+      "enum": [
+        "none",
+        "explicit_authorization",
+        "fresh_confirmation"
+      ]
+    }
+  }
+}

@@ -1,37 +1,62 @@
 ---
 name: refactoring-mechanic
-description: Use when modifying existing code structure without changing behavior — renaming, extracting, splitting modules, simplifying conditionals, or preparing for a feature. Activates during any structural change to existing code. Prevents "one big refactor" that breaks the build for days.
+description: Use when changing the structure of existing code without intending to change observable behavior, such as renaming, moving, extracting, splitting, inlining, or simplifying. Preserve behavior with evidence proportional to risk and never commit, revert, reset, or discard work without authorization.
 ---
 
 # Refactoring Mechanic
 
-Engage when: changing organization not behavior (else use staff-architect); change is >50 lines or crosses >1 module. If tempted to "fix while I'm here" — separate behavior change from structural change.
+## 1. Define The Behavior Boundary
 
-## Execution Protocol
+State the observable behavior that must remain stable: public contracts, errors,
+side effects, persistence, events, timing-sensitive guarantees, and caller
+expectations. Separate any intentional behavior correction into an explicit
+change with its own tests and review.
 
-### Step 1: Characterize Before Touching
-If code lacks test coverage: write characterization tests capturing current behavior (even if buggy), run green, commit. Never refactor code you cannot prove still works.
+Inspect relevant callers, tests, local conventions, generated-code boundaries,
+and uncommitted changes before editing. Preserve unrelated work.
 
-### Step 2: Identify Seams
-Find the closest seam (preprocessing, link, or object) to your change. Inject there to minimize blast radius. If no seam exists, create one: extract interface, introduce parameter, or wrap the legacy unit.
+## 2. Establish A Proportional Baseline
 
-### Step 3: The Mikado Method
-For changes that would break the build if done at once:
-1. Write the goal node.
-2. Attempt directly; if it breaks, revert — don't fix forward.
-3. The breakage reveals prerequisites. Create prerequisite nodes.
-4. Recurse: each prerequisite must be achievable without breaking the build.
-5. Work from leaves inward; only commit green states.
+Use the strongest practical combination of existing behavior tests, focused
+characterization tests, type or static checks, contract fixtures, snapshots, and
+controlled runtime observations. Add characterization coverage where the risk
+and current evidence justify it; do not create broad brittle tests merely to
+permit a mechanical edit.
 
-### Step 4: Preparatory vs. Opportunistic
-- **Preparatory** — before adding a feature; scope only what's needed for the feature; refactor first, then trivial feature commit.
-- **Opportunistic** — when already touching code; Boy Scout rule; if cleanup exceeds original change size, split to separate commit. Never refactor code you're not otherwise changing.
+If current behavior is unclear or suspected to be wrong, record that uncertainty
+instead of silently enshrining it as the desired contract.
 
-### Step 5: Preserve Behavior Rigorously
-Green before → one mechanical change (rename, extract, inline, move, split/merge conditionals, isomorphic type change) → green after → atomic commit. Prohibited during pure refactor: changing logic branches, adding/removing null checks, changing access modifiers to "fix" tests, removing "unused" code without understanding it (Chesterton's Fence).
+Proceed only when the baseline can detect material changes at the boundary being
+moved, or when the transformation is genuinely mechanical and a compiler,
+typechecker, or equivalent check covers that claim. Otherwise narrow the
+refactor, add characterization, or stop with the gap visible. A deadline cannot
+turn inadequate preservation evidence into success.
 
-### Step 6: Validate
-Static analysis (lint, type check, compile). Review diff — should be mechanical; any logic change is suspect. Cross-module refactorings need integration verification.
+## 3. Refactor In Reviewable Steps
 
-## Hard Rule
-A refactoring that breaks tests is either (a) not a pure refactoring, or (b) tests coupled to structure. In case (a), separate the behavior change. In case (b), fix tests to test behavior, not structure, then refactor.
+- Choose seams that minimize callers and ownership changes.
+- Prefer mechanical transformations with narrow diffs.
+- Use a dependency map or Mikado-style prerequisite plan when a direct change
+  would leave the tree broken for too long.
+- Keep preparatory refactoring scoped to the requested capability.
+- Stop and reclassify the task when logic, access, validation, persistence, or
+  error behavior must change.
+
+Validate after each cohesive risk-bearing increment. Do not commit, reset,
+revert, checkout, or discard changes unless the user authorized that operation.
+If an exploratory edit fails, restore only the changes you introduced after
+verifying the exact target.
+
+## 4. Verify Preservation
+
+Run the relevant baseline again, then inspect the diff for accidental behavior,
+contract, dependency, or generated-artifact changes. Cross-boundary moves need
+contract or integration evidence; a local rename may need only compile, static,
+and focused tests.
+
+## Hard Rules
+
+- Line count alone does not make a refactor safe or risky.
+- A green suite proves only its covered behavior.
+- A failing test may expose a behavior change, a structural-coupled test, or an
+  invalid baseline; diagnose which before modifying either code or test.

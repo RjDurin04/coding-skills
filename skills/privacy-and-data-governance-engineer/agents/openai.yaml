@@ -1,0 +1,4 @@
+interface:
+  display_name: "Privacy and Data Governance Engineer"
+  short_description: "Engineer privacy-safe data lifecycles and controls"
+  default_prompt: "Use $privacy-and-data-governance-engineer to review this data flow for privacy, retention, access, and deletion risks."

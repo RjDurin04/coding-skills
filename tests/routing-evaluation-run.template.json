@@ -1,0 +1,30 @@
+{
+  "$schema": "../schemas/routing-evaluation-run.schema.json",
+  "schema_version": 1,
+  "case_id": "replace-with-routing-case-id",
+  "rules_pack_version": "4.0.0",
+  "model": {
+    "provider": "replace-with-provider",
+    "name": "replace-with-model-name",
+    "version": "replace-with-model-version",
+    "agent_surface": "replace-with-agent-surface"
+  },
+  "runner": {
+    "id": "replace-with-runner-identity",
+    "type": "automation",
+    "organization": "replace-with-organization"
+  },
+  "started_at": "2000-01-01T00:00:00Z",
+  "duration_seconds": 0,
+  "decision": {
+    "mode": "answer",
+    "signals": [
+      "durable_task"
+    ],
+    "risk": "trivial",
+    "confirmation": "none",
+    "lead_skill": null,
+    "supporting_skills": []
+  },
+  "notes": "Replace placeholder metadata and decision fields with the agent-emitted routing decision."
+}

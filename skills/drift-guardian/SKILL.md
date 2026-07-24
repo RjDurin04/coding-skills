@@ -1,85 +1,53 @@
 ---
 name: drift-guardian
-description: Use during implementation to prevent architectural erosion. Checks boundaries, dependency direction, duplication, and convention drift before and after code changes.
+description: Use when a change creates actual boundary pressure, such as a new cross-module dependency, bypassed public interface, duplicated policy, circular reference, ownership ambiguity, repeated exception, or broad shared abstraction. Distinguish harmful erosion from intentional architecture evolution and add proportional guards.
 ---
 
 # Drift Guardian
 
-Engage when:
+Do not engage merely because a repository has multiple modules or a file is
+large. Look for a concrete pressure on ownership, dependency direction, or a
+protected contract.
 
-- The project has more than one module, feature area, package, layer, or contributor.
-- You add a dependency or import from a new area.
-- You duplicate logic that may already exist.
-- You modify a large file, public API, or shared abstraction.
-- The change crosses domain, infrastructure, UI, data, or service boundaries.
+## 1. Establish The Current Boundary
 
-## Step 1: Boundary Scan
+Identify the owner, public surface, allowed dependencies, relevant data and
+transaction boundary, and evidence that the boundary is current. Use code,
+tests, build rules, module manifests, and maintained decisions. If no coherent
+architecture exists, describe the observed convention and uncertainty instead
+of inventing a layered or domain model.
 
-Before writing code, identify:
+## 2. Name The Pressure
 
-- Which module, feature, bounded context, or layer owns the change.
-- Which dependencies are allowed by existing architecture.
-- Which public interfaces must be used instead of internal files.
-- Which ADRs, docs, tests, or conventions govern this area.
+Examples include:
 
-If ownership or dependency direction is unclear and the ambiguity is material, ask. If risk is low, make a small `[ASSUMED]` choice and disclose it.
+- importing an internal implementation across ownership boundaries;
+- duplicating a business or authorization invariant;
+- creating a circular or bidirectional dependency;
+- sharing mutable data without a contract;
+- adding a generic abstraction before multiple consumers need it;
+- accumulating temporary adapters or exceptions without exit conditions.
 
-## Step 2: Dependency Direction
+Explain the concrete consequence: change amplification, inconsistent policy,
+unsafe data access, deployment coupling, broken isolation, or unclear ownership.
 
-Follow the project's actual architecture. If the project has no documented architecture, infer local conventions from nearby code before adding structure.
+## 3. Compare Evolution Paths
 
-Common defaults when they fit the codebase:
+Compare the smallest local change, use of the current public boundary, and a
+deliberate boundary revision when each is viable. A boundary may need to evolve;
+do not preserve it solely because it already exists. If revising it, update
+owners, contracts, callers, tests, and maintained architecture records together.
 
-- Domain code should not depend on framework, database, transport, or UI details.
-- Application/use-case code may depend on domain contracts.
-- Infrastructure implements ports/adapters and depends inward.
-- Sibling modules communicate through explicit public interfaces.
-- Circular dependencies are design smells.
+## 4. Guard Proportionally
 
-Do not impose a DDD/layered structure on a project that does not use it.
-
-## Step 3: Duplication And Abstraction Check
-
-Before adding a helper or duplicating logic:
-
-- Search for existing behavior.
-- Prefer existing local utilities when they fit.
-- Keep one-off logic inline when it is clearer.
-- Extract only when there is repeated pressure, a named invariant, or a boundary to protect.
-
-## Step 4: Fitness Function
-
-For structural changes, propose or add a guard that prevents future drift:
-
-- Import-boundary test.
-- Lint/static rule.
-- Architecture test.
-- Contract test.
-- Documentation/ADR when automation is not practical.
-
-## Step 5: Stop On Boundary Workarounds
-
-When tempted to bypass a boundary, import internals, duplicate policy logic, or add a "temporary" bridge:
-
-1. Name the tension.
-2. Compare the clean path and fast path.
-3. Recommend the smallest safe path.
-4. Escalate to an ADR or user decision if the choice is material.
-
-## Output
-
-```
-Drift review: PASS | PARTIAL | RISK
-Boundary/owner: [...]
-Dependency direction: [...]
-Duplication check: [...]
-Guard added/proposed: [...]
-Risk: BLOCKER | WARNING | NOTE - [...]
-```
+Add or propose an import rule, architecture test, contract test, schema
+constraint, lint rule, or maintained decision only when recurrence is plausible
+and the guard costs less than repeated review. A one-time low-risk deviation may
+need only a documented decision and cleanup condition.
 
 ## Hard Rules
 
-- Local architecture beats generic architecture advice.
-- Do not create hidden coupling to finish faster.
-- Do not add structure just to look organized.
-- If the design is wrong, surface it instead of routing around it.
+- Local verified architecture beats generic layering advice.
+- Do not call normal collaboration between modules drift without a violated or
+  newly contested boundary.
+- Do not route around a real boundary conflict with hidden coupling.

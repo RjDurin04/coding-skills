@@ -50,7 +50,13 @@ autonomous workflows, fine-tuning, or model/provider/version changes.
 ## 4. Evaluations And Change Control
 
 - Maintain representative, adversarial, privacy, safety, and regression
-  evaluation cases tied to user-visible acceptance thresholds.
+  evaluation cases tied to user-visible acceptance evidence. Record dataset
+  provenance, collection/labeling limits, holdout separation, leakage checks,
+  important subgroup/edge behavior, human or non-AI baseline where useful, and
+  uncertainty/abstention behavior.
+- Use accepted evaluation thresholds. Label proposed thresholds `CANDIDATE`
+  with an owner and validation plan; do not invent a number and call it a
+  requirement or production gate.
 - Evaluate prompt, model, provider, retrieval, tool, policy, and preprocessing
   changes before rollout. Pin or record versions where supported; detect silent
   provider/model drift.
@@ -74,6 +80,8 @@ autonomous workflows, fine-tuning, or model/provider/version changes.
   prompts or full payloads by default.
 - Provide user-visible disclosure and correction/escalation paths appropriate to
   the product and risk. Preserve audit evidence for consequential actions.
+- Define drift detection, rollback/kill switch, evaluation owner, and evidence
+  review cadence for material behavior.
 
 ## Delivery Contribution
 

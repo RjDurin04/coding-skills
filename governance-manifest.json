@@ -1,21 +1,17 @@
 {
-  "schema_version": 1,
-  "pack_version": "3.0.0",
+  "$schema": "schemas/governance-manifest.schema.json",
+  "schema_version": 2,
+  "pack_version": "4.0.0",
   "entrypoints": [
     "AGENTS.md",
     "GEMINI.md"
   ],
   "project_profile": "PROJECT-AGENT-PROFILE.md",
   "project_profile_template": "templates/PROJECT-AGENT-PROFILE.md",
-  "capability_evaluations": {
-    "catalog": "tests/capability-evaluations.json",
-    "validator": "tests/validate-capability-evaluations.ps1",
-    "scorer": "tests/score-capability-run.ps1",
-    "run_template": "templates/CAPABILITY-EVALUATION-RUN.json",
-    "minimum_cases": 50
-  },
   "unified_delivery_fields": [
-    "Outcome",
+    "Task outcome",
+    "Release readiness",
+    "External action",
     "Risk and routing",
     "Changed files",
     "Key decision",
@@ -24,6 +20,58 @@
     "Residual risks",
     "Human approval required"
   ],
+  "task_modes": {
+    "answer": {
+      "description": "Explain or answer without changing repository artifacts or causing external effects.",
+      "allows_repository_changes": false,
+      "allows_external_effects": false,
+      "required_signals": [
+        "durable_task"
+      ]
+    },
+    "review": {
+      "description": "Inspect and report findings without changing repository artifacts or causing external effects.",
+      "allows_repository_changes": false,
+      "allows_external_effects": false,
+      "required_signals": [
+        "durable_task"
+      ]
+    },
+    "diagnose": {
+      "description": "Determine cause and gather evidence without implementing a fix or causing external effects.",
+      "allows_repository_changes": false,
+      "allows_external_effects": false,
+      "required_signals": [
+        "durable_task"
+      ]
+    },
+    "design": {
+      "description": "Produce a decision, specification, or plan without changing repository artifacts or causing external effects.",
+      "allows_repository_changes": false,
+      "allows_external_effects": false,
+      "required_signals": [
+        "durable_task"
+      ]
+    },
+    "implement": {
+      "description": "Create or change repository artifacts, verify the result locally, and stop before external or shared-environment effects.",
+      "allows_repository_changes": true,
+      "allows_external_effects": false,
+      "required_signals": [
+        "durable_task",
+        "implementation_task"
+      ]
+    },
+    "operate": {
+      "description": "Perform a specifically authorized operational, shared-environment, external, or release action without changing repository artifacts; operation-time edits require a separate implement-mode cycle.",
+      "allows_repository_changes": false,
+      "allows_external_effects": true,
+      "required_signals": [
+        "durable_task",
+        "operational_action"
+      ]
+    }
+  },
   "risk_order": [
     "trivial",
     "standard",
@@ -36,217 +84,765 @@
     "fresh_confirmation"
   ],
   "rules": [
-    { "name": "adversarial-self-review", "path": "rules/adversarial-self-review.md" },
-    { "name": "agent-operation-safety", "path": "rules/agent-operation-safety.md" },
-    { "name": "ai-provenance-disclosure", "path": "rules/ai-provenance-disclosure.md" },
-    { "name": "ai-system-safety", "path": "rules/ai-system-safety.md" },
-    { "name": "algorithmic-efficiency-gate", "path": "rules/algorithmic-efficiency-gate.md" },
-    { "name": "complexity-budget", "path": "rules/complexity-budget.md" },
-    { "name": "context-budget", "path": "rules/context-budget.md" },
-    { "name": "data-integrity-and-migrations", "path": "rules/data-integrity-and-migrations.md" },
-    { "name": "evolutionary-stewardship", "path": "rules/evolutionary-stewardship.md" },
-    { "name": "failure-mode-catalog", "path": "rules/failure-mode-catalog.md" },
-    { "name": "governance-router", "path": "rules/governance-router.md" },
-    { "name": "implementation-execution-protocol", "path": "rules/implementation-execution-protocol.md" },
-    { "name": "observability-by-design", "path": "rules/observability-by-design.md" },
-    { "name": "operational-resilience", "path": "rules/operational-resilience.md" },
-    { "name": "production-readiness-gate", "path": "rules/production-readiness-gate.md" },
-    { "name": "requirements-precision-gate", "path": "rules/requirements-precision-gate.md" },
-    { "name": "security-and-privacy-gate", "path": "rules/security-and-privacy-gate.md" },
-    { "name": "testing-strategy", "path": "rules/testing-strategy.md" }
-  ],
-  "skills": [
-    { "name": "adversarial-test-forge", "path": "skills/adversarial-test-forge/SKILL.md" },
-    { "name": "api-and-contract-engineer", "path": "skills/api-and-contract-engineer/SKILL.md", "ui_metadata": "skills/api-and-contract-engineer/agents/openai.yaml" },
-    { "name": "code-archaeologist", "path": "skills/code-archaeologist/SKILL.md" },
-    { "name": "cognitive-primitives", "path": "skills/cognitive-primitives/SKILL.md" },
-    { "name": "data-and-database-engineer", "path": "skills/data-and-database-engineer/SKILL.md", "ui_metadata": "skills/data-and-database-engineer/agents/openai.yaml" },
-    { "name": "debugging-strategist", "path": "skills/debugging-strategist/SKILL.md" },
-    { "name": "distributed-systems-engineer", "path": "skills/distributed-systems-engineer/SKILL.md", "ui_metadata": "skills/distributed-systems-engineer/agents/openai.yaml" },
-    { "name": "documentation-steward", "path": "skills/documentation-steward/SKILL.md", "ui_metadata": "skills/documentation-steward/agents/openai.yaml" },
-    { "name": "drift-guardian", "path": "skills/drift-guardian/SKILL.md" },
-    { "name": "engineering-leadership", "path": "skills/engineering-leadership/SKILL.md", "ui_metadata": "skills/engineering-leadership/agents/openai.yaml" },
-    { "name": "formal-assurance-engineer", "path": "skills/formal-assurance-engineer/SKILL.md", "ui_metadata": "skills/formal-assurance-engineer/agents/openai.yaml" },
-    { "name": "graceful-sunset-steward", "path": "skills/graceful-sunset-steward/SKILL.md" },
-    { "name": "incident-commander", "path": "skills/incident-commander/SKILL.md", "ui_metadata": "skills/incident-commander/agents/openai.yaml" },
-    { "name": "interface-designer", "path": "skills/interface-designer/SKILL.md" },
-    { "name": "observability-detective", "path": "skills/observability-detective/SKILL.md" },
-    { "name": "performance-engineer", "path": "skills/performance-engineer/SKILL.md" },
-    { "name": "platform-infrastructure-engineer", "path": "skills/platform-infrastructure-engineer/SKILL.md", "ui_metadata": "skills/platform-infrastructure-engineer/agents/openai.yaml" },
-    { "name": "product-and-domain-strategist", "path": "skills/product-and-domain-strategist/SKILL.md", "ui_metadata": "skills/product-and-domain-strategist/agents/openai.yaml" },
-    { "name": "quality-engineering-lead", "path": "skills/quality-engineering-lead/SKILL.md", "ui_metadata": "skills/quality-engineering-lead/agents/openai.yaml" },
-    { "name": "refactoring-mechanic", "path": "skills/refactoring-mechanic/SKILL.md" },
-    { "name": "requirements-crystallizer", "path": "skills/requirements-crystallizer/SKILL.md" },
-    { "name": "risk-radar-scout", "path": "skills/risk-radar-scout/SKILL.md" },
-    { "name": "safe-release-conductor", "path": "skills/safe-release-conductor/SKILL.md" },
-    { "name": "security-reviewer", "path": "skills/security-reviewer/SKILL.md" },
-    { "name": "staff-architect", "path": "skills/staff-architect/SKILL.md" },
-    { "name": "tech-stack-preference", "path": "skills/tech-stack-preference/SKILL.md" }
-  ],
-  "risk_overlays": [
     {
-      "minimum_risk": "standard",
-      "rules": [],
-      "skills": ["cognitive-primitives"]
+      "name": "adversarial-self-review",
+      "path": "rules/adversarial-self-review.md"
+    },
+    {
+      "name": "agent-operation-safety",
+      "path": "rules/agent-operation-safety.md"
+    },
+    {
+      "name": "ai-provenance-disclosure",
+      "path": "rules/ai-provenance-disclosure.md"
+    },
+    {
+      "name": "ai-system-safety",
+      "path": "rules/ai-system-safety.md"
+    },
+    {
+      "name": "algorithmic-efficiency-gate",
+      "path": "rules/algorithmic-efficiency-gate.md"
+    },
+    {
+      "name": "complexity-budget",
+      "path": "rules/complexity-budget.md"
+    },
+    {
+      "name": "configuration-and-feature-flags",
+      "path": "rules/configuration-and-feature-flags.md"
+    },
+    {
+      "name": "context-budget",
+      "path": "rules/context-budget.md"
+    },
+    {
+      "name": "data-integrity-and-migrations",
+      "path": "rules/data-integrity-and-migrations.md"
+    },
+    {
+      "name": "evolutionary-stewardship",
+      "path": "rules/evolutionary-stewardship.md"
+    },
+    {
+      "name": "failure-mode-catalog",
+      "path": "rules/failure-mode-catalog.md"
+    },
+    {
+      "name": "governance-router",
+      "path": "rules/governance-router.md"
+    },
+    {
+      "name": "implementation-execution-protocol",
+      "path": "rules/implementation-execution-protocol.md"
+    },
+    {
+      "name": "observability-by-design",
+      "path": "rules/observability-by-design.md"
+    },
+    {
+      "name": "operational-resilience",
+      "path": "rules/operational-resilience.md"
+    },
+    {
+      "name": "production-readiness-gate",
+      "path": "rules/production-readiness-gate.md"
+    },
+    {
+      "name": "requirements-precision-gate",
+      "path": "rules/requirements-precision-gate.md"
+    },
+    {
+      "name": "security-and-privacy-gate",
+      "path": "rules/security-and-privacy-gate.md"
+    },
+    {
+      "name": "supply-chain-and-build-integrity",
+      "path": "rules/supply-chain-and-build-integrity.md"
+    },
+    {
+      "name": "testing-strategy",
+      "path": "rules/testing-strategy.md"
     }
   ],
+  "skills": [
+    {
+      "name": "adversarial-test-forge",
+      "path": "skills/adversarial-test-forge/SKILL.md"
+    },
+    {
+      "name": "ai-system-and-evaluation-engineer",
+      "path": "skills/ai-system-and-evaluation-engineer/SKILL.md",
+      "ui_metadata": "skills/ai-system-and-evaluation-engineer/agents/openai.yaml"
+    },
+    {
+      "name": "api-and-contract-engineer",
+      "path": "skills/api-and-contract-engineer/SKILL.md",
+      "ui_metadata": "skills/api-and-contract-engineer/agents/openai.yaml"
+    },
+    {
+      "name": "code-archaeologist",
+      "path": "skills/code-archaeologist/SKILL.md"
+    },
+    {
+      "name": "cognitive-primitives",
+      "path": "skills/cognitive-primitives/SKILL.md"
+    },
+    {
+      "name": "data-and-database-engineer",
+      "path": "skills/data-and-database-engineer/SKILL.md",
+      "ui_metadata": "skills/data-and-database-engineer/agents/openai.yaml"
+    },
+    {
+      "name": "debugging-strategist",
+      "path": "skills/debugging-strategist/SKILL.md"
+    },
+    {
+      "name": "distributed-systems-engineer",
+      "path": "skills/distributed-systems-engineer/SKILL.md",
+      "ui_metadata": "skills/distributed-systems-engineer/agents/openai.yaml"
+    },
+    {
+      "name": "documentation-steward",
+      "path": "skills/documentation-steward/SKILL.md",
+      "ui_metadata": "skills/documentation-steward/agents/openai.yaml"
+    },
+    {
+      "name": "drift-guardian",
+      "path": "skills/drift-guardian/SKILL.md"
+    },
+    {
+      "name": "engineering-leadership",
+      "path": "skills/engineering-leadership/SKILL.md",
+      "ui_metadata": "skills/engineering-leadership/agents/openai.yaml"
+    },
+    {
+      "name": "formal-assurance-engineer",
+      "path": "skills/formal-assurance-engineer/SKILL.md",
+      "ui_metadata": "skills/formal-assurance-engineer/agents/openai.yaml"
+    },
+    {
+      "name": "graceful-sunset-steward",
+      "path": "skills/graceful-sunset-steward/SKILL.md"
+    },
+    {
+      "name": "incident-commander",
+      "path": "skills/incident-commander/SKILL.md",
+      "ui_metadata": "skills/incident-commander/agents/openai.yaml"
+    },
+    {
+      "name": "interface-designer",
+      "path": "skills/interface-designer/SKILL.md"
+    },
+    {
+      "name": "observability-detective",
+      "path": "skills/observability-detective/SKILL.md"
+    },
+    {
+      "name": "performance-engineer",
+      "path": "skills/performance-engineer/SKILL.md"
+    },
+    {
+      "name": "platform-infrastructure-engineer",
+      "path": "skills/platform-infrastructure-engineer/SKILL.md",
+      "ui_metadata": "skills/platform-infrastructure-engineer/agents/openai.yaml"
+    },
+    {
+      "name": "privacy-and-data-governance-engineer",
+      "path": "skills/privacy-and-data-governance-engineer/SKILL.md",
+      "ui_metadata": "skills/privacy-and-data-governance-engineer/agents/openai.yaml"
+    },
+    {
+      "name": "product-and-domain-strategist",
+      "path": "skills/product-and-domain-strategist/SKILL.md",
+      "ui_metadata": "skills/product-and-domain-strategist/agents/openai.yaml"
+    },
+    {
+      "name": "quality-engineering-lead",
+      "path": "skills/quality-engineering-lead/SKILL.md",
+      "ui_metadata": "skills/quality-engineering-lead/agents/openai.yaml"
+    },
+    {
+      "name": "refactoring-mechanic",
+      "path": "skills/refactoring-mechanic/SKILL.md"
+    },
+    {
+      "name": "requirements-crystallizer",
+      "path": "skills/requirements-crystallizer/SKILL.md"
+    },
+    {
+      "name": "risk-radar-scout",
+      "path": "skills/risk-radar-scout/SKILL.md"
+    },
+    {
+      "name": "safe-release-conductor",
+      "path": "skills/safe-release-conductor/SKILL.md"
+    },
+    {
+      "name": "security-reviewer",
+      "path": "skills/security-reviewer/SKILL.md"
+    },
+    {
+      "name": "staff-architect",
+      "path": "skills/staff-architect/SKILL.md"
+    }
+  ],
+  "project_overlays": [
+    {
+      "name": "laravel-react-inertia",
+      "path": "overlays/laravel-react-inertia/SKILL.md",
+      "description": "Optional Laravel, React, Inertia, and TypeScript preferences; active only when explicitly adopted by the project's PROJECT-AGENT-PROFILE.md."
+    }
+  ],
+  "risk_overlays": [],
   "routing_signals": {
     "durable_task": {
+      "description": "Any engineering answer, review, diagnosis, design, implementation, or operation governed by this pack.",
       "minimum_risk": "trivial",
       "rules": [
         "governance-router",
-        "implementation-execution-protocol",
         "context-budget",
         "adversarial-self-review",
         "agent-operation-safety"
       ],
-      "skills": [],
+      "lead_skill": null,
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "implementation_task": {
+      "description": "Creation, modification, movement, or deletion of durable repository artifacts.",
+      "minimum_risk": "trivial",
+      "rules": [
+        "implementation-execution-protocol"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "operational_action": {
+      "description": "A non-repository operational action will change local runtime, shared, or external state under OPERATE.",
+      "minimum_risk": "standard",
+      "rules": [
+        "agent-operation-safety"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "existing_unfamiliar_code": {
+      "description": "Work in an existing or unfamiliar codebase where behavior, ownership, or local conventions must be discovered before decisions are made.",
       "minimum_risk": "standard",
-      "rules": ["evolutionary-stewardship"],
-      "skills": ["code-archaeologist"],
+      "rules": [
+        "evolutionary-stewardship"
+      ],
+      "lead_skill": "code-archaeologist",
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "vague_material_requirement": {
+      "description": "A material requirement, acceptance boundary, policy, or constraint is ambiguous or conflicting.",
       "minimum_risk": "standard",
-      "rules": ["requirements-precision-gate"],
-      "skills": ["requirements-crystallizer"],
+      "rules": [
+        "requirements-precision-gate"
+      ],
+      "lead_skill": "requirements-crystallizer",
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "material_requirement_or_constraint": {
+      "description": "A clear accepted high-stakes, consequential, cross-boundary, or architecturally significant requirement or constraint materially determines correctness, quality, security, privacy, cost, compatibility, or a public contract.",
+      "minimum_risk": "standard",
+      "rules": [
+        "requirements-precision-gate"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "complex_reasoning_or_state_model": {
+      "description": "The task needs explicit invariants, state transitions, multi-step decomposition, competing-constraint analysis, or a non-obvious approach decision.",
+      "minimum_risk": "standard",
+      "rules": [],
+      "lead_skill": null,
+      "supporting_skills": [
+        "cognitive-primitives"
+      ],
       "confirmation": "none"
     },
     "behavior_change": {
+      "description": "Observable runtime, contract, validation, state, or user behavior changes.",
       "minimum_risk": "standard",
-      "rules": ["testing-strategy"],
-      "skills": [],
+      "rules": [
+        "testing-strategy"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "test_logic_or_verification_change": {
+      "description": "Executable tests, fixtures, assertions, test harnesses, or verification logic change without changing production behavior.",
+      "minimum_risk": "standard",
+      "rules": [
+        "testing-strategy"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "pure_refactor": {
+      "description": "Internal structure changes while observable behavior and public contracts are intended to remain unchanged.",
+      "minimum_risk": "standard",
+      "rules": [
+        "testing-strategy",
+        "evolutionary-stewardship"
+      ],
+      "lead_skill": "refactoring-mechanic",
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "bug_or_regression": {
+      "description": "A failing test, defect, regression, or unexpected behavior needs evidence-led diagnosis or correction.",
       "minimum_risk": "standard",
-      "rules": ["testing-strategy", "failure-mode-catalog"],
-      "skills": ["debugging-strategist"],
+      "rules": [
+        "testing-strategy"
+      ],
+      "lead_skill": "debugging-strategist",
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "architecture_or_public_boundary": {
+      "description": "A public contract, ownership boundary, shared abstraction, service boundary, or costly-to-reverse architecture decision changes.",
       "minimum_risk": "structural",
-      "rules": ["complexity-budget", "evolutionary-stewardship"],
-      "skills": ["staff-architect", "drift-guardian"],
+      "rules": [
+        "complexity-budget",
+        "evolutionary-stewardship"
+      ],
+      "lead_skill": "staff-architect",
+      "supporting_skills": [
+        "drift-guardian"
+      ],
       "confirmation": "none"
     },
     "new_durable_boundary": {
+      "description": "A new service, module, shared component, durable configuration surface, or long-lived ownership boundary is proposed.",
       "minimum_risk": "structural",
-      "rules": ["complexity-budget"],
-      "skills": ["drift-guardian", "staff-architect"],
+      "rules": [
+        "complexity-budget"
+      ],
+      "lead_skill": "drift-guardian",
+      "supporting_skills": [
+        "staff-architect"
+      ],
       "confirmation": "none"
     },
     "dependency_change": {
+      "description": "A new or materially changed runtime dependency, framework, hosted service, or vendor commitment is proposed.",
       "minimum_risk": "structural",
-      "rules": ["complexity-budget", "security-and-privacy-gate"],
-      "skills": ["drift-guardian", "security-reviewer"],
+      "rules": [
+        "complexity-budget",
+        "supply-chain-and-build-integrity",
+        "security-and-privacy-gate"
+      ],
+      "lead_skill": "drift-guardian",
+      "supporting_skills": [
+        "security-reviewer"
+      ],
+      "confirmation": "none"
+    },
+    "supply_chain_change": {
+      "description": "A package version, lockfile, package source, build script, CI action, generated artifact, or dependency trust decision changes.",
+      "minimum_risk": "standard",
+      "rules": [
+        "supply-chain-and-build-integrity",
+        "security-and-privacy-gate"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [
+        "security-reviewer"
+      ],
+      "confirmation": "none"
+    },
+    "supply_chain_advisory_or_bounded_vulnerability": {
+      "description": "A dependency or build advisory, or a bounded vulnerability with no credible active compromise or material security impact, requires intake and assessment.",
+      "minimum_risk": "standard",
+      "rules": [
+        "supply-chain-and-build-integrity",
+        "security-and-privacy-gate"
+      ],
+      "lead_skill": "security-reviewer",
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "supply_chain_vulnerability_or_compromise": {
+      "description": "A material supply-chain vulnerability, suspected malicious package or source, or suspected or confirmed compromised build path requires assessment or response.",
+      "minimum_risk": "critical",
+      "rules": [
+        "supply-chain-and-build-integrity",
+        "security-and-privacy-gate"
+      ],
+      "lead_skill": "security-reviewer",
+      "supporting_skills": [
+        "adversarial-test-forge"
+      ],
+      "confirmation": "none"
+    },
+    "repository_code_execution": {
+      "description": "Repository-controlled tests, builds, generators, hooks, migrations, installers, or other scripts will execute locally.",
+      "minimum_risk": "trivial",
+      "rules": [
+        "agent-operation-safety"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "unfamiliar_or_privileged_repository_execution": {
+      "description": "Repository-controlled code is unfamiliar, mutation-prone, networked, installer- or hook-driven, or would run with credentials, elevated privileges, broad filesystem access, or material cost.",
+      "minimum_risk": "standard",
+      "rules": [
+        "agent-operation-safety",
+        "supply-chain-and-build-integrity"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "untrusted_input_or_data_access": {
+      "description": "Code parses untrusted input, constructs a database or search query, resolves an object scope, or exposes a data-access boundary.",
+      "minimum_risk": "standard",
+      "rules": [
+        "security-and-privacy-gate"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "established_security_boundary": {
+      "description": "Bounded work touches an established, unchanged authentication, authorization, tenant-isolation, secret-handling, or other security boundary without expanding privilege, data exposure, or trust.",
+      "minimum_risk": "standard",
+      "rules": [
+        "security-and-privacy-gate"
+      ],
+      "lead_skill": "security-reviewer",
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "security_sensitive": {
+      "description": "A new, changed, or high-impact authentication, authorization, tenant-isolation, secret-handling, or sensitive trust boundary is involved, or there is a material security vulnerability or credible regulated, bulk, or cross-tenant data exposure.",
       "minimum_risk": "critical",
-      "rules": ["security-and-privacy-gate"],
-      "skills": ["security-reviewer", "adversarial-test-forge"],
+      "rules": [
+        "security-and-privacy-gate"
+      ],
+      "lead_skill": "security-reviewer",
+      "supporting_skills": [
+        "adversarial-test-forge"
+      ],
+      "confirmation": "none"
+    },
+    "sensitive_data_handling": {
+      "description": "Personal or sensitive data is handled within an established and approved trust boundary without creating a new high-impact boundary.",
+      "minimum_risk": "standard",
+      "rules": [
+        "security-and-privacy-gate"
+      ],
+      "lead_skill": "privacy-and-data-governance-engineer",
+      "supporting_skills": [
+        "security-reviewer"
+      ],
+      "confirmation": "none"
+    },
+    "privacy_lifecycle": {
+      "description": "Consent, purpose limitation, collection, retention, deletion, subject rights, residency, or material privacy-governance behavior changes.",
+      "minimum_risk": "structural",
+      "rules": [
+        "security-and-privacy-gate",
+        "data-integrity-and-migrations"
+      ],
+      "lead_skill": "privacy-and-data-governance-engineer",
+      "supporting_skills": [
+        "security-reviewer"
+      ],
       "confirmation": "none"
     },
     "persisted_data": {
+      "description": "Persisted state, transactions, idempotency, durable identifiers, or stored data behavior changes.",
       "minimum_risk": "standard",
-      "rules": ["data-integrity-and-migrations"],
-      "skills": [],
+      "rules": [
+        "data-integrity-and-migrations"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "schema_or_migration": {
+      "description": "A schema, index, migration, backfill, or compatibility transition for persisted data changes.",
       "minimum_risk": "structural",
-      "rules": ["data-integrity-and-migrations"],
-      "skills": ["drift-guardian"],
+      "rules": [
+        "data-integrity-and-migrations"
+      ],
+      "lead_skill": "data-and-database-engineer",
+      "supporting_skills": [
+        "drift-guardian"
+      ],
       "confirmation": "none"
     },
     "critical_data_integrity": {
+      "description": "A credible failure could corrupt, lose, duplicate, misattribute, or leak material data across an authorization or ownership scope.",
       "minimum_risk": "critical",
-      "rules": ["data-integrity-and-migrations", "security-and-privacy-gate"],
-      "skills": ["security-reviewer", "adversarial-test-forge"],
+      "rules": [
+        "data-integrity-and-migrations",
+        "security-and-privacy-gate"
+      ],
+      "lead_skill": "data-and-database-engineer",
+      "supporting_skills": [
+        "security-reviewer",
+        "adversarial-test-forge"
+      ],
       "confirmation": "none"
     },
     "algorithmic_efficiency": {
+      "description": "A hot path, query, loop, transform, cache, queue, latency target, or user-sized and growing workload needs complexity or performance analysis.",
       "minimum_risk": "standard",
-      "rules": ["algorithmic-efficiency-gate"],
-      "skills": ["performance-engineer"],
+      "rules": [
+        "algorithmic-efficiency-gate"
+      ],
+      "lead_skill": "performance-engineer",
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "production_runtime_flow": {
+      "description": "A service, worker, job, webhook, integration, or other production runtime flow changes.",
       "minimum_risk": "standard",
-      "rules": ["observability-by-design", "operational-resilience"],
-      "skills": [],
+      "rules": [
+        "observability-by-design",
+        "operational-resilience"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "running_system_symptom": {
+      "description": "A symptom in a running system requires telemetry-led investigation.",
       "minimum_risk": "standard",
-      "rules": ["observability-by-design", "failure-mode-catalog"],
-      "skills": ["observability-detective", "debugging-strategist"],
+      "rules": [
+        "observability-by-design"
+      ],
+      "lead_skill": "observability-detective",
+      "supporting_skills": [
+        "debugging-strategist"
+      ],
+      "confirmation": "none"
+    },
+    "recurring_or_bounded_operational_failure": {
+      "description": "A recurring or operationally significant but bounded failure needs durable detection, ownership, mitigation, or prevention.",
+      "minimum_risk": "standard",
+      "rules": [
+        "failure-mode-catalog",
+        "operational-resilience"
+      ],
+      "lead_skill": "observability-detective",
+      "supporting_skills": [
+        "debugging-strategist"
+      ],
+      "confirmation": "none"
+    },
+    "credible_high_impact_harm": {
+      "description": "The task has a credible path to high-impact harm involving human safety, health, rights, employment, finances, privacy, or security, or material system integrity or availability, and no more specific Critical signal already represents the same consequence.",
+      "minimum_risk": "critical",
+      "rules": [
+        "adversarial-self-review",
+        "failure-mode-catalog",
+        "security-and-privacy-gate"
+      ],
+      "lead_skill": "risk-radar-scout",
+      "supporting_skills": [
+        "adversarial-test-forge",
+        "security-reviewer"
+      ],
       "confirmation": "none"
     },
     "user_interface": {
+      "description": "A user-facing interaction, workflow, accessibility behavior, or visual information hierarchy changes.",
       "minimum_risk": "standard",
       "rules": [],
-      "skills": ["interface-designer"],
+      "lead_skill": "interface-designer",
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "user_interface_with_data": {
+      "description": "A form or user interface reads, submits, reveals, or transforms application data.",
       "minimum_risk": "standard",
-      "rules": ["security-and-privacy-gate"],
-      "skills": ["interface-designer"],
+      "rules": [
+        "security-and-privacy-gate"
+      ],
+      "lead_skill": "interface-designer",
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "ai_product_behavior": {
-      "minimum_risk": "structural",
-      "rules": ["ai-system-safety", "security-and-privacy-gate", "observability-by-design"],
-      "skills": ["security-reviewer", "adversarial-test-forge"],
+      "description": "LLM, embedding, retrieval, classifier, agent, model, or tool-using product behavior changes and needs explicit evaluation.",
+      "minimum_risk": "standard",
+      "rules": [
+        "ai-system-safety",
+        "security-and-privacy-gate",
+        "observability-by-design"
+      ],
+      "lead_skill": "ai-system-and-evaluation-engineer",
+      "supporting_skills": [
+        "adversarial-test-forge",
+        "security-reviewer"
+      ],
       "confirmation": "none"
     },
     "nontrivial_ai_assisted_work": {
+      "description": "AI materially assisted a durable engineering artifact or decision and provenance must be disclosed.",
       "minimum_risk": "trivial",
-      "rules": ["ai-provenance-disclosure"],
-      "skills": [],
+      "rules": [
+        "ai-provenance-disclosure"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [],
       "confirmation": "none"
     },
-    "release_or_shared_environment": {
+    "release_design_or_configuration": {
+      "description": "A release strategy, rollback design, deployment configuration, staged rollout, or release control is designed or changed without executing it.",
+      "minimum_risk": "structural",
+      "rules": [
+        "operational-resilience",
+        "configuration-and-feature-flags"
+      ],
+      "lead_skill": "safe-release-conductor",
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "production_readiness_assessment": {
+      "description": "A production-ready, shippable, deployable, or release-readiness claim is evaluated.",
+      "minimum_risk": "structural",
+      "rules": [
+        "production-readiness-gate",
+        "operational-resilience"
+      ],
+      "lead_skill": "safe-release-conductor",
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "shared_environment_release_execution": {
+      "description": "A production deployment, release, promotion, rollout, or a material or difficult-to-recover shared-environment release mutation will actually execute.",
       "minimum_risk": "critical",
       "rules": [
         "production-readiness-gate",
         "operational-resilience",
-        "ai-provenance-disclosure",
         "agent-operation-safety"
       ],
-      "skills": ["safe-release-conductor"],
+      "lead_skill": "safe-release-conductor",
+      "supporting_skills": [],
       "confirmation": "fresh_confirmation"
     },
-    "deprecation_or_replacement": {
+    "artifact_build_or_distribution": {
+      "description": "A release artifact is packaged, signed, attested, promoted, distributed, or published, or its provenance and identity controls change.",
       "minimum_risk": "structural",
-      "rules": ["data-integrity-and-migrations", "evolutionary-stewardship"],
-      "skills": ["graceful-sunset-steward"],
+      "rules": [
+        "supply-chain-and-build-integrity"
+      ],
+      "lead_skill": "safe-release-conductor",
+      "supporting_skills": [
+        "security-reviewer"
+      ],
+      "confirmation": "none"
+    },
+    "configuration_or_feature_flag": {
+      "description": "Runtime configuration, environment-dependent behavior, feature flags, kill switches, or temporary operational controls change.",
+      "minimum_risk": "standard",
+      "rules": [
+        "configuration-and-feature-flags"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [
+        "drift-guardian"
+      ],
+      "confirmation": "none"
+    },
+    "security_relevant_configuration": {
+      "description": "Configuration materially changes authentication, authorization, secrets, TLS, origin or network trust, security headers, execution permissions, or data-exposure controls.",
+      "minimum_risk": "structural",
+      "rules": [
+        "configuration-and-feature-flags",
+        "security-and-privacy-gate"
+      ],
+      "lead_skill": "security-reviewer",
+      "supporting_skills": [
+        "drift-guardian"
+      ],
+      "confirmation": "none"
+    },
+    "deprecation_or_replacement": {
+      "description": "An old interface, behavior, data shape, dependency, service, or system will be deprecated, migrated, replaced, or removed.",
+      "minimum_risk": "structural",
+      "rules": [
+        "data-integrity-and-migrations",
+        "evolutionary-stewardship"
+      ],
+      "lead_skill": "graceful-sunset-steward",
+      "supporting_skills": [
+        "drift-guardian"
+      ],
       "confirmation": "none"
     },
     "external_side_effect": {
+      "description": "An action will write to an external service, contact another person, publish content, create a remote resource, or otherwise cause an effect outside the local workspace.",
       "minimum_risk": "standard",
-      "rules": ["agent-operation-safety"],
-      "skills": [],
+      "rules": [
+        "agent-operation-safety"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [],
       "confirmation": "explicit_authorization"
     },
     "destructive_or_irreversible_action": {
+      "description": "An action materially deletes, overwrites, rotates, revokes, destroys, or makes valuable state difficult to recover; scoped reviewable version-controlled edits with a verified recovery path do not match.",
       "minimum_risk": "critical",
-      "rules": ["agent-operation-safety", "data-integrity-and-migrations"],
-      "skills": ["security-reviewer"],
+      "rules": [
+        "agent-operation-safety",
+        "data-integrity-and-migrations"
+      ],
+      "lead_skill": "security-reviewer",
+      "supporting_skills": [],
       "confirmation": "fresh_confirmation"
     },
-    "credential_permission_financial_or_legal_action": {
+    "material_public_communication": {
+      "description": "An external communication is legally binding, security- or incident-sensitive, mass-distributed, or materially difficult to retract without reputational or user harm.",
       "minimum_risk": "critical",
-      "rules": ["agent-operation-safety", "security-and-privacy-gate"],
-      "skills": ["security-reviewer"],
+      "rules": [
+        "agent-operation-safety"
+      ],
+      "lead_skill": null,
+      "supporting_skills": [],
+      "confirmation": "fresh_confirmation"
+    },
+    "bounded_credential_or_permission_action": {
+      "description": "A specifically scoped, reversible credential or permission action is confined to a local or isolated non-production environment and does not expand privilege, transfer ownership, expose sensitive data, or create material downstream impact.",
+      "minimum_risk": "standard",
+      "rules": [
+        "agent-operation-safety",
+        "security-and-privacy-gate"
+      ],
+      "lead_skill": "security-reviewer",
+      "supporting_skills": [],
+      "confirmation": "explicit_authorization"
+    },
+    "credential_permission_financial_or_legal_action": {
+      "description": "An action changes production, shared, or privileged credentials or permissions; expands privilege; transfers ownership; commits funds; creates a legal obligation; or signs, approves, or makes one of those consequential decisions on another party's behalf.",
+      "minimum_risk": "critical",
+      "rules": [
+        "agent-operation-safety",
+        "security-and-privacy-gate"
+      ],
+      "lead_skill": "security-reviewer",
+      "supporting_skills": [],
       "confirmation": "fresh_confirmation"
     },
     "production_incident_change": {
+      "description": "A live production incident response will mutate production or a shared environment.",
       "minimum_risk": "critical",
       "rules": [
         "observability-by-design",
@@ -254,22 +850,38 @@
         "production-readiness-gate",
         "agent-operation-safety"
       ],
-      "skills": ["incident-commander", "observability-detective", "safe-release-conductor"],
+      "lead_skill": "incident-commander",
+      "supporting_skills": [
+        "observability-detective",
+        "safe-release-conductor"
+      ],
       "confirmation": "fresh_confirmation"
     },
     "product_domain_discovery": {
+      "description": "User value, business workflow, domain policy, success criteria, or the smallest useful product scope needs discovery.",
       "minimum_risk": "standard",
-      "rules": ["requirements-precision-gate"],
-      "skills": ["product-and-domain-strategist"],
+      "rules": [
+        "requirements-precision-gate"
+      ],
+      "lead_skill": "product-and-domain-strategist",
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "major_project_uncertainty": {
+      "description": "Material uncertainty spans scope, ownership, feasibility, safety, cost, or reversibility and needs explicit risk reduction.",
       "minimum_risk": "structural",
-      "rules": ["requirements-precision-gate", "complexity-budget"],
-      "skills": ["product-and-domain-strategist", "risk-radar-scout"],
+      "rules": [
+        "requirements-precision-gate",
+        "complexity-budget"
+      ],
+      "lead_skill": "risk-radar-scout",
+      "supporting_skills": [
+        "product-and-domain-strategist"
+      ],
       "confirmation": "none"
     },
     "api_contract": {
+      "description": "A public API, event, webhook, protocol, schema, SDK-facing surface, versioning policy, or compatibility contract changes.",
       "minimum_risk": "structural",
       "rules": [
         "testing-strategy",
@@ -277,39 +889,66 @@
         "complexity-budget",
         "evolutionary-stewardship"
       ],
-      "skills": ["api-and-contract-engineer", "drift-guardian"],
+      "lead_skill": "api-and-contract-engineer",
+      "supporting_skills": [
+        "drift-guardian"
+      ],
       "confirmation": "none"
     },
     "database_design": {
+      "description": "A data model, query shape, index, transaction, isolation, ownership, or database architecture decision changes.",
       "minimum_risk": "structural",
-      "rules": ["data-integrity-and-migrations", "algorithmic-efficiency-gate"],
-      "skills": ["data-and-database-engineer", "performance-engineer"],
+      "rules": [
+        "data-integrity-and-migrations"
+      ],
+      "lead_skill": "data-and-database-engineer",
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "distributed_system": {
+      "description": "Cross-process, cross-service, queue, region, ordering, delivery, consistency, retry, or partition behavior changes.",
       "minimum_risk": "structural",
-      "rules": ["testing-strategy", "observability-by-design", "operational-resilience"],
-      "skills": ["distributed-systems-engineer", "adversarial-test-forge"],
+      "rules": [
+        "testing-strategy",
+        "observability-by-design",
+        "operational-resilience"
+      ],
+      "lead_skill": "distributed-systems-engineer",
+      "supporting_skills": [
+        "adversarial-test-forge"
+      ],
       "confirmation": "none"
     },
     "platform_infrastructure": {
+      "description": "Cloud, infrastructure as code, network, identity, compute, storage, runtime platform, or environment topology changes.",
       "minimum_risk": "structural",
       "rules": [
         "operational-resilience",
         "security-and-privacy-gate",
         "complexity-budget",
-        "agent-operation-safety"
+        "agent-operation-safety",
+        "supply-chain-and-build-integrity"
       ],
-      "skills": ["platform-infrastructure-engineer", "drift-guardian"],
+      "lead_skill": "platform-infrastructure-engineer",
+      "supporting_skills": [
+        "drift-guardian",
+        "security-reviewer"
+      ],
       "confirmation": "none"
     },
     "quality_strategy": {
+      "description": "Cross-system test architecture, quality gates, a flaky or slow suite, or release-confidence strategy changes.",
       "minimum_risk": "structural",
-      "rules": ["testing-strategy", "complexity-budget"],
-      "skills": ["quality-engineering-lead"],
+      "rules": [
+        "testing-strategy",
+        "complexity-budget"
+      ],
+      "lead_skill": "quality-engineering-lead",
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "active_incident_coordination": {
+      "description": "A high-impact incident needs coordination, containment planning, evidence tracking, communication, and recovery without authorizing live mutation by itself.",
       "minimum_risk": "critical",
       "rules": [
         "observability-by-design",
@@ -317,26 +956,66 @@
         "operational-resilience",
         "agent-operation-safety"
       ],
-      "skills": ["incident-commander", "observability-detective"],
+      "lead_skill": "incident-commander",
+      "supporting_skills": [
+        "observability-detective"
+      ],
       "confirmation": "none"
     },
     "cross_team_technical_leadership": {
-      "minimum_risk": "structural",
-      "rules": ["complexity-budget", "evolutionary-stewardship"],
-      "skills": ["engineering-leadership"],
+      "description": "Multi-person or cross-team prioritization, delegation, ownership, technical review, mentoring, or decision facilitation is needed.",
+      "minimum_risk": "standard",
+      "rules": [],
+      "lead_skill": "engineering-leadership",
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "documentation_stewardship": {
+      "description": "A durable README, API guide, architecture record, runbook, migration guide, or documentation-drift decision is needed.",
       "minimum_risk": "trivial",
       "rules": [],
-      "skills": ["documentation-steward"],
+      "lead_skill": "documentation-steward",
+      "supporting_skills": [],
       "confirmation": "none"
     },
     "formal_assurance": {
-      "minimum_risk": "critical",
-      "rules": ["testing-strategy"],
-      "skills": ["formal-assurance-engineer", "adversarial-test-forge"],
+      "description": "A material invariant, protocol, or algorithm needs property-based, model-based, static, proof-strength, or other formalized evidence.",
+      "minimum_risk": "structural",
+      "rules": [
+        "testing-strategy"
+      ],
+      "lead_skill": "formal-assurance-engineer",
+      "supporting_skills": [
+        "adversarial-test-forge"
+      ],
       "confirmation": "none"
     }
+  },
+  "schemas": {
+    "governance_manifest": "schemas/governance-manifest.schema.json",
+    "governance_scenarios": "schemas/governance-scenarios.schema.json",
+    "routing_evaluations": "schemas/routing-evaluations.schema.json",
+    "routing_run": "schemas/routing-evaluation-run.schema.json",
+    "capability_evaluations": "schemas/capability-evaluations.schema.json",
+    "capability_run": "schemas/capability-evaluation-run.schema.json"
+  },
+  "routing_evaluations": {
+    "scenario_catalog": "tests/governance-scenarios.json",
+    "scenario_runner": "tests/run-governance-scenarios.ps1",
+    "catalog": "tests/routing-evaluations.json",
+    "validator": "tests/validate-routing-evaluations.ps1",
+    "scorer": "tests/score-routing-decision.ps1",
+    "scorer_tests": "tests/test-routing-decision-scorer.ps1",
+    "run_template": "tests/routing-evaluation-run.template.json",
+    "minimum_cases": 12
+  },
+  "capability_evaluations": {
+    "catalog": "tests/capability-evaluations.json",
+    "validator": "tests/validate-capability-evaluations.ps1",
+    "scorer": "tests/score-capability-run.ps1",
+    "scorer_tests": "tests/test-capability-scorer.ps1",
+    "run_template": "templates/CAPABILITY-EVALUATION-RUN.json",
+    "minimum_cases": 70,
+    "minimum_cases_per_routable_skill": 2
   }
 }

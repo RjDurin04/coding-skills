@@ -1,40 +1,56 @@
 ---
 name: adversarial-test-forge
-description: Use when writing any logic that handles user input, external data, concurrent operations, or business-critical flows. Activates during or immediately after implementation. Generates tests designed to FALSIFY code — not prove it works, but actively try to break it. Produces unit, property-based, and chaos tests with explicit risk-based prioritization.
+description: Use when behavior has meaningful input, state, concurrency, external-system, security, data-integrity, or business risk and tests should try to falsify important claims. Select test techniques and case depth from concrete failure modes rather than branch count, fixed property quotas, or universal runtime thresholds.
 ---
 
 # Adversarial Test Forge
 
-## Activation Procedure
+## 1. Identify What Must Fail Safely
 
-Before writing tests, ask:
-1. Does this code handle untrusted input?
-2. Would a bug here cause data loss, financial loss, or security breach?
-3. Does it involve concurrency, external state, or side effects?
-4. Is it on the critical path for business value?
-5. Does the logic have >1 branch or >1 collaborator?
+Map the protected invariants, trust boundaries, state transitions, side effects,
+limits, and likely bug magnets. Rank cases by consequence, plausibility, current
+coverage, and cost to detect later. Do not engage merely because a function has
+more than one branch.
 
-If ≥1 is YES → engage. Trivial getters/setters and pure passthroughs are exempt.
+Consider as relevant:
 
-## Execution Protocol
+- empty, missing, malformed, duplicate, oversized, encoded, and boundary input;
+- unauthorized role, object, field, tenant, or operation;
+- wrong order, retry, replay, cancellation, concurrent execution, and recovery;
+- time zones, clock changes, precision, overflow, pagination, and limits;
+- timeout, partial response, unavailable dependency, stale cache, failed write,
+  and partial commit;
+- invariant violations and previously observed regressions.
 
-### Step 1: Score Risk
-```
-Impact if wrong: [Data loss | Money | Security | UX | Cosmetic]
-Likelihood of bug: [High change freq | Complex logic | New dev | Third-party]
-Test investment tier: [Exhaustive | Standard | Minimal]
-```
+## 2. Choose The Right Test Surface
 
-### Step 2: Generate Falsification Tests
-For each function/endpoint, cover:
-- **Happy Path**: 1-2 tests (documentation only)
-- **Boundary Attacks**: empty/null/zero/negative/max, unicode, limit±1
-- **State Attacks**: wrong order, twice (idempotency), concurrently (races), after failure (recovery)
-- **Invariants**: 2-5 property-based checks that MUST hold for any input
-- **Failure Injection**: network timeout, DB unavailable, partial read/write, clock skew, disk full
-- **Bug Magnets**: off-by-one, timezone/DST, float precision, null vs empty vs missing, case sensitivity, integer overflow
+Select unit, integration, contract, end-to-end, property-based, fuzz,
+state-machine, concurrency, mutation, or fault-injection tests according to the
+boundary and risk. Do not require every technique or a fixed number of
+properties per function.
 
-Tests must: use AAA structure, test ONE thing, be deterministic (no time.now, no real random, no network), fail with clear invariant message, run fast (<100ms unit tests).
+Prefer the lowest test layer that provides direct evidence for the behavior,
+then add cross-boundary evidence where mocks would hide the failure. Use
+production-like dependencies only in an authorized, isolated environment.
 
-### Step 3: Regression Seeding
-When fixing any bug: the test comes first (proving the bug exists), then the fix.
+## 3. Keep Evidence Reliable
+
+- Control time, randomness, scheduling, network, and shared state where the test
+  contract permits.
+- Follow the repository's test performance budgets; do not impose a universal
+  sub-100 ms rule.
+- Make failures identify the broken invariant and relevant input.
+- Avoid redundant cases that exercise the same path without increasing
+  confidence.
+- Bound fuzzing, concurrency, payloads, and fault injection to avoid unsafe
+  resource use.
+
+For a bug fix, reproduce with a failing regression test first when feasible. If
+the original environment or timing cannot be reproduced safely, test the
+violated invariant or nearest controlled failure mode and disclose the gap.
+
+## 4. Report Coverage Honestly
+
+State the claims exercised, techniques used, important cases omitted, fixture or
+environment limits, and remaining risk. Passing adversarial tests supports only
+the tested state space; it does not prove the absence of defects.

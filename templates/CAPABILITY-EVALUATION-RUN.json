@@ -1,14 +1,43 @@
 {
-  "case_id": "replace-with-case-id",
-  "model": "replace-with-model-family",
-  "agent_surface": "replace-with-ide-or-agent-surface",
-  "model_version": "replace-with-exact-version-or-snapshot",
-  "rules_pack_version": "3.0.0",
-  "repository_and_revision": "replace-with-repository-and-immutable-revision",
-  "started_at": "replace-with-ISO-8601-timestamp",
-  "duration_seconds": 0,
-  "token_or_cost_measure": "replace-with-recorded-measure-or-unavailable-reason",
-  "artifact_paths": [],
+  "$schema": "../schemas/capability-evaluation-run.schema.json",
+  "schema_version": 2,
+  "case_id": "replace-with-capability-case-id",
+  "rules_pack_version": "4.0.0",
+  "model": {
+    "provider": "replace-with-provider",
+    "name": "replace-with-model-name",
+    "version": "replace-with-model-version",
+    "agent_surface": "replace-with-agent-surface"
+  },
+  "execution": {
+    "repository": "replace-with-repository",
+    "revision": "replace-with-revision",
+    "started_at": "2000-01-01T00:00:00Z",
+    "duration_seconds": 0,
+    "token_measure": {
+      "unit": "tokens",
+      "value": 0
+    }
+  },
+  "runner": {
+    "id": "replace-with-runner-id",
+    "type": "automation",
+    "organization": "replace-with-runner-organization"
+  },
+  "reviewer": {
+    "id": "replace-with-separately-established-reviewer-id",
+    "type": "human",
+    "organization": "replace-with-reviewer-organization"
+  },
+  "artifacts": [
+    {
+      "id": "evaluation_artifact",
+      "path": "replace-with-artifact-path",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "media_type": "text/plain",
+      "description": "Replace with a content-addressed transcript, patch, check log, or review artifact."
+    }
+  ],
   "dimension_scores": {
     "outcome_and_requirements": 0,
     "correctness_and_contracts": 0,
@@ -20,7 +49,16 @@
     "simplicity_and_cost": 0,
     "communication_and_leadership": 0
   },
-  "automatic_failure": false,
-  "reviewer": "replace-with-human-or-approved-reviewer",
-  "notes": ""
+  "criterion_results": [
+    {
+      "criterion_id": "replace_with_exact_catalog_criterion_id",
+      "status": "satisfied",
+      "evidence_artifact_ids": [
+        "evaluation_artifact"
+      ],
+      "review_notes": "Replace with a reviewer-attested criterion-level assessment grounded in the referenced artifact."
+    }
+  ],
+  "automatic_failure_reason_ids": [],
+  "notes": "Replace all placeholders. Every catalog criterion needs one result and evidence reference. Record external identity and review provenance when claiming independent verification."
 }

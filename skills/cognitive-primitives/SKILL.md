@@ -1,62 +1,51 @@
 ---
 name: cognitive-primitives
-description: Always-on foundational reasoning layer for any coding task. Activates during design, implementation, debugging, and review. Provides the mental models that transform mechanical coding into structural mastery — how to see state spaces, boundaries, invariants, composition, and time in any system.
+description: Use as a supporting reasoning toolkit for non-trivial design, debugging, implementation, or review when state spaces, boundaries, invariants, composition, time, or approach trade-offs materially affect correctness. Do not load for routine local edits or turn its prompts into mandatory ceremony.
 ---
 
 # Cognitive Primitives
 
-Always on. Explicitly invoke when designing interfaces, mutating state, debugging, or choosing between alternatives. If you reach for a pattern without naming the force it resolves — engage this skill first.
+Select only the lenses that expose a material risk or decision. Record the
+answer, not a ritual list of primitive names.
 
-## Primitive 1: State Space Thinking
-**Core question:** What states are possible? Which are valid? Can I make illegal states unrepresentable?
-1. Enumerate all field/flag combinations; classify valid / invalid / unreachable.
-2. Collapse the invalid region via types (sealed classes, exhaustive matching, constructor validation).
-3. Prefer total functions — push edge cases to the type system, not runtime checks.
+## State And Invariants
 
-## Primitive 2: Boundary Thinking
-**Core question:** Where are the system edges? What crosses them? What's the protocol? What's the failure mode?
-1. Identify boundaries (I/O, network, process, module, thread, trust).
-2. Define contract at each boundary: data shape, preconditions, postconditions, error encoding, backpressure.
-3. Parse, don't validate — transform untrusted input into a rich type at the perimeter. Never pass raw across legacy/external boundaries.
-4. Design failure mode per boundary (timeout, retry, circuit break, degrade, crash). Never silent swallow.
+- Identify relevant valid, invalid, transitional, and terminal states.
+- State the preconditions, postconditions, and stable or temporal invariants that
+  matter to the requested behavior.
+- Enforce invariants at the strongest practical boundary: types, schemas,
+  constraints, authorization, transactions, runtime checks, or tests.
+- Do not force every edge case into the type system when external data, legacy
+  contracts, or runtime policy make boundary validation clearer.
 
-## Primitive 3: Invariant Thinking
-**Core question:** What MUST be true before / after / during? How do I enforce it?
-1. Preconditions — what must hold for this operation to be valid?
-2. Postconditions — what must hold when this operation completes?
-3. Invariants — what must hold at all stable states?
-4. Temporal invariants — what ordering guarantees must hold?
-5. Enforcement hierarchy: type system > runtime asserts / constraints > property-based tests > documentation.
+## Boundaries And Time
 
-## Primitive 4: Composition Thinking
-**Core question:** Can I build this from smaller, testable pieces? Do the pieces compose without hidden coupling?
-1. Decompose by responsibility; check that outputs of A are valid inputs for B with no shared mutable state.
-2. Prefer pure functions. Minimize coupling surface.
-3. Composition over inheritance. Abstraction resistance — when in doubt, inline; extract only when clearly simpler. Rule of Three before abstracting.
-4. Cognitive load budget — keep scope within working memory (~7±2 concepts).
+- Identify trust, process, module, persistence, network, and concurrency
+  boundaries that the change actually crosses.
+- Define data shape, ownership, error semantics, limits, timeout behavior, and
+  recovery where relevant.
+- Model ordering, retries, duplicates, cancellation, partial completion, clock
+  assumptions, and race windows only when the system can exhibit them.
 
-## Primitive 5: Temporal Thinking
-**Core question:** What happens over time? What if events reorder? What if time moves backward?
-1. Model the timeline; identify race windows where interleaving causes invalid states.
-2. Consider replay / idempotency — can this operation run twice safely?
-3. For complex flows, explicitly define states, transitions, and guards (state machine).
-4. Distributed: enforce happens-before, use logical clocks not wall-clock, design for at-least-once delivery.
+## Composition And Approach
 
-## Primitive 6: Formal Contract Thinking
-**Core question:** What is the mathematical/specification essence of this component?
-1. Specify preconditions, postconditions, invariants algebraically (Design by Contract).
-2. Before implementing, write the properties this code must satisfy; implementation is the proof.
-3. Verify associativity, commutativity, identity where applicable. Preserve contract through refinement steps.
+- Prefer cohesive pieces with explicit inputs, outputs, and ownership.
+- Reuse a local abstraction when it fits; keep one-off logic local when
+  extraction would add indirection.
+- Compare viable approaches by correctness, security, operational cost,
+  performance, reversibility, maintainability, and codebase fit.
+- Separate complexity inherent in the problem from complexity introduced by the
+  solution, then remove or isolate the latter.
 
-## Primitive 7: Approach Selection Thinking
-**Core question:** Why this approach instead of the obvious weaker one?
-1. Compare reuse, smallest direct change, and structural change before standard+ implementation.
-2. For algorithms, compare dominant operations, input growth, time/space complexity, I/O shape, and memory bounds.
-3. Reject options by named force: correctness, security, performance, maintainability, reversibility, local convention, or complexity.
-4. If the fastest patch leaves a broken model, name the refactor or architecture decision instead of hiding it.
+## Evidence
 
-## Essential vs. Accidental Complexity
-Before committing: classify complexity as essential (inherent to the problem) or accidental (introduced by our solution). Remove or isolate accidental complexity; never let it leak into the domain model.
+Treat these lenses as ways to form requirements and hypotheses, not as proof.
+Implementation is never proof of correctness. Match important claims with
+proportional evidence from tests, static checks, runtime observation, contracts,
+benchmarks, or formal analysis.
 
-## Hard Rule
-Every non-trivial design decision must be traceable to at least one Cognitive Primitive. If you cannot name the primitive that justifies a structure, the justification is intuition — and intuition is a bug when stakes are high.
+## Hard Rules
+
+- Do not apply every lens to every task.
+- Do not justify a pattern by name alone.
+- Do not convert an unverified mental model into a verified claim.

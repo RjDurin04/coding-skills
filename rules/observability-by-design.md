@@ -23,7 +23,7 @@ with no hidden runtime workflow.
 |---|---|---|
 | Minimal | local/trivial/self-evident | existing errors/tests |
 | Standard | normal runtime/user flow/external call/background work | structured boundary logs + contextual errors |
-| Critical | money/auth/PII/data integrity/high volume/prod incident risk | logs, metrics, traces/correlation, alerts/health/runbook as applicable |
+| Critical | high-consequence authz/sensitive-data/data-integrity/financial/high-volume/incident risk | logs, metrics, traces/correlation, alerts/health/runbook as applicable |
 
 ## Instrument Boundaries
 
@@ -36,14 +36,20 @@ Avoid tight-loop logs, full payloads, and messages nobody can act on.
 
 Logs (structured, searchable, safe context), metrics (count, latency, error rate,
 saturation, queue depth, retries, invariant), traces (multi-step/cross-service
-causality), health/readiness (serving ability), alerts (actionable owner/threshold),
-runbook note (human action needed).
+causality), health/readiness (serving ability), alerts (purpose, owner/recipient,
+threshold/window, response), runbook note (human action needed). Non-alert
+telemetry may serve diagnosis, audit, capacity, or product measurement; name its
+consumer/purpose and retention rather than forcing every signal to page someone.
 
 ## Safety
 
 Never log secrets, tokens, credentials, raw PII, payment data, full prompts, or
-full payloads. Redact/hash identifiers when full values are unnecessary. User
-errors should help without leaking internals. Debug logs must not become prod leaks.
+full payloads. Minimize identifiers; prefer short-lived opaque correlation IDs
+or approved keyed pseudonyms when linkage is required. Hashing alone is not
+anonymization: stable or low-entropy hashes can be correlated or reversed and
+remain sensitive. Define access, key handling, and retention for pseudonymous
+telemetry. User errors should help without leaking internals. Debug logs must
+not become production leaks.
 
 ## Delivery Contribution
 
@@ -53,5 +59,6 @@ detection, and resulting risk to the unified delivery record in `GEMINI.md`.
 ## Hard Rules
 
 - Invisible/expensive failure needs a signal.
-- Non-actionable signal should be removed/reduced.
+- Alerts must have a response and owner; other telemetry must have a justified
+  consumer/purpose and retention.
 - Sensitive-data leakage in observability is a bug.

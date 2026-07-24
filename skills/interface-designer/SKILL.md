@@ -1,135 +1,69 @@
 ---
 name: interface-designer
-description: UI/UX design protocol for interfaces, flows, and visual systems. Activates on any user-facing design task. Reduces intention-to-action distance through clarity, progressive disclosure, feedback, and inevitability.
+description: Use when designing, implementing, or reviewing a user-facing screen, component, workflow, interaction, or design system. Ground decisions in user goals, local conventions, applicable accessibility requirements, responsive behavior, localization, and evidence rather than universal aesthetic claims.
 ---
 
 # Interface Designer
 
-Invoke when designing or reviewing screens, flows, or components. Default to clarity over cleverness. Every decision traces to a user need, business goal, or accessibility requirement.
+## 1. Establish Context
 
-## Core Principle: Reduce Intention-to-Action Distance
+Identify the primary users, tasks, environment, content, device and input modes,
+risk of error, business constraints, and existing design system. Preserve local
+patterns when they work; deviate only for a concrete usability or accessibility
+reason.
 
-The user's goal should flow into system action with minimal friction, maximal clarity, and—when earned—delight. The best interface feels inevitable.
+Map the main path and relevant loading, empty, partial, success, disabled,
+offline, permission-denied, validation, and failure states. Include recovery or
+undo for consequential actions when practical.
 
-## H1: Clarity & Cognitive Load
+## 2. Design The Interaction
 
-A clear interface answers instantly: Where am I? What can I do? What happens if I do it?
+- Make primary actions and consequences clear without hiding necessary context.
+- Use progressive disclosure only when it reduces real complexity.
+- Preserve recognizable controls, meaningful labels, and consistent feedback.
+- Prevent errors through constraints and early guidance; explain unavailable
+  actions instead of silently disabling them.
+- Keep server-side authorization and validation authoritative.
+- Match density, hierarchy, copy, and feedback to the task and audience rather
+  than a universal aesthetic.
 
-- **Progressive disclosure:** Primary visible; secondary accessible; tertiary hidden. Each flow step asks for minimum info. Novices see simplified UI; power users discover advanced features.
-- **Hierarchy:** Visual weight (size, color, position, whitespace, typography) must match semantic importance. Never let marketing banners overpower primary tasks.
-- **Gestalt:** Use proximity, similarity, continuity, closure, common fate for implicit organization.
+## 3. Meet The Applicable Accessibility Target
 
-## H2: Affordances & Predictability
+Discover the project's contractual, regulatory, platform, and product target.
+If none is established for new web work, use WCAG 2.2 AA as a provisional
+engineering baseline, record that it is not an adopted contractual or
+compliance claim, and surface adoption to the responsible owner. Do not claim
+compliance from intent.
 
-- Buttons look pressable; links look tappable; sliders look draggable. Preserve affordances even in minimal aesthetics.
-- **Internal consistency:** Predictable across screens/states.
-- **External consistency:** Respect platform conventions (iOS, Material, Fluent).
-- **Break consistency only** when the convention is flawed, context is unique, or innovation provides overwhelming value.
+Verify as relevant:
 
-## H3: Feedback & Statefulness
+- semantic structure, accessible names, instructions, and error association;
+- keyboard operation, logical focus order, visible focus, focus restoration, and
+  modal focus containment;
+- screen-reader announcements for dynamic status and errors;
+- contrast, non-color cues, text resizing, zoom, reflow, and orientation;
+- pointer target size under the adopted standard and platform guidance;
+- reduced-motion preferences and operation without motion;
+- captions, transcripts, alternatives, and timing controls for media.
 
-Every action produces a reaction. Absent feedback destroys trust.
-- **Immediate:** >100ms perceptible; >1s feels broken.
-- **Informative:** Say what happened and what's next.
-- **Proportional:** Minor → subtle; major → prominent.
+## 4. Design For Variation
 
-Design all states:
-- **Empty:** Teach, reassure, invite. Never "No data."
-- **Loading:** Skeletons > spinners; progress bars > indeterminate when duration is predictable.
-- **Error:** What happened, why, and what to do next—plain language, no blame.
-- **Partial:** Some data loaded, some didn't.
+Test narrow and wide layouts, long and short content, localization expansion,
+pluralization, date/number formats, bidirectional text, and right-to-left layout
+where supported. Do not assume color meaning, reading direction, gesture,
+navigation position, or motion direction is culturally universal.
 
-## H4: Error Prevention
+Protect privacy in previews, errors, analytics, assistive labels, and shared
+screens. Avoid deceptive defaults, hidden costs, confirmshaming, forced
+continuity, or asymmetrical cancellation.
 
-Great designers keep error messages rare.
-- **Architectural:** Constraints prevent invalid input at source (date pickers, not free-text).
-- **Interface:** Disable buttons when prerequisites unmet. Show requirements before typing. Inline validation > post-submit errors.
-- **Contextual:** Add friction for irreversible actions. Friction is a feature here.
+## 5. Validate With Evidence
 
-## H5: Accessibility Baseline
+Use the smallest useful mix of design review, automated checks, keyboard and
+screen-reader testing, responsive inspection, usability observation, analytics,
+and experiment data. Treat numeric usability claims, timing thresholds, and
+sample-size rules as context-dependent evidence, not universal facts.
 
-Design for extremes; the middle follows.
-- WCAG 2.1 AA minimum. Aim higher.
-- Touch targets: 44×44pt (iOS), 48×48dp (Android).
-- High contrast, large targets, screen-reader support benefit everyone (sunlight, coffee hands, aging eyes).
-
-## H6: Fitts's Law & Physical Reality
-
-- Large, proximate targets for related actions.
-- Screen edges/corners = infinite in one dimension.
-- Respect thumb zones, reachability, environmental context (sunlight, noise, motion).
-
-## H7: Temporal & Memory
-
-- Working memory ≈ 4 chunks. Every element competes.
-- Minimize decisions in checkout/high-stakes flows (decision fatigue).
-- Users remember peaks and endings. Design both deliberately.
-- **Motion semantics:** Right = forward; down = dismissal. Consistency builds spatial understanding.
-
-## H8: Typography, Color, Spacing
-
-- **Measure:** 45–75 chars/line. Leading 1.4–1.6×.
-- **Color:** Red=danger; green=success; blue=trust/links. Contrast 4.5:1 normal, 3:1 large. Respect cultural associations.
-- **Layout:** 8-point grid. Whitespace is active hierarchy.
-- Pair icons with labels when recognition is uncertain.
-
-## H9: Interaction & Motion
-
-- **Micro-interactions:** Single-task moments. Feedback, error prevention, brand.
-- **Transitions:** No abrupt state changes. Orient users in information space.
-- **Easing:** Ease-out = responsive; ease-in = deliberate; ease-in-out = natural.
-- **Duration:** Micro 100–300ms; transitions 300–500ms. >1s = sluggish.
-- **Purposeful:** Every animation orients, feeds back, or reveals hierarchy. If removal doesn't reduce clarity, it was unnecessary.
-
-## H10: Systems Thinking
-
-- Products are ecosystems of flows, states, edge cases, dependencies.
-- **Tokens:** Abstract colors, type, spacing, radii from components.
-- **Components:** Flexible across contexts; constrained for consistency.
-- **Documentation:** Undocumented design systems are private languages.
-- Map 2nd/3rd-order effects before changes (users, support, analytics, localization, design system).
-
-## H11: Research & Validation
-
-- Every decision is a testable bet: "Changing X will result Y for segment Z, measured by metric M."
-- Qualitative = why; quantitative = what/how much. Both required.
-- Test 5 users early → catches ~85% of usability problems.
-- Say-Do Gap: Combine interviews with analytics.
-
-## H12: Copy as Interface
-
-Poor copy undermines great design.
-- **Microcopy:** Clear, concise, actionable. "Save changes" > "Submit."
-- **Errors:** What happened, why, next step.
-- **Empty states:** Clear path forward.
-- **Tone:** Match context (serious for finance; playful for social).
-
-## H13: Ethics
-
-Never manipulate.
-- **Forbidden:** Roach motel, hidden costs, confirmshaming, forced continuity, deceptive defaults.
-- **Addiction:** Infinite scroll / variable rewards may boost metrics but destroy trust.
-- **AI transparency:** Explain algorithmic decisions; provide recourse.
-- **Framing:** "Don't lose your progress" > "Save your progress."
-
-## H14: Taste & Restraint
-
-Taste separates competent from inevitable design.
-- **Context:** Minimal for meditation; expressive for games; dense for pro tools.
-- **Restraint:** Remove anything whose absence doesn't degrade goal completion.
-- **Timeless > trendy:** Hierarchy, legibility, affordances endure.
-- **Details:** 2px misalignments and off easing curves are felt collectively.
-
-## Platform Reference
-
-- **iOS:** Clarity, deference, depth. Nav top; tab bar bottom; San Francisco; modals slide up.
-- **Material:** Bold graphics, meaningful motion. FAB primary; nav drawers; elevation hierarchy.
-- **Web:** Underlined links; labeled forms; responsive breakpoints.
-
-## Hard Rule (Ship Checklist)
-
-1. Stressed first-time user understands primary action in <3s.
-2. All states (empty, loading, error, partial, success) designed, not accidental.
-3. Passes WCAG 2.1 AA minimum.
-4. Every element traces to user need, business goal, or accessibility—not ego.
-5. Removing any element degrades goal completion. If not, remove it.
+Report what was tested, target and viewport/input coverage, defects found, and
+unverified states. A polished screenshot is not evidence that the workflow is
+usable or accessible.

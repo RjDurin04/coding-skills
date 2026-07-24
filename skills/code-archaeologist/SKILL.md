@@ -1,72 +1,59 @@
 ---
 name: code-archaeologist
-description: Use before modifying unfamiliar existing code, debugging, or accepting non-trivial AI-generated code. Prevents write-first behavior by proving the agent understands callers, contracts, state, and failure modes.
+description: Use before changing or diagnosing unfamiliar existing code, load-bearing behavior, or non-trivial generated code. Reconstruct callers, contracts, state, ownership, and failure modes from current evidence while treating unexplained code as an unverified constraint, not proof of intentional design.
 ---
 
 # Code Archaeologist
 
-Engage when:
+Build enough understanding for the task's consequence before editing.
 
-- You did not create the code and the change is more than trivial.
-- You are changing behavior in a file you have not read.
-- You are fixing a bug in unfamiliar code.
-- You are reviewing or accepting non-trivial generated code.
-- The file is load-bearing: business rules, security, data integrity, concurrency, migrations, or public API.
+## 1. Preserve Current Work
 
-Do not write durable implementation code until comprehension is sufficient for the risk.
+Inspect relevant uncommitted changes and generated-file boundaries first.
+Assume unrelated modifications belong to the user. Do not overwrite, revert, or
+reinterpret them without evidence and authority.
 
-## Step 1: Map The Territory
+## 2. Map The Execution Path
 
-Identify:
+Trace:
 
-- Entry points: routes, handlers, jobs, commands, event listeners, UI flows.
-- Callers and callees: who depends on this and what it depends on.
-- Data flow: input, parsing, transformation, persistence, output.
-- Public contract: types, return values, errors, side effects, events, logs.
-- Ownership: module, bounded context, feature area, or subsystem.
-- Invariants: what must be true before, during, and after execution.
+- entry points, callers, callees, jobs, events, and user flows;
+- input parsing, transformations, persistence, output, and side effects;
+- public and implicit contracts, including errors and timing;
+- authorization, invariants, transactions, retries, and failure recovery;
+- module, feature, service, or operational ownership.
 
-## Step 2: Read The Local Narrative
+Search for existing helpers and conventions before proposing new structure.
 
-Inspect nearby evidence:
+## 3. Weigh The Evidence
 
-- Tests, fixtures, snapshots, examples, stories, docs, ADRs, comments.
-- Existing helpers and conventions for validation, errors, transactions, logging, and naming.
-- Git history or blame when available and useful. If no Git history exists, do not invent it.
+Inspect nearby tests, fixtures, schemas, examples, runbooks, configuration, ADRs,
+and comments. Use history or blame when available and decision-relevant, but
+remember that documentation and old commits can be stale.
 
-## Step 3: Classify The Code
+Classify code as load-bearing, boundary, generated, presentation or glue,
+apparently unused, or unclear. If a suspicious line cannot yet be explained,
+treat it as an `UNVERIFIED CONSTRAINT`: preserve it until callers, tests,
+history, runtime evidence, or an owner decision establishes whether it is
+required. Do not presume it was intentional or correct.
 
-- **Load-bearing:** business rules, auth, data integrity, concurrency, persistence, public contracts. Touch cautiously.
-- **Boundary code:** parsing, adapters, controllers, queues, integrations. Protect contracts and failures.
-- **Scaffolding:** presentation glue, simple mapping, local formatting. Safer, but still preserve conventions.
-- **Dead or unclear:** do not remove without evidence.
+## 4. Predict The Change
 
-If you cannot explain why a suspicious line exists, treat it as intentional until proven otherwise.
+Before editing, be able to state:
 
-## Step 4: Predict Effects
+- what relevant callers observe now and after the change;
+- what data or permissions could be lost, leaked, corrupted, or duplicated;
+- which failure modes or dependencies change;
+- which checks could detect a bad edit;
+- what remains unknown.
 
-Before editing, be able to answer:
-
-- What callers observe today.
-- What behavior changes after the edit.
-- What state could be corrupted, leaked, duplicated, or lost.
-- What failures become more or less likely.
-- What tests/checks should catch a bad change.
-- What the smallest safe rollback would be.
-
-## Output
-
-```
-Code archaeology: COMPLETE | PARTIAL | BLOCKED
-Files/context inspected: [...]
-Contracts/invariants found: [...]
-Uncertain inferences: [...]
-Risk: BLOCKER | WARNING | NOTE - [...]
-```
+For low-risk local work, a bounded disclosed assumption may be enough. For
+load-bearing or irreversible work, a material unexplained contract is a blocker.
 
 ## Hard Rules
 
-- Never modify durable code you cannot explain at the level required by the risk.
-- Never accept an abstraction with unclear ownership or contract.
-- Never remove code only because it looks unused; prove it or leave it.
-- "Ask the AI again" is not comprehension.
+- Apparent age, complexity, or lack of references is not proof that code is
+  obsolete.
+- A comment or ADR is evidence, not guaranteed current truth.
+- Do not accept generated code whose material contracts and risks remain
+  unexplained.

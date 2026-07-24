@@ -1,43 +1,62 @@
 ---
 name: graceful-sunset-steward
-description: Use when retiring systems, deprecating APIs, migrating off legacy platforms, or shutting down features. Activates on "let's replace", "migrate from X to Y", "deprecate this endpoint", or EOL planning. Executes the Strangler Fig pattern with data integrity guarantees, compliance-aware archival, and zero-surprise communication to dependents.
+description: Use when deprecating, replacing, migrating, disabling, or removing a feature, API, schema, service, dependency, or legacy system. Select a context-appropriate transition pattern, protect consumers and data, and define evidence-based exit criteria without imposing fixed timelines or architectures.
 ---
 
 # Graceful Sunset Steward
 
-## Activation Procedure
+## 1. Establish The Sunset Contract
 
-Before acting, ask:
-1. Is the user asking to remove, replace, migrate, or deprecate something?
-2. Will this change make existing code, data, or integrations unreachable?
-3. Is there an old system being replaced by a new one?
+Inventory known consumers, owners, contracts, traffic, dependencies, stored and
+derived data, retention obligations, operational procedures, and recovery
+options. Mark unknown consumers or unverifiable usage as risk rather than
+assuming absence.
 
-If ≥1 is YES → engage. Adding a feature or fixing a bug is NOT a sunset task.
+Define:
 
-## Execution Protocol
+- replacement or end state;
+- compatibility and migration obligations;
+- measurable exit criteria;
+- decision owner and support path;
+- reversible and irreversible steps.
 
-### Step 1: Census
-Before ANY sunset action, identify: who depends on this, their migration path, what data lives here (PII/financial/audit/ephemeral), and compliance regime. If any unknown → stop and discover.
+## 2. Select A Transition Pattern
 
-### Step 2: Choose Sunset Pattern
-- **APIs/Services**: Strangler Fig — new alongside old → route traffic (1%→100%) → old read-only → old dark → decommission
-- **Endpoints**: Deprecation Ladder — T-6mo header, T-3mo email guide, T-1mo sunset date, T-0 return 410, T+1mo remove code
-- **Data**: Expand-Contract — new schema coexists → dual-write + backfill → verify zero diff → read-switch → stop writing old → drop after safety window
+Choose by consumer control, data coupling, reversibility, scale, and operational
+capacity. Options include an in-place migration, compatibility adapter,
+deprecation window, staged routing, strangler transition, expand-contract
+schema change, or a controlled one-time cutover.
 
-### Step 3: Verify Integrity
-Before cutover: row counts match, checksums on sampled records, edge cases (nulls/unicode/max-length/soft-deletes), referential integrity, timestamps preserved, business invariants hold. Run in staging with production-shaped data.
+Treat every pattern as an option:
 
-### Step 4: Archive & Compliance
-Declare: retention requirement per regulation, archive format, access procedure, legal holds, right-to-be-forgotten mechanism.
+- Do not introduce dual writes unless reconciliation, idempotency, and added
+  operational complexity are justified.
+- Do not force a staged migration when a bounded atomic cutover is safer.
+- Derive notice periods and safety windows from contracts, observed usage,
+  consequence, and stakeholder needs; do not invent fixed months or days.
 
-### Step 5: Communicate
-Plan: T-minus announcements, migration docs with working examples, support channel, "lights out" notice, post-sunset FAQ.
+## 3. Protect Data And Consumers
 
-### Step 6: Point-of-No-Return Checklist
-Before irreversible step: backup verified restorable, rollback rehearsed, all consumers confirmed migrated, zero traffic to old system for N days, legal sign-off, archive accessible, post-sunset contacts identified.
+Define data mapping, validation, reconciliation, failure recovery, retention,
+deletion, legal hold, archive access, and restoration requirements as
+applicable. Verify business invariants, not only counts. Test representative
+edge cases and rollback or roll-forward paths at the risk level required.
 
-### Step 7: Tombstone
-Leave redirect/410/docs explaining what happened. Record ADR for WHY. Set retention clock with automated purge.
+Communicate through channels appropriate to the actual consumers. Provide
+working migration guidance, status visibility, and a final removal notice when
+external or cross-team users are affected. Leave a redirect, error, tombstone,
+or durable decision record only when it will help remaining callers or
+operators.
 
-## Hard Rule
-No big-bang shutdowns. No silent deletions. No "we told them 6 months ago" without proof.
+## 4. Execute With Authority
+
+Planning and read-only readiness assessment do not authorize disabling, deleting,
+cutting over, or mutating shared systems. Resolve exact targets and obtain the
+required authorization and fresh confirmation before an irreversible step.
+
+## Hard Rules
+
+- Do not remove a contract or data silently.
+- Do not claim consumers migrated without usage and acceptance evidence.
+- Do not let a temporary compatibility path persist without an owner and exit
+  condition.

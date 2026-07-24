@@ -1,111 +1,97 @@
 ---
 name: implementation-execution-protocol
 trigger: model_decision
-description: Mandatory loop for coding tasks: context first, scoped edits, proportional verification, self-review, evidence-based delivery.
+description: Mandatory loop for IMPLEMENT tasks: context first, scoped edits, proportional verification, self-review, and evidence-based delivery.
 ---
 
 # Implementation Execution Protocol
 
-Use for every task that creates, edits, deletes, configures, or reviews code.
-Apply `rules/governance-router.md` first.
+Use only when the requested mode includes `IMPLEMENT`: creating, editing,
+deleting, or configuring durable repository artifacts. `ANSWER`, `REVIEW`,
+`DIAGNOSE`, and `DESIGN` remain read-only unless implementation is separately
+requested. `OPERATE` governs shared/external mutation, not repository
+edits. Apply `rules/governance-router.md` first.
 
 ## 1. Classify Before Editing
 
-Name: intent (feature/fix/refactor/test/config/docs/migration/release/investigation),
-risk tier (trivial/standard/structural/critical), blast radius (files, modules,
-APIs, data, jobs, UI, deps, ops), and acceptance evidence.
+Name the intended behavior, acceptance evidence, manifest routing signals,
+effective risk, blast radius, and local action authority. The manifest supplies
+risk floors. Discovery may change matching signals, but never downshift while a
+higher-floor trigger remains.
 
-Risk floors: behavior change/bug fix => Standard; public API/contract,
-cross-module boundary, schema, dependency, shared abstraction, or durable
-architecture => Structural;
-auth, secrets, PII/financial/regulated data, tenant isolation, destructive data,
-production/shared-environment mutation, release execution, irreversible
-operation, security/compliance exposure, or credible data loss/corruption/
-duplication/cross-scope leakage => Critical. A self-contained new file or
-ordinary persisted-data change does not raise the floor by itself. Highest
-matching floor wins.
-
-Trivial local edits can be terse. Standard+ work needs a brief plan before broad changes.
+Trivial edits can be terse. Standard work needs one concise evidence-backed
+decision. Structural/Critical work needs explicit boundaries, meaningful
+alternatives, compatibility/recovery, and a verification plan.
 
 ## 2. Discover Context
 
-For existing code inspect: entry points/callers; input-to-output data flow;
-contracts/errors/side effects/persistence; tests/fixtures; conventions for
-naming, validation, errors, transactions, logging, deps, file layout; existing
-utilities. Use project discovery tools if available; otherwise search/read code.
-Never claim unavailable tools were used.
+For existing code inspect the relevant entry point and callers; input-to-output
+flow; contracts, errors, side effects, and persistence; tests/fixtures; local
+conventions; existing owners/helpers; and current uncommitted work.
 
-For standard+ work, record evidence anchors: files read, callers/contracts found,
-tests/fixtures checked, and search terms or inspected locations for existing
-helpers/patterns. If using an unfamiliar package/API, inspect installed source,
-types, local usage, or official docs before naming methods, fields, routes, or
-options. Do not infer third-party behavior from naming.
+For Standard+ work retain evidence anchors: files read, contracts/callers found,
+tests checked, and search terms or locations inspected for reuse. For an
+unfamiliar package or API, inspect installed source/types/local usage or current
+official documentation. Do not infer behavior from naming.
 
-## 3. Choose Smallest Correct Approach
+## 3. Select The Smallest Correct Fit
 
-Answer: behavior/invariant changed or preserved; relevant edge cases; failure
-response; scale/workload risk; conventions followed; tests/checks covering risk.
+State the invariant or behavior changed/preserved, material edge/failure cases,
+scale risk, existing pattern used, and evidence planned.
 
-For standard+ work, compare at least:
-- Existing/reuse path: local services, helpers, components, schemas, patterns.
-- Smallest direct path: minimal change that is still correct and maintainable.
-- Structural path: refactor/architecture change, only if the problem warrants it.
+- Standard: compare reuse with the smallest direct change; mention a structural
+  alternative only when there is real pressure for one.
+- Structural/Critical: compare meaningful local, direct, and structural options;
+  record why rejected choices fail on correctness, risk, fit, lifecycle cost, or
+  reversibility.
 
-Record this decision artifact for standard+ work:
-
-```
-Decision:
-- Existing/reuse path considered: [...]
-- Smallest correct path considered: [...]
-- Structural path considered: [...]
-- Chosen approach: [...]
-- Codebase evidence used: [...]
-- Weaker options rejected because: [...]
-- Verification evidence planned: [...]
-```
-
-Choose the strongest fit, not the fastest edit. Reject shortcut/prototype paths
-unless explicitly requested. If a patch hides a deeper model problem, stop and
-explain the refactor needed. For standard+ work, unsupported assertions about
-available helpers, contracts, APIs, packages, fields, or routes are defects.
+Do not generate alternatives merely to satisfy ceremony. If the patch would
+hide a deeper model failure, stop and explain the required design change.
 
 ## 4. Implement Safely
 
-Keep edits scoped; preserve public behavior unless requested; separate refactor
-from behavior change; reuse fitting abstractions; add deps only when local/stdlib
-options are inadequate and package risk is checked; use clear names, direct flow,
-contextual errors. Do not invent unsupported behavior, APIs, fields, routes,
-packages, permissions, migrations, or config. Do not revert unrelated user changes.
+- Keep edits within the requested scope and preserve public behavior unless the
+  request changes it.
+- Separate refactoring from behavior change and preserve unrelated user work.
+- Reuse a fitting owner; add structure or dependencies only when they reduce
+  total lifecycle risk or protect a real boundary/invariant.
+- Enforce validation, authorization, data integrity, bounded resources, and
+  contextual safe errors at the appropriate layer.
+- Do not invent behavior, APIs, fields, routes, packages, permissions,
+  migrations, configuration, or numeric requirements.
+
+If release-time repository changes are needed, remain in or return to
+`IMPLEMENT`, verify them, then separately enter `OPERATE`; implementation
+authority never implies release authority.
 
 ## 5. Verify Proportionally
 
-Use the lightest meaningful checks, broaden by risk: unit/regression tests;
-integration/contract/persistence tests; typecheck/lint/format/build/static
-analysis; browser/manual UI checks; query-count/benchmark/profile/load-shaped
-checks; security tests for auth, tenant isolation, secrets, untrusted input.
-Diagnose failures; do not ship around them. Disclose checks not run and risk.
+Use the lightest checks capable of falsifying material claims, broadened by
+risk: focused/regression tests; integration/contract/persistence tests;
+type/lint/format/build/static checks; UI/manual checks; query/benchmark/profile;
+and security/tenancy/failure tests.
 
-## 6. Self-Review
+Tests, builds, hooks, installers, generators, and formatters execute code. Apply
+`rules/agent-operation-safety.md` before running them and
+`rules/supply-chain-and-build-integrity.md` when build/dependency trust matters.
+Diagnose failures; do not ship around them. Record environment, evidence time or
+artifact version, and unverified target-environment gaps.
 
-Before delivery check: actual request solved; no unrelated churn; conventions
-preserved; null/empty/error/permission/concurrency/failure states handled;
-algorithms/queries/memory appropriate; tests adequate; known issues fixed or
-reported.
+## 6. Self-Review And Deliver
 
-## Delivery Contribution
+Check that the actual request is solved, churn is scoped, contracts and
+conventions are preserved, material failure/permission/concurrency/limit states
+are handled, resource shape is appropriate, and evidence supports each claim.
 
-Feed implementation status, changed files, the material approach decision,
-checks, gaps, and risks into the unified delivery record in `GEMINI.md`. Keep the
-full decision artifact as an internal work record unless it materially helps the
-user evaluate the result.
+Feed changed files, the material decision, checks, gaps, and risks into the
+unified delivery record in `GEMINI.md`. Task completion must remain separate
+from release readiness and external-action status.
 
 ## Hard Rules
 
-- No durable edits before relevant context.
-- No standard+ edit without governance routing and evidence anchors.
-- No "done" without verification or explicit gap.
-- No symptom patch when root cause is knowable.
-- No architecture bypass for speed.
-- No durable shortcut, hardcode, or prototype implementation unless explicitly requested.
-- No invented APIs/packages/fields/routes/contracts.
-- No hidden known issues.
+- No durable edit before relevant context and routing.
+- No Standard+ edit without evidence anchors.
+- No invented interfaces, requirements, results, or authority.
+- No symptom patch when the root cause is knowable and in scope.
+- No production/shared mutation under `IMPLEMENT`.
+- No "done" without proportional verification or an explicit gap.

@@ -1,50 +1,70 @@
 ---
 name: complexity-budget
 trigger: model_decision
-description: Apply before adding abstractions, files, dependencies, configuration, architecture, or broad structure.
+description: Apply before adding material abstractions, dependencies, shared or public boundaries, ownership surfaces, architecture, or broad coordinated structure.
 ---
 
 # Complexity Budget
 
 Complexity must buy correctness, clarity, safety, performance, or cheaper future
-change. Defaults are ceilings, not quotas.
+change. Judge cohesion, coupling, ownership, and lifecycle cost—not raw counts.
 
-| Tier | Abstractions | Files/modules | Dependencies | Tests |
-|---|---:|---:|---:|---|
-| Trivial | 0 | 0-1 | 0 | existing/minimal |
-| Standard | 0-1 | 0-3 | 0 | focused behavior |
-| Structural | justify each | justify each | 0 unless strong case | regression/integration |
-| Critical | minimize/prove | minimize/prove owner | avoid unless reviewed | adversarial/risk-driven |
+## Orientation Heuristics
+
+These are prompts for review, not quotas, ceilings, or release gates:
+
+| Tier | Typical shape | Required justification |
+|---|---|---|
+| Trivial | Usually no new abstraction/dependency and at most one local file | Explain any durable structure. |
+| Standard | Usually a small number of cohesive edits and no new boundary | Name the owner and why existing structure does not fit. |
+| Structural | New/shared boundary, dependency, or several coordinated modules may be correct | Justify each durable ownership/dependency surface and migration cost. |
+| Critical | Prefer the smallest auditable design that enforces critical invariants | Demonstrate boundary enforcement, failure handling, recovery, and review ownership with scoped evidence. |
+
+Never pack unrelated responsibilities into a large file, collapse useful
+boundaries, avoid tests, or choose an unsafe bespoke implementation merely to
+stay under a count.
 
 ## Spend Only For Real Pressure
 
-Valid: repeated logic with same invariant and real callers; boundary protecting
-domain from infra/external/legacy; stable public contract owner; workload-required
-algorithm/data structure; test seam for important behavior.
+Valid pressure includes repeated logic with the same invariant and real callers;
+a boundary isolating domain from external/legacy concerns; a stable public
+contract owner; workload-required data structure/algorithm; or a test seam for
+material behavior.
 
-Invalid: "might be useful"; copying another project; vague helper hiding mess;
-dependency for small convenience; framework-template folders/classes without need.
+Invalid pressure includes "might be useful", copying another project's shape,
+framework-template folders without ownership, vague helpers that hide
+responsibilities, or a convenience dependency whose lifecycle cost exceeds its
+value.
 
-## Dependency Checklist
+## Dependencies
 
-Before adding one: local/stdlib insufficient; identity/maintenance/license/security
-acceptable; versioning follows project; runtime/bundle/ops cost acceptable;
-replacement path understood. Unknown durable risk means do not add or disclose.
+Minimize total lifecycle and security risk, not dependency count. Compare:
+existing/local functionality; a small direct implementation; and a maintained,
+appropriately scoped dependency. Check identity, maintenance, license,
+advisories, transitive/install/native risk, version policy, runtime/bundle/ops
+cost, and replacement path under
+`rules/supply-chain-and-build-integrity.md`.
 
-## If Exceeded
+Do not hand-roll cryptography, authentication/authorization, security protocols,
+or standards-heavy parsers merely to report zero dependencies. Bespoke code is a
+dependency the project must own.
 
-Re-check problem fit; inline/simplify accidental complexity; split refactor from
-behavior; escalate to architecture only when complexity is essential.
+## When Complexity Grows
+
+Re-check problem fit; split unrelated responsibilities; inline accidental
+indirection; separate refactor from behavior; document durable ownership; and
+escalate to architecture only when the pressure is real. More files can improve
+cohesion; fewer files can reduce indirection. Neither is inherently simpler.
 
 ## Delivery Contribution
 
-Add material new abstractions/files/dependencies, their justification, the
-simpler option rejected, and any exceeded budget to the unified delivery record
-in `GEMINI.md`.
+Record only material new boundaries, abstractions, configuration, files, or
+dependencies; why they reduce total risk/cost; the simpler option considered;
+and remaining ownership or migration risk.
 
 ## Hard Rules
 
-- Zero new dependencies by default.
-- No abstraction without invariant, boundary, or repeated pressure.
-- No broad refactor hidden in feature/fix.
-- If simpler is correct and maintainable, choose it.
+- No abstraction without a concrete invariant, boundary, or repeated pressure.
+- No broad refactor hidden in a feature/fix.
+- No numeric-count compliance at the expense of cohesion, tests, or safety.
+- If simpler is correct, safer, and maintainable, choose it.
