@@ -32,6 +32,29 @@ function Write-InvalidResult {
     } | ConvertTo-Json -Depth 10
 }
 
+function ConvertFrom-JsonDocument {
+    param([string] $Json)
+
+    $command = Get-Command ConvertFrom-Json -CommandType Cmdlet
+    if ($command.Parameters.ContainsKey('DateKind')) {
+        return ConvertFrom-Json -InputObject $Json -DateKind String
+    }
+    return ConvertFrom-Json -InputObject $Json
+}
+
+function Test-JsonTimestamp {
+    param($Value)
+
+    if (($Value -is [datetime]) -or ($Value -is [datetimeoffset])) {
+        return $true
+    }
+    if (($Value -isnot [string]) -or [string]::IsNullOrWhiteSpace($Value)) {
+        return $false
+    }
+    $parsed = [datetimeoffset]::MinValue
+    return [datetimeoffset]::TryParse([string] $Value, [ref] $parsed)
+}
+
 function Read-Json {
     param(
         [string] $Path,
@@ -43,7 +66,8 @@ function Read-Json {
         return $null
     }
     try {
-        return [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+        $json = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
+        return ConvertFrom-JsonDocument $json
     }
     catch {
         Add-Failure "$Label is not valid JSON: $($_.Exception.Message)"
@@ -263,7 +287,7 @@ if ([string] $record.'$schema' -ne '../schemas/routing-evaluation-run.schema.jso
 if (((($record.schema_version -isnot [int]) -and ($record.schema_version -isnot [long]))) -or ([int] $record.schema_version -ne 1)) {
     Add-Failure 'Routing run record schema_version must be integer 1.'
 }
-foreach ($field in @('case_id', 'rules_pack_version', 'started_at')) {
+foreach ($field in @('case_id', 'rules_pack_version')) {
     if (($record.$field -isnot [string]) -or
         [string]::IsNullOrWhiteSpace([string] $record.$field) -or
         ([string] $record.$field).StartsWith('replace-with-', [System.StringComparison]::OrdinalIgnoreCase)) {
@@ -273,8 +297,7 @@ foreach ($field in @('case_id', 'rules_pack_version', 'started_at')) {
 if ($record.notes -isnot [string]) {
     Add-Failure 'Routing run record notes must be a string.'
 }
-$parsedStartedAt = [datetimeoffset]::MinValue
-if (($record.started_at -is [string]) -and (-not [datetimeoffset]::TryParse([string] $record.started_at, [ref] $parsedStartedAt))) {
+if (-not (Test-JsonTimestamp $record.started_at)) {
     Add-Failure 'Routing run record started_at must be a valid timestamp.'
 }
 if ((-not (Test-Number $record.duration_seconds)) -or ([double] $record.duration_seconds -lt 0)) {

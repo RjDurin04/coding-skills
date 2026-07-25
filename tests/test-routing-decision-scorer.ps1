@@ -215,6 +215,17 @@ $tests = @(
             param($Record)
             $Record.duration_seconds = [double]::NaN
         }
+    },
+    [pscustomobject]@{
+        Name = 'invalid-started-at-type'
+        CaseId = 'answer-engineering-explanation'
+        ExpectedExit = 0
+        ExpectedStatus = 'INVALID'
+        ExpectedFinding = 'started_at must be a valid timestamp'
+        Mutation = {
+            param($Record)
+            $Record.started_at = 123
+        }
     }
 )
 

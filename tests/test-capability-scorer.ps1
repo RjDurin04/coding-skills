@@ -263,6 +263,17 @@ try {
             }
         },
         [pscustomobject]@{
+            Name = 'invalid-started-at-type'
+            CaseId = $standardCaseId
+            Score = 100
+            ExpectedStatus = 'INVALID'
+            ExpectedPattern = 'execution started_at must be a valid timestamp'
+            Mutation = {
+                param($Record)
+                $Record.execution.started_at = 123
+            }
+        },
+        [pscustomobject]@{
             Name = 'automatic-failure-reason'
             CaseId = $standardCaseId
             Score = 100

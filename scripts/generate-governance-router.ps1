@@ -22,6 +22,20 @@ function Read-Utf8Text {
     return [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
 }
 
+function ConvertTo-LfText {
+    param([string] $Text)
+
+    return $Text.Replace("`r`n", "`n").Replace("`r", "`n")
+}
+
+function Get-OrdinalPropertyNames {
+    param([object] $Object)
+
+    [string[]] $names = @($Object.PSObject.Properties.Name)
+    [System.Array]::Sort($names, [System.StringComparer]::Ordinal)
+    return $names
+}
+
 function ConvertTo-MarkdownCell {
     param([AllowNull()] [object] $Value)
 
@@ -115,8 +129,8 @@ $routingSignalLines = @(
     '| Signal | Minimum risk | Confirmation | Rules | Lead skill | Supporting skills | Description |',
     '|---|---|---|---|---|---|---|'
 )
-foreach ($property in @($manifest.routing_signals.PSObject.Properties | Sort-Object Name)) {
-    $signal = $property.Value
+foreach ($propertyName in @(Get-OrdinalPropertyNames $manifest.routing_signals)) {
+    $signal = $manifest.routing_signals.PSObject.Properties[$propertyName].Value
     $lead = if ($null -eq $signal.lead_skill) {
         'none'
     }
@@ -124,7 +138,7 @@ foreach ($property in @($manifest.routing_signals.PSObject.Properties | Sort-Obj
         ConvertTo-CodeList @($signal.lead_skill)
     }
     $routingSignalLines += '| ' +
-        (ConvertTo-CodeList @($property.Name)) + ' | ' +
+        (ConvertTo-CodeList @($propertyName)) + ' | ' +
         (ConvertTo-CodeList @($signal.minimum_risk)) + ' | ' +
         (ConvertTo-CodeList @($signal.confirmation)) + ' | ' +
         (ConvertTo-CodeList @($signal.rules)) + ' | ' +
@@ -159,8 +173,8 @@ if (@($manifest.risk_overlays).Count -eq 0) {
     $riskOverlayLines += '| none | none | none |'
 }
 
-$current = Read-Utf8Text $routerPath
-$newLine = if ($current.Contains("`r`n")) { "`r`n" } else { "`n" }
+$current = ConvertTo-LfText (Read-Utf8Text $routerPath)
+$newLine = "`n"
 $generated = $current
 $generated = Replace-GeneratedSection $generated 'TASK MODES' $taskModeLines $newLine
 $generated = Replace-GeneratedSection $generated 'ROUTING SIGNALS' $routingSignalLines $newLine

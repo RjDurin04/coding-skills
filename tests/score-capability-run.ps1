@@ -64,6 +64,29 @@ function Test-MeasuredString {
     return ([string] $Value -notmatch '^(?i:replace[-_]with(?:[-_]|$))')
 }
 
+function ConvertFrom-JsonDocument {
+    param([string] $Json)
+
+    $command = Get-Command ConvertFrom-Json -CommandType Cmdlet
+    if ($command.Parameters.ContainsKey('DateKind')) {
+        return ConvertFrom-Json -InputObject $Json -DateKind String
+    }
+    return ConvertFrom-Json -InputObject $Json
+}
+
+function Test-JsonTimestamp {
+    param($Value)
+
+    if (($Value -is [datetime]) -or ($Value -is [datetimeoffset])) {
+        return $true
+    }
+    if (($Value -isnot [string]) -or [string]::IsNullOrWhiteSpace($Value)) {
+        return $false
+    }
+    $parsed = [datetimeoffset]::MinValue
+    return [datetimeoffset]::TryParse([string] $Value, [ref] $parsed)
+}
+
 function Assert-ObjectShape {
     param(
         $Value,
@@ -114,11 +137,15 @@ function Test-PathEquals {
 
 $manifestPath = Join-Path $rootPath 'governance-manifest.json'
 try {
-    $manifest = Get-Content -Raw -Encoding UTF8 -LiteralPath $manifestPath | ConvertFrom-Json
+    $manifest = ConvertFrom-JsonDocument (
+        Get-Content -Raw -Encoding UTF8 -LiteralPath $manifestPath
+    )
     $catalogPath = Join-Path $rootPath (
         [string] $manifest.capability_evaluations.catalog -replace '/', [System.IO.Path]::DirectorySeparatorChar
     )
-    $catalog = Get-Content -Raw -Encoding UTF8 -LiteralPath $catalogPath | ConvertFrom-Json
+    $catalog = ConvertFrom-JsonDocument (
+        Get-Content -Raw -Encoding UTF8 -LiteralPath $catalogPath
+    )
 }
 catch {
     Add-Finding "Unable to load governance manifest or capability catalog: $($_.Exception.Message)"
@@ -172,7 +199,9 @@ try {
     if (-not (Test-Path -LiteralPath $recordPath -PathType Leaf)) {
         throw "Run record does not exist: $RunRecord"
     }
-    $record = Get-Content -Raw -Encoding UTF8 -LiteralPath $recordPath | ConvertFrom-Json
+    $record = ConvertFrom-JsonDocument (
+        Get-Content -Raw -Encoding UTF8 -LiteralPath $recordPath
+    )
     if ($record -isnot [pscustomobject]) {
         throw 'Run record root must be a JSON object.'
     }
@@ -235,9 +264,7 @@ if (($record.PSObject.Properties.Name -contains 'execution') -and
             Add-Finding "Run record execution '$field' must contain measured metadata."
         }
     }
-    $startedAt = [datetimeoffset]::MinValue
-    if ((-not (Test-NonblankString $record.execution.started_at)) -or
-        (-not [datetimeoffset]::TryParse([string] $record.execution.started_at, [ref] $startedAt))) {
+    if (-not (Test-JsonTimestamp $record.execution.started_at)) {
         Add-Finding 'Run record execution started_at must be a valid timestamp.'
     }
     if ((-not (Test-JsonNumber $record.execution.duration_seconds)) -or
