@@ -285,7 +285,7 @@ catch {
 }
 
 try {
-    if (($catalog.schema_version -isnot [int]) -or ([int] $catalog.schema_version -ne 3)) {
+    if (((($catalog.schema_version -isnot [int]) -and ($catalog.schema_version -isnot [long]))) -or ([int] $catalog.schema_version -ne 3)) {
         Add-Finding 'Capability catalog schema_version must be integer 3.'
     }
     Assert-ThresholdPolicyAudit $catalog.threshold_policies

@@ -120,27 +120,18 @@ elif mode == "oversize":
     sys.stdout.write("x" * 8192)
 elif mode.startswith("spawn-child-"):
     marker_path = capture_path.with_suffix(".survived")
-    if os.name == "nt":
-        command = (
-            "ping -n 6 127.0.0.1 >nul"
-            f' & >"{marker_path}" echo survived'
-        )
-        child = subprocess.Popen(
-            [os.environ["COMSPEC"], "/d", "/c", command],
-            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-        )
-    else:
-        child_source = (
-            "import pathlib,sys,time;"
-            "time.sleep(5);"
-            "pathlib.Path(sys.argv[1]).write_text('survived',encoding='utf-8')"
-        )
-        child = subprocess.Popen([
-            sys.executable,
-            "-c",
-            child_source,
-            str(marker_path),
-        ])
+    child_source = (
+        "import pathlib,sys,time;"
+        "time.sleep(5);"
+        "pathlib.Path(sys.argv[1]).write_text('survived',encoding='utf-8')"
+    )
+    child = subprocess.Popen([
+        sys.executable,
+        "-c",
+        child_source,
+        str(marker_path),
+    ])
+
     with capture_path.open("a", encoding="utf-8") as capture:
         capture.write(json.dumps({"child_pid": child.pid}) + "\n")
     if mode == "spawn-child-normal":
