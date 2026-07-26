@@ -368,7 +368,7 @@ if (($null -eq $catalog) -or ($null -eq $record)) {
 }
 
 try {
-    if (($catalog.schema_version -isnot [int]) -or ([int] $catalog.schema_version -ne 2)) {
+    if (((($catalog.schema_version -isnot [int]) -and ($catalog.schema_version -isnot [long]))) -or ([int] $catalog.schema_version -ne 2)) {
         Add-Failure 'Routing catalog schema_version must be integer 2.'
     }
     Assert-ThresholdPolicyAudit $catalog.threshold_policies
