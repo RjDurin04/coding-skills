@@ -58,6 +58,10 @@ def main() -> int:
             "schemas/routing-evaluation-run.schema.json",
         ),
         (
+            "templates/ROUTING-MODEL-ADAPTER.json",
+            "schemas/routing-model-adapter.schema.json",
+        ),
+        (
             "tests/capability-evaluations.json",
             "schemas/capability-evaluations.schema.json",
         ),
@@ -94,6 +98,16 @@ def main() -> int:
             loaded[instance_relative] = (instance, schema)
         except Exception as error:  # validator/reference errors must fail closed
             failures.append(f"{instance_relative} / {schema_relative}: {error}")
+
+    for schema_relative in (
+        "schemas/routing-model-evaluation-report.schema.json",
+    ):
+        try:
+            schema = load_json(root / schema_relative)
+            Draft202012Validator.check_schema(schema)
+            print(f"PASS schema meta-validation for {schema_relative}")
+        except Exception as error:
+            failures.append(f"{schema_relative}: {error}")
 
     manifest_instance, manifest_schema = loaded.get(
         "governance-manifest.json",
@@ -144,8 +158,8 @@ def main() -> int:
         return 1
 
     print(
-        "JSON Schema validation PASS: 6 schemas meta-valid, "
-        "6 canonical artifacts valid, rejection self-tests passed."
+        "JSON Schema validation PASS: 8 schemas meta-valid, "
+        "7 canonical artifacts valid, rejection self-tests passed."
     )
     return 0
 

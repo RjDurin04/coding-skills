@@ -114,6 +114,128 @@ function Assert-UniqueStrings {
     }
 }
 
+$canonicalCapabilityThresholdTargets = @(
+    'rubric.pass_score',
+    'rubric.critical_pass_score',
+    'rubric.dimensions.*.weight',
+    'rubric.dimensions.*.minimum_scores.trivial',
+    'rubric.dimensions.*.minimum_scores.standard',
+    'rubric.dimensions.*.minimum_scores.structural',
+    'rubric.dimensions.*.minimum_scores.critical',
+    'rubric.automatic_failure_reasons.*.id',
+    'manifest.capability_evaluations.minimum_cases',
+    'manifest.capability_evaluations.minimum_cases_per_routable_skill',
+    'skill_coverage.*.minimum_cases',
+    'coverage_requirements.maximum_cases',
+    'coverage_requirements.minimum_categories',
+    'coverage_requirements.minimum_cases_by_risk.trivial',
+    'coverage_requirements.minimum_cases_by_risk.standard',
+    'coverage_requirements.minimum_cases_by_risk.structural',
+    'coverage_requirements.minimum_cases_by_risk.critical',
+    'coverage_requirements.minimum_low_risk_ratio.numerator',
+    'coverage_requirements.minimum_low_risk_ratio.denominator',
+    'coverage_requirements.minimum_criteria_per_case.must_demonstrate',
+    'coverage_requirements.minimum_criteria_per_case.must_avoid',
+    'coverage_requirements.minimum_criteria_per_case.required_evidence'
+)
+
+function Assert-ThresholdPolicies {
+    param($Policies)
+
+    if (($Policies -isnot [System.Array]) -or ($Policies -is [string])) {
+        Add-Failure 'Capability threshold_policies must be an array.'
+        return
+    }
+    $ids = @()
+    $targets = @()
+    foreach ($policy in @($Policies)) {
+        $fields = @(
+            'id',
+            'classification',
+            'status',
+            'owner',
+            'basis',
+            'evidence_refs',
+            'reviewed_on',
+            'review_by',
+            'targets'
+        )
+        if (-not (Assert-ObjectShape $policy $fields $fields 'Capability threshold policy')) {
+            continue
+        }
+        $ids += [string] $policy.id
+        if (@('derived', 'safety_policy', 'empirical', 'implementation_limit') -notcontains [string] $policy.classification) {
+            Add-Failure "Threshold policy '$($policy.id)' has invalid classification."
+        }
+        if (@('candidate', 'accepted') -notcontains [string] $policy.status) {
+            Add-Failure "Threshold policy '$($policy.id)' has invalid status."
+        }
+        foreach ($propertyName in @('owner', 'basis')) {
+            if (-not (Test-NonblankString $policy.$propertyName)) {
+                Add-Failure "Threshold policy '$($policy.id)' $propertyName must be nonblank."
+            }
+        }
+        if ($policy.evidence_refs -isnot [System.Array]) {
+            Add-Failure "Threshold policy '$($policy.id)' evidence_refs must be an array."
+        }
+        elseif (([string] $policy.classification -eq 'empirical') -and (@($policy.evidence_refs).Count -eq 0)) {
+            Add-Failure "Empirical threshold policy '$($policy.id)' requires evidence_refs."
+        }
+        foreach ($dateProperty in @('reviewed_on', 'review_by')) {
+            $parsedDate = [datetime]::MinValue
+            if (($policy.$dateProperty -isnot [string]) -or
+                (-not [datetime]::TryParseExact(
+                    [string] $policy.$dateProperty,
+                    'yyyy-MM-dd',
+                    [System.Globalization.CultureInfo]::InvariantCulture,
+                    [System.Globalization.DateTimeStyles]::None,
+                    [ref] $parsedDate
+                ))) {
+                Add-Failure "Threshold policy '$($policy.id)' $dateProperty must be YYYY-MM-DD."
+            }
+            elseif (($dateProperty -eq 'review_by') -and ($parsedDate.Date -lt [datetime]::UtcNow.Date)) {
+                Add-Failure "Threshold policy '$($policy.id)' review_by is expired."
+            }
+        }
+        if (($policy.targets -isnot [System.Array]) -or (@($policy.targets).Count -eq 0)) {
+            Add-Failure "Threshold policy '$($policy.id)' targets must be a nonempty array."
+        }
+        else {
+            foreach ($target in @($policy.targets)) {
+                if (-not (Test-NonblankString $target)) {
+                    Add-Failure "Threshold policy '$($policy.id)' contains a blank or non-string target."
+                    continue
+                }
+                $targets += [string] $target
+            }
+        }
+    }
+    Assert-UniqueStrings $ids 'Capability threshold policies'
+    Assert-UniqueStrings $targets 'Capability threshold targets'
+    foreach ($target in @($targets | Sort-Object -Unique)) {
+        if ($canonicalCapabilityThresholdTargets -notcontains $target) {
+            Add-Failure "Capability threshold target is unknown or non-leaf: $target"
+        }
+    }
+    foreach ($target in $canonicalCapabilityThresholdTargets) {
+        $ownerCount = @($targets | Where-Object { $_ -eq $target }).Count
+        if ($ownerCount -ne 1) {
+            Add-Failure "Capability threshold target '$target' must have exactly one owner; found $ownerCount."
+        }
+    }
+    $uniqueTargets = @($targets | Sort-Object -Unique)
+    for ($leftIndex = 0; $leftIndex -lt $uniqueTargets.Count; $leftIndex++) {
+        for ($rightIndex = $leftIndex + 1; $rightIndex -lt $uniqueTargets.Count; $rightIndex++) {
+            $left = [string] $uniqueTargets[$leftIndex]
+            $right = [string] $uniqueTargets[$rightIndex]
+            if ($left.StartsWith($right + '.', [System.StringComparison]::Ordinal) -or
+                $right.StartsWith($left + '.', [System.StringComparison]::Ordinal)) {
+                Add-Failure "Capability threshold targets overlap at parent/child paths: '$left' and '$right'."
+            }
+        }
+    }
+}
+
 $manifestPath = Join-Path $rootPath 'governance-manifest.json'
 $manifest = Read-JsonObject $manifestPath 'Governance manifest'
 if ($null -eq $manifest) {
@@ -152,15 +274,49 @@ if (($null -eq $catalog) -or ($null -eq $runTemplate)) {
     exit 1
 }
 
-$catalogFields = @('$schema', 'schema_version', 'rubric', 'skill_coverage', 'cases')
+$catalogFields = @(
+    '$schema',
+    'schema_version',
+    'threshold_policies',
+    'coverage_requirements',
+    'rubric',
+    'skill_coverage',
+    'cases'
+)
 [void](Assert-ObjectShape $catalog $catalogFields $catalogFields 'Capability catalog')
 if (($catalog.PSObject.Properties.Name -contains '$schema') -and
     ([string] $catalog.'$schema' -ne '../schemas/capability-evaluations.schema.json')) {
     Add-Failure "Capability catalog `$schema must be '../schemas/capability-evaluations.schema.json'."
 }
 if (($catalog.PSObject.Properties.Name -contains 'schema_version') -and
-    ((-not (Test-JsonInteger $catalog.schema_version)) -or (([int] $catalog.schema_version) -ne 2))) {
-    Add-Failure 'Capability catalog schema_version must be integer 2.'
+    ((-not (Test-JsonInteger $catalog.schema_version)) -or (([int] $catalog.schema_version) -ne 3))) {
+    Add-Failure 'Capability catalog schema_version must be integer 3.'
+}
+Assert-ThresholdPolicies $catalog.threshold_policies
+$coverageFields = @(
+    'maximum_cases',
+    'minimum_categories',
+    'minimum_cases_by_risk',
+    'minimum_low_risk_ratio',
+    'minimum_criteria_per_case'
+)
+$coverageUsable = Assert-ObjectShape $catalog.coverage_requirements $coverageFields $coverageFields 'Capability coverage_requirements'
+if ($coverageUsable) {
+    [void](Assert-ObjectShape $catalog.coverage_requirements.minimum_cases_by_risk @(
+        'trivial',
+        'standard',
+        'structural',
+        'critical'
+    ) @('trivial', 'standard', 'structural', 'critical') 'Capability minimum_cases_by_risk')
+    [void](Assert-ObjectShape $catalog.coverage_requirements.minimum_low_risk_ratio @(
+        'numerator',
+        'denominator'
+    ) @('numerator', 'denominator') 'Capability minimum_low_risk_ratio')
+    [void](Assert-ObjectShape $catalog.coverage_requirements.minimum_criteria_per_case @(
+        'must_demonstrate',
+        'must_avoid',
+        'required_evidence'
+    ) @('must_demonstrate', 'must_avoid', 'required_evidence') 'Capability minimum_criteria_per_case')
 }
 if (($catalog.PSObject.Properties.Name -contains 'skill_coverage') -and
     ($catalog.skill_coverage -isnot [System.Array])) {
@@ -359,8 +515,9 @@ if ($coverageBySkill.Count -ne $skillNames.Count) {
 
 $cases = if ($catalog.cases -is [System.Array]) { @($catalog.cases) } else { @() }
 $minimumCases = [int] $manifest.capability_evaluations.minimum_cases
-if (($cases.Count -lt $minimumCases) -or ($cases.Count -gt 150)) {
-    Add-Failure "Capability catalog must contain $minimumCases-150 cases; found $($cases.Count)."
+$maximumCases = [int] $catalog.coverage_requirements.maximum_cases
+if (($cases.Count -lt $minimumCases) -or ($cases.Count -gt $maximumCases)) {
+    Add-Failure "Capability catalog must contain $minimumCases-$maximumCases cases; found $($cases.Count)."
 }
 
 $caseIds = @()
@@ -428,9 +585,9 @@ foreach ($case in $cases) {
 
     $criterionIds = @()
     foreach ($criterionGroup in @(
-        [pscustomobject]@{ Name = 'must_demonstrate'; Minimum = 2 },
-        [pscustomobject]@{ Name = 'must_avoid'; Minimum = 1 },
-        [pscustomobject]@{ Name = 'required_evidence'; Minimum = 1 }
+        [pscustomobject]@{ Name = 'must_demonstrate'; Minimum = [int] $catalog.coverage_requirements.minimum_criteria_per_case.must_demonstrate },
+        [pscustomobject]@{ Name = 'must_avoid'; Minimum = [int] $catalog.coverage_requirements.minimum_criteria_per_case.must_avoid },
+        [pscustomobject]@{ Name = 'required_evidence'; Minimum = [int] $catalog.coverage_requirements.minimum_criteria_per_case.required_evidence }
     )) {
         $groupName = [string] $criterionGroup.Name
         $groupValue = $case.$groupName
@@ -468,25 +625,22 @@ foreach ($case in $cases) {
 
 Assert-UniqueStrings $caseIds 'Capability cases'
 $categories = @($categoryNames | Sort-Object -Unique)
-if ($categories.Count -lt 10) {
-    Add-Failure "Capability catalog needs at least 10 categories; found $($categories.Count)."
+if ($categories.Count -lt [int] $catalog.coverage_requirements.minimum_categories) {
+    Add-Failure "Capability catalog needs at least $($catalog.coverage_requirements.minimum_categories) categories; found $($categories.Count)."
 }
 
-$riskFloors = @{
-    trivial = 5
-    standard = 15
-    structural = 15
-    critical = 10
-}
 foreach ($risk in $risks) {
-    if (([int] $caseCountsByRisk[$risk]) -lt ([int] $riskFloors[$risk])) {
-        Add-Failure "Capability catalog needs at least $($riskFloors[$risk]) '$risk' cases; found $($caseCountsByRisk[$risk])."
+    $riskFloor = [int] $catalog.coverage_requirements.minimum_cases_by_risk.$risk
+    if (([int] $caseCountsByRisk[$risk]) -lt $riskFloor) {
+        Add-Failure "Capability catalog needs at least $riskFloor '$risk' cases; found $($caseCountsByRisk[$risk])."
     }
 }
 $lowRiskCount = [int] $caseCountsByRisk.trivial + [int] $caseCountsByRisk.standard
-$minimumLowRiskCount = [int] [math]::Ceiling($cases.Count / 3.0)
+$ratioNumerator = [double] $catalog.coverage_requirements.minimum_low_risk_ratio.numerator
+$ratioDenominator = [double] $catalog.coverage_requirements.minimum_low_risk_ratio.denominator
+$minimumLowRiskCount = [int] [math]::Ceiling($cases.Count * $ratioNumerator / $ratioDenominator)
 if ($lowRiskCount -lt $minimumLowRiskCount) {
-    Add-Failure "Trivial plus standard cases must be at least one-third of the catalog ($minimumLowRiskCount); found $lowRiskCount."
+    Add-Failure "Trivial plus standard cases do not meet the catalog ratio floor ($minimumLowRiskCount); found $lowRiskCount."
 }
 
 $requiredCaseIds = @(

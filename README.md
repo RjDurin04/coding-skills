@@ -18,6 +18,7 @@ For each engineering task, the pack guides the agent through this flow:
 ```text
 user request
     -> task mode
+    -> narrow generated fast-path screen
     -> matching routing signals
     -> risk and confirmation level
     -> required rules
@@ -33,6 +34,14 @@ It deliberately separates three questions:
 3. **Was an authorized external or operational action actually executed?**
 
 A passing local test does not answer all three.
+
+### Two-stage routing
+
+A self-contained, read-only `ANSWER` may use the generated trivial baseline
+only when every fast-path exclusion is demonstrably false. Any true or unknown
+exclusion falls back to full manifest composition. The validator requires every
+routing signal to be classified as allowed or excluded, so a new signal cannot
+silently enter the fast path.
 
 ## Core Concepts
 
@@ -85,7 +94,7 @@ instructions.
 | [`templates/PROJECT-AGENT-PROFILE.md`](templates/PROJECT-AGENT-PROFILE.md) | Template for repository-specific context. |
 | [`schemas/`](schemas/) | JSON Schemas for the manifest and evaluation artifacts. |
 | [`tests/`](tests/) | Routing scenarios, capability cases, scorers, and negative tests. |
-| [`scripts/test-governance.ps1`](scripts/test-governance.ps1) | Canonical aggregate validation command. |
+| [`scripts/test-governance.ps1`](scripts/test-governance.ps1) | Canonical deterministic pack-validation command. |
 | [`.github/workflows/governance.yml`](.github/workflows/governance.yml) | Windows and Linux CI validation. |
 
 The current pack version, rule inventory, skill inventory, routing signals, and
@@ -246,8 +255,8 @@ For a governed engineering request, the agent should:
 1. Read [`GEMINI.md`](GEMINI.md).
 2. Read the adopting project's `PROJECT-AGENT-PROFILE.md`, when present.
 3. Select exactly one current task mode.
-4. Route through
-   [`governance-manifest.json`](governance-manifest.json), using
+4. Apply the generated fast-path screen. If any exclusion is true or unknown,
+   route through [`governance-manifest.json`](governance-manifest.json), using
    [`rules/governance-router.md`](rules/governance-router.md) as the readable
    view.
 5. Apply the union of matching rules.
@@ -266,8 +275,8 @@ than inheriting authority from the previous mode.
 ## Modify Or Extend The Pack
 
 Use [`governance-manifest.json`](governance-manifest.json) as the authoritative
-inventory. Keep generated router sections, schemas, catalogs, and tests aligned
-with it.
+inventory. Keep generated governance sections, schemas, catalogs, and tests
+aligned with it.
 
 Common extension points:
 
@@ -278,7 +287,7 @@ Common extension points:
 - extend exact routing and raw evaluation cases; or
 - add capability cases and non-compensatory failure criteria.
 
-When the manifest changes, regenerate the readable router:
+When the manifest changes, regenerate the generated governance views:
 
 ```powershell
 ./scripts/generate-governance-router.ps1
@@ -287,7 +296,7 @@ When the manifest changes, regenerate the readable router:
 Install the pinned schema-validation dependencies from
 [`requirements-governance.txt`](requirements-governance.txt) in an isolated
 Python environment. Ensure that environment's `python` command is active, then
-run the aggregate:
+run the deterministic checks:
 
 ```powershell
 python -m pip install ``
@@ -304,27 +313,39 @@ On systems where PowerShell is launched explicitly:
 pwsh ./scripts/test-governance.ps1
 ```
 
-The aggregate checks:
+The deterministic checks cover:
 
 - executable JSON Schema validation and malformed-input rejection;
-- generated-router parity;
+- generated governance-section parity;
 - manifest, schema, inventory, and reference integrity;
 - exact routing scenarios and raw routing coverage;
 - routing scorer bypasses and process exit contracts;
+- offline routing model-runner protocol, isolation, redaction, repetition, and
+  exit contracts;
 - capability catalog coverage and scorer behavior; and
 - governance-validator mutation tests.
 
-The CI workflow runs the same aggregate on Windows and Linux.
+The CI workflow runs the same checks on Windows and Linux. A passing result
+validates the pack artifacts and deterministic harnesses; it does not establish
+live-model behavior, target-environment readiness, or production safety.
 
 ## Evaluation Artifacts
 
-The repository contains two complementary evaluation layers:
+The repository contains three complementary evaluation layers:
 
-- [`tests/routing-evaluations.json`](tests/routing-evaluations.json) checks
-  whether an agent selects the expected mode, signals, risk, confirmation, and
-  skills for raw requests.
+- [`tests/governance-scenarios.json`](tests/governance-scenarios.json) tests
+  deterministic composition from declared signals.
+- [`tests/routing-evaluations.json`](tests/routing-evaluations.json) is a
+  separately owned human semantic oracle for raw requests. Its signal labels
+  are not forced to mirror the composition catalog; overlap discrepancies are
+  surfaced by validation.
 - [`tests/capability-evaluations.json`](tests/capability-evaluations.json)
   defines broader engineering capability cases and scoring criteria.
+
+Thresholds carry owner, classification, status, basis, evidence references,
+and review dates. Current score policies are explicitly `candidate` safety
+policy, not empirically calibrated truth. Derived non-compensatory invariants
+and bounded implementation limits are tracked separately.
 
 Use
 [`tests/routing-evaluation-run.template.json`](tests/routing-evaluation-run.template.json)
@@ -333,10 +354,64 @@ and
 as run-record starting points.
 
 The bundled scorers validate record structure, declared reviewer separation,
-criterion coverage, automatic failures, and artifact hashes. They do not
-authenticate reviewer identity or independently establish that cited evidence
-is substantively relevant. Treat results as reviewer-attested unless an
-external review system supplies that assurance.
+criterion coverage, automatic failures, and artifact hashes. Their machine
+outcome contract is `status: PASS | FAIL`; capability results separately expose
+review provenance through `attestation_status`. Neither field authenticates
+reviewer identity or independently establishes that cited evidence is
+substantively relevant. Treat attested results as reviewer-attested unless an
+external review system supplies stronger assurance.
+
+### Run actual models
+
+The provider-neutral runner invokes user-supplied adapters without a shell.
+Adapter configurations must remain secret-free: put only environment-variable
+names in `environment_allowlist`, never credential values in `argv`. The
+runner's command-line secret checks are best-effort heuristics, not a complete
+secret scanner; apply external repository and artifact secret scanning as an
+independent control. Each adapter receives exactly the raw request JSON, never
+the oracle rationale or expected decision.
+
+Copy
+[`templates/ROUTING-MODEL-ADAPTER.json`](templates/ROUTING-MODEL-ADAPTER.json)
+outside the repository, replace its placeholders, and run explicit repeated
+trials:
+
+```powershell
+python tests/run-routing-model-evaluations.py `
+  --root . `
+  --public-catalog tests/routing-evaluations.json `
+  --adapter C:\secure\model-a.adapter.json `
+  --adapter C:\secure\model-b.adapter.json `
+  --trials 5 `
+  --timeout-seconds 60 `
+  --max-request-bytes 131072 `
+  --max-output-bytes 65536 `
+  --max-invocations 1000 `
+  --output C:\temp\routing-model-report.json
+```
+
+Use `--private-catalog` instead of `--public-catalog` for a holdout stored
+outside the repository. Private prompts, case identifiers, rationales,
+expected decisions, and scores are not copied into the summary. Authored
+paraphrase or reordered variants inherit their base case's oracle decision.
+The runner uses a sanitized environment, a disposable working directory,
+bounded request/output sizes, a launch-through-stdin deadline, an explicit
+invocation budget, mutation detection within that directory, repeated trials,
+and side-by-side model reporting. The catalog's `maximum_cases` applies to all
+runnable base and variant cases. `--max-invocations` independently caps
+`selected cases × adapters × trials`; neither limit has a hidden default.
+The runner starts a local supervisor inside the process-containment boundary;
+that supervisor resolves and launches the configured adapter without a shell,
+so adapter lookup and launch remain terminable under the same deadline.
+Selecting a strict subset with `--case` records `selection_scope: partial`. A
+clean subset returns top-level `PARTIAL` with exit code `4`, never the
+full-evaluation `PASS` contract; underlying failures and errors keep their
+normal statuses. On Windows the runner combines a Job Object with
+observed-descendant cleanup. On POSIX it contains the adapter's initial process
+group; a descendant that deliberately starts a new session can escape that
+group. Neither path is an OS-enforced network or filesystem sandbox. Use an
+externally enforced sandbox or container boundary whenever an adapter or
+evaluated surface is untrusted or could cause real effects.
 
 ## Troubleshooting
 
@@ -358,7 +433,7 @@ Use the exact overlay identifier from `governance-manifest.json` in the
 profile's `adopted_overlays` field. Framework detection alone does not activate
 an overlay.
 
-### Generated-router parity fails
+### Generated governance-section parity fails
 
 Update the manifest first, then run:
 
@@ -366,12 +441,12 @@ Update the manifest first, then run:
 ./scripts/generate-governance-router.ps1
 ```
 
-Review the generated diff and rerun the aggregate.
+Review the generated diff and rerun the deterministic governance checks.
 
 ### Schema validation uses the wrong packages
 
 Activate the isolated Python environment containing the exact versions from
-`requirements-governance.txt`, then rerun the aggregate.
+`requirements-governance.txt`, then rerun the deterministic governance checks.
 
 ### The agent applies too much ceremony
 

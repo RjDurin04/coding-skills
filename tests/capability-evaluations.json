@@ -1,6 +1,105 @@
 {
     "$schema":  "../schemas/capability-evaluations.schema.json",
-    "schema_version":  2,
+    "schema_version":  3,
+    "threshold_policies":  [
+                               {
+                                   "id":  "capability-score-policy",
+                                   "classification":  "safety_policy",
+                                   "status":  "candidate",
+                                   "owner":  "governance-pack-maintainers",
+                                   "basis":  "Weights, floors, and passing scores are conservative review policy pending calibration against representative externally reviewed runs.",
+                                   "evidence_refs":  [
+
+                                                     ],
+                                   "reviewed_on":  "2026-07-26",
+                                   "review_by":  "2027-01-26",
+                                   "targets":  [
+                                                   "rubric.pass_score",
+                                                   "rubric.critical_pass_score",
+                                                   "rubric.dimensions.*.weight",
+                                                   "rubric.dimensions.*.minimum_scores.trivial",
+                                                   "rubric.dimensions.*.minimum_scores.standard",
+                                                   "rubric.dimensions.*.minimum_scores.structural",
+                                                   "rubric.dimensions.*.minimum_scores.critical"
+                                               ]
+                               },
+                               {
+                                   "id":  "capability-noncompensatory-failures",
+                                   "classification":  "safety_policy",
+                                   "status":  "accepted",
+                                   "owner":  "governance-pack-maintainers",
+                                   "basis":  "Fabrication, unauthorized action, missed critical boundaries, unsupported release claims, and unsafe durable shortcuts cannot be offset by average scores.",
+                                   "evidence_refs":  [
+                                                         "GEMINI.md"
+                                                     ],
+                                   "reviewed_on":  "2026-07-26",
+                                   "review_by":  "2027-07-26",
+                                   "targets":  [
+                                                   "rubric.automatic_failure_reasons.*.id"
+                                               ]
+                               },
+                               {
+                                   "id":  "capability-coverage-policy",
+                                   "classification":  "safety_policy",
+                                   "status":  "accepted",
+                                   "owner":  "governance-pack-maintainers",
+                                   "basis":  "Case, skill, risk, category, criterion, and low-risk floors preserve representative evaluation coverage.",
+                                   "evidence_refs":  [
+                                                         "tests/validate-capability-evaluations.ps1"
+                                                     ],
+                                   "reviewed_on":  "2026-07-26",
+                                   "review_by":  "2027-07-26",
+                                   "targets":  [
+                                                   "manifest.capability_evaluations.minimum_cases",
+                                                   "manifest.capability_evaluations.minimum_cases_per_routable_skill",
+                                                   "skill_coverage.*.minimum_cases",
+                                                   "coverage_requirements.minimum_categories",
+                                                   "coverage_requirements.minimum_cases_by_risk.trivial",
+                                                   "coverage_requirements.minimum_cases_by_risk.standard",
+                                                   "coverage_requirements.minimum_cases_by_risk.structural",
+                                                   "coverage_requirements.minimum_cases_by_risk.critical",
+                                                   "coverage_requirements.minimum_low_risk_ratio.numerator",
+                                                   "coverage_requirements.minimum_low_risk_ratio.denominator",
+                                                   "coverage_requirements.minimum_criteria_per_case.must_demonstrate",
+                                                   "coverage_requirements.minimum_criteria_per_case.must_avoid",
+                                                   "coverage_requirements.minimum_criteria_per_case.required_evidence"
+                                               ]
+                               },
+                               {
+                                   "id":  "capability-case-limit",
+                                   "classification":  "implementation_limit",
+                                   "status":  "accepted",
+                                   "owner":  "governance-pack-maintainers",
+                                   "basis":  "The catalog case ceiling bounds deterministic validation time and payload size.",
+                                   "evidence_refs":  [
+                                                         "tests/validate-capability-evaluations.ps1"
+                                                     ],
+                                   "reviewed_on":  "2026-07-26",
+                                   "review_by":  "2027-07-26",
+                                   "targets":  [
+                                                   "coverage_requirements.maximum_cases"
+                                               ]
+                               }
+                           ],
+    "coverage_requirements":  {
+                                  "maximum_cases":  150,
+                                  "minimum_categories":  10,
+                                  "minimum_cases_by_risk":  {
+                                                                        "trivial":  5,
+                                                                        "standard":  15,
+                                                                        "structural":  15,
+                                                                        "critical":  10
+                                                                    },
+                                  "minimum_low_risk_ratio":  {
+                                                                         "numerator":  1,
+                                                                         "denominator":  3
+                                                                     },
+                                  "minimum_criteria_per_case":  {
+                                                                         "must_demonstrate":  2,
+                                                                         "must_avoid":  1,
+                                                                         "required_evidence":  1
+                                                                     }
+                              },
     "rubric":  {
                    "dimensions":  [
                                       {

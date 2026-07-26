@@ -1,7 +1,7 @@
 {
   "$schema": "schemas/governance-manifest.schema.json",
-  "schema_version": 2,
-  "pack_version": "4.0.0",
+  "schema_version": 3,
+  "pack_version": "4.1.0",
   "entrypoints": [
     "AGENTS.md",
     "GEMINI.md"
@@ -83,6 +83,171 @@
     "explicit_authorization",
     "fresh_confirmation"
   ],
+  "status_namespaces": {
+    "claim_certainty": [
+      "VERIFIED",
+      "INFERRED",
+      "ASSUMED",
+      "UNKNOWN"
+    ],
+    "requirement_status": [
+      "APPROVED",
+      "CANDIDATE",
+      "UNKNOWN"
+    ],
+    "finding_severity": [
+      "BLOCKER",
+      "WARNING",
+      "NOTE"
+    ],
+    "gate_assessment": [
+      "PASS",
+      "FAIL",
+      "UNVERIFIED",
+      "N_A"
+    ],
+    "evaluation_result": [
+      "PASS",
+      "FAIL",
+      "INVALID",
+      "ERROR",
+      "PARTIAL"
+    ],
+    "task_outcome": [
+      "COMPLETE",
+      "PARTIAL",
+      "BLOCKED"
+    ],
+    "release_readiness": [
+      "NOT_ASSESSED",
+      "READY",
+      "PARTIAL",
+      "NOT_READY"
+    ],
+    "external_action": [
+      "NOT_REQUESTED",
+      "AWAITING_AUTHORIZATION",
+      "BLOCKED",
+      "PARTIAL",
+      "EXECUTED",
+      "FAILED"
+    ]
+  },
+  "policy_clauses": [
+    {
+      "id": "mode-bounds-actions",
+      "owner_path": "GEMINI.md",
+      "summary": "Task mode limits allowed actions; it does not grant authority or expand the requested scope."
+    },
+    {
+      "id": "workspace-preservation",
+      "owner_path": "rules/agent-operation-safety.md",
+      "summary": "Inspect current state and preserve unrelated user work before local mutation."
+    },
+    {
+      "id": "local-execution-safety",
+      "owner_path": "rules/agent-operation-safety.md",
+      "summary": "Resolve a repository command and its filesystem, network, credential, cost, and target effects before execution."
+    },
+    {
+      "id": "evidence-scope",
+      "owner_path": "GEMINI.md",
+      "summary": "A check supports only the property, artifact, environment, and time it actually observed."
+    },
+    {
+      "id": "delivery-status-separation",
+      "owner_path": "GEMINI.md",
+      "summary": "Task outcome, release readiness, and external-action status are independent claims."
+    },
+    {
+      "id": "unknown-requires-full-route",
+      "owner_path": "rules/governance-router.md",
+      "summary": "Any true or unknown fast-path exclusion requires full manifest routing."
+    }
+  ],
+  "fast_path": {
+    "eligible_modes": [
+      "answer"
+    ],
+    "allowed_signals": [
+      "durable_task"
+    ],
+    "excluded_signals": [
+      "implementation_task",
+      "operational_action",
+      "existing_unfamiliar_code",
+      "vague_material_requirement",
+      "material_requirement_or_constraint",
+      "complex_reasoning_or_state_model",
+      "behavior_change",
+      "test_logic_or_verification_change",
+      "pure_refactor",
+      "bug_or_regression",
+      "architecture_or_public_boundary",
+      "new_durable_boundary",
+      "dependency_change",
+      "supply_chain_change",
+      "supply_chain_advisory_or_bounded_vulnerability",
+      "supply_chain_vulnerability_or_compromise",
+      "repository_code_execution",
+      "unfamiliar_or_privileged_repository_execution",
+      "untrusted_input_or_data_access",
+      "established_security_boundary",
+      "security_sensitive",
+      "sensitive_data_handling",
+      "privacy_lifecycle",
+      "persisted_data",
+      "schema_or_migration",
+      "critical_data_integrity",
+      "algorithmic_efficiency",
+      "production_runtime_flow",
+      "running_system_symptom",
+      "recurring_or_bounded_operational_failure",
+      "credible_high_impact_harm",
+      "user_interface",
+      "user_interface_with_data",
+      "ai_product_behavior",
+      "nontrivial_ai_assisted_work",
+      "release_design_or_configuration",
+      "production_readiness_assessment",
+      "shared_environment_release_execution",
+      "artifact_build_or_distribution",
+      "configuration_or_feature_flag",
+      "security_relevant_configuration",
+      "deprecation_or_replacement",
+      "external_side_effect",
+      "destructive_or_irreversible_action",
+      "material_public_communication",
+      "bounded_credential_or_permission_action",
+      "credential_permission_financial_or_legal_action",
+      "production_incident_change",
+      "product_domain_discovery",
+      "major_project_uncertainty",
+      "api_contract",
+      "database_design",
+      "distributed_system",
+      "platform_infrastructure",
+      "quality_strategy",
+      "active_incident_coordination",
+      "cross_team_technical_leadership",
+      "documentation_stewardship",
+      "formal_assurance"
+    ],
+    "exclusion_checks": [
+      "The request needs repository, project, environment, current-state, or specialist context.",
+      "The request may change code, behavior, contracts, data, UI, configuration, dependencies, artifacts, or runtime state.",
+      "Security, privacy, credentials, permissions, money, legal effect, untrusted input, or credible high-impact harm may be involved.",
+      "Execution, network access, an external or shared effect, production, destruction, or difficult recovery may be involved.",
+      "The request is ambiguous enough that another routing signal may match."
+    ],
+    "policy_clause_ids": [
+      "mode-bounds-actions",
+      "evidence-scope",
+      "delivery-status-separation",
+      "unknown-requires-full-route"
+    ],
+    "fallback_on_unknown": true
+  },
   "rules": [
     {
       "name": "adversarial-self-review",
@@ -135,6 +300,10 @@
     {
       "name": "implementation-execution-protocol",
       "path": "rules/implementation-execution-protocol.md"
+    },
+    {
+      "name": "interface-and-accessibility-gate",
+      "path": "rules/interface-and-accessibility-gate.md"
     },
     {
       "name": "observability-by-design",
@@ -518,7 +687,7 @@
       "confirmation": "none"
     },
     "established_security_boundary": {
-      "description": "Bounded work touches an established, unchanged authentication, authorization, tenant-isolation, secret-handling, or other security boundary without expanding privilege, data exposure, or trust.",
+      "description": "Current code, configuration, and test evidence establishes that bounded work touches an unchanged authentication, authorization, tenant-isolation, secret-handling, or other security boundary without expanding privilege, data exposure, or trust; when that evidence is unavailable, use security_sensitive.",
       "minimum_risk": "standard",
       "rules": [
         "security-and-privacy-gate"
@@ -540,7 +709,7 @@
       "confirmation": "none"
     },
     "sensitive_data_handling": {
-      "description": "Personal or sensitive data is handled within an established and approved trust boundary without creating a new high-impact boundary.",
+      "description": "Classified personal or sensitive data is handled at known volume and tenant scope within an established and approved trust boundary without creating a new high-impact boundary; unknown classification, volume, scope, or approval uses security_sensitive.",
       "minimum_risk": "standard",
       "rules": [
         "security-and-privacy-gate"
@@ -647,7 +816,7 @@
       "confirmation": "none"
     },
     "credible_high_impact_harm": {
-      "description": "The task has a credible path to high-impact harm involving human safety, health, rights, employment, finances, privacy, or security, or material system integrity or availability, and no more specific Critical signal already represents the same consequence.",
+      "description": "A credible failure could materially harm human safety, health, civil rights, employment, or personal finances, or cause catastrophic system-integrity, system-availability, or organizational loss when no more specific Critical signal applies.",
       "minimum_risk": "critical",
       "rules": [
         "adversarial-self-review",
@@ -664,7 +833,9 @@
     "user_interface": {
       "description": "A user-facing interaction, workflow, accessibility behavior, or visual information hierarchy changes.",
       "minimum_risk": "standard",
-      "rules": [],
+      "rules": [
+        "interface-and-accessibility-gate"
+      ],
       "lead_skill": "interface-designer",
       "supporting_skills": [],
       "confirmation": "none"
@@ -673,6 +844,7 @@
       "description": "A form or user interface reads, submits, reveals, or transforms application data.",
       "minimum_risk": "standard",
       "rules": [
+        "interface-and-accessibility-gate",
         "security-and-privacy-gate"
       ],
       "lead_skill": "interface-designer",
@@ -996,8 +1168,15 @@
     "governance_scenarios": "schemas/governance-scenarios.schema.json",
     "routing_evaluations": "schemas/routing-evaluations.schema.json",
     "routing_run": "schemas/routing-evaluation-run.schema.json",
+    "routing_model_adapter": "schemas/routing-model-adapter.schema.json",
+    "routing_model_report": "schemas/routing-model-evaluation-report.schema.json",
     "capability_evaluations": "schemas/capability-evaluations.schema.json",
     "capability_run": "schemas/capability-evaluation-run.schema.json"
+  },
+  "behavioral_evaluations": {
+    "runner": "tests/run-routing-model-evaluations.py",
+    "runner_tests": "tests/test-routing-model-runner.py",
+    "adapter_template": "templates/ROUTING-MODEL-ADAPTER.json"
   },
   "routing_evaluations": {
     "scenario_catalog": "tests/governance-scenarios.json",

@@ -2,7 +2,8 @@
 param(
     [Parameter(Mandatory = $true)]
     [string] $RunRecord,
-    [string] $Root
+    [string] $Root,
+    [string] $CatalogPath
 )
 
 Set-StrictMode -Version Latest
@@ -224,12 +225,141 @@ function Test-SameStringSet {
     return $true
 }
 
+$canonicalRoutingThresholdTargets = @(
+    'scoring.pass_score',
+    'scoring.penalties.wrong_mode',
+    'scoring.penalties.missing_signal',
+    'scoring.penalties.unnecessary_signal',
+    'scoring.penalties.risk_underroute_per_level',
+    'scoring.penalties.risk_overroute_per_level',
+    'scoring.penalties.confirmation_underroute_per_level',
+    'scoring.penalties.confirmation_overroute_per_level',
+    'scoring.penalties.wrong_lead_skill',
+    'scoring.penalties.missing_supporting_skill',
+    'scoring.penalties.unnecessary_supporting_skill',
+    'scoring.penalties.critical_underroute',
+    'manifest.routing_evaluations.minimum_cases',
+    'coverage_requirements.maximum_cases',
+    'coverage_requirements.minimum_cases_per_signal',
+    'coverage_requirements.minimum_cases_per_mode',
+    'coverage_requirements.minimum_minimal_route_cases'
+)
+
+function Assert-ThresholdPolicyAudit {
+    param($Policies)
+
+    if (($Policies -isnot [System.Array]) -or ($Policies -is [string])) {
+        Add-Failure 'Routing threshold_policies must be an array.'
+        return
+    }
+    $ids = @()
+    $targets = @()
+    $policiesByTarget = @{}
+    foreach ($policy in @($Policies)) {
+        $fields = @(
+            'id',
+            'classification',
+            'status',
+            'owner',
+            'basis',
+            'evidence_refs',
+            'reviewed_on',
+            'review_by',
+            'targets'
+        )
+        if (-not (Assert-ObjectShape $policy $fields @() 'Routing threshold policy')) {
+            continue
+        }
+        $ids += [string] $policy.id
+        if (@('derived', 'safety_policy', 'empirical', 'implementation_limit') -notcontains [string] $policy.classification) {
+            Add-Failure "Routing threshold policy '$($policy.id)' has an invalid classification."
+        }
+        if (@('candidate', 'accepted') -notcontains [string] $policy.status) {
+            Add-Failure "Routing threshold policy '$($policy.id)' has an invalid status."
+        }
+        foreach ($propertyName in @('owner', 'basis')) {
+            if (($policy.$propertyName -isnot [string]) -or
+                [string]::IsNullOrWhiteSpace([string] $policy.$propertyName)) {
+                Add-Failure "Routing threshold policy '$($policy.id)' $propertyName must be nonblank."
+            }
+        }
+        $evidenceRefs = @(Get-StringArray $policy.evidence_refs "Routing threshold policy '$($policy.id)' evidence_refs" -AllowEmpty)
+        if (([string] $policy.classification -eq 'empirical') -and ($evidenceRefs.Count -eq 0)) {
+            Add-Failure "Empirical routing threshold policy '$($policy.id)' requires evidence_refs."
+        }
+        foreach ($dateProperty in @('reviewed_on', 'review_by')) {
+            $parsedDate = [datetime]::MinValue
+            if (($policy.$dateProperty -isnot [string]) -or
+                (-not [datetime]::TryParseExact(
+                    [string] $policy.$dateProperty,
+                    'yyyy-MM-dd',
+                    [System.Globalization.CultureInfo]::InvariantCulture,
+                    [System.Globalization.DateTimeStyles]::None,
+                    [ref] $parsedDate
+                ))) {
+                Add-Failure "Routing threshold policy '$($policy.id)' $dateProperty must be YYYY-MM-DD."
+            }
+            elseif (($dateProperty -eq 'review_by') -and ($parsedDate.Date -lt [datetime]::UtcNow.Date)) {
+                Add-Failure "Routing threshold policy '$($policy.id)' review_by is expired."
+            }
+        }
+        foreach ($target in @(Get-StringArray $policy.targets "Routing threshold policy '$($policy.id)' targets")) {
+            $targets += $target
+            if (-not $policiesByTarget.ContainsKey($target)) {
+                $policiesByTarget[$target] = @()
+            }
+            $policiesByTarget[$target] += $policy
+        }
+    }
+    foreach ($duplicate in @($ids | Group-Object | Where-Object Count -gt 1)) {
+        Add-Failure "Routing threshold policies contain duplicate id '$($duplicate.Name)'."
+    }
+    foreach ($duplicate in @($targets | Group-Object | Where-Object Count -gt 1)) {
+        Add-Failure "Routing threshold target '$($duplicate.Name)' has multiple owners."
+    }
+    foreach ($target in @($targets | Sort-Object -Unique)) {
+        if ($canonicalRoutingThresholdTargets -notcontains $target) {
+            Add-Failure "Routing threshold target is unknown or non-leaf: $target"
+        }
+    }
+    foreach ($target in $canonicalRoutingThresholdTargets) {
+        $ownerCount = @($targets | Where-Object { $_ -eq $target }).Count
+        if ($ownerCount -ne 1) {
+            Add-Failure "Routing threshold target '$target' must have exactly one owner; found $ownerCount."
+        }
+    }
+    $uniqueTargets = @($targets | Sort-Object -Unique)
+    for ($leftIndex = 0; $leftIndex -lt $uniqueTargets.Count; $leftIndex++) {
+        for ($rightIndex = $leftIndex + 1; $rightIndex -lt $uniqueTargets.Count; $rightIndex++) {
+            $left = [string] $uniqueTargets[$leftIndex]
+            $right = [string] $uniqueTargets[$rightIndex]
+            if ($left.StartsWith($right + '.', [System.StringComparison]::Ordinal) -or
+                $right.StartsWith($left + '.', [System.StringComparison]::Ordinal)) {
+                Add-Failure "Routing threshold targets overlap at parent/child paths: '$left' and '$right'."
+            }
+        }
+    }
+    $criticalTarget = 'scoring.penalties.critical_underroute'
+    if ($policiesByTarget.ContainsKey($criticalTarget)) {
+        $criticalOwners = @($policiesByTarget[$criticalTarget])
+        if (($criticalOwners.Count -ne 1) -or
+            ([string] $criticalOwners[0].classification -ne 'derived')) {
+            Add-Failure "Routing threshold target '$criticalTarget' must be owned only by one derived policy."
+        }
+    }
+}
+
 $manifest = Read-Json (Join-Path $rootPath 'governance-manifest.json') 'Governance manifest'
 if ($null -eq $manifest) {
     Write-InvalidResult $failures
     exit 2
 }
-$catalogPath = Join-Path $rootPath (([string] $manifest.routing_evaluations.catalog) -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+$catalogPath = if ([string]::IsNullOrWhiteSpace($CatalogPath)) {
+    Join-Path $rootPath (([string] $manifest.routing_evaluations.catalog) -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+}
+else {
+    [System.IO.Path]::GetFullPath($CatalogPath)
+}
 $catalog = Read-Json $catalogPath 'Routing evaluation catalog'
 $record = Read-Json $recordPath 'Routing run record'
 if (($null -eq $catalog) -or ($null -eq $record)) {
@@ -238,6 +368,19 @@ if (($null -eq $catalog) -or ($null -eq $record)) {
 }
 
 try {
+    if (($catalog.schema_version -isnot [int]) -or ([int] $catalog.schema_version -ne 2)) {
+        Add-Failure 'Routing catalog schema_version must be integer 2.'
+    }
+    Assert-ThresholdPolicyAudit $catalog.threshold_policies
+    $scorePolicies = @($catalog.threshold_policies | Where-Object {
+        @($_.targets) -contains 'scoring.pass_score'
+    })
+    if ($scorePolicies.Count -ne 1) {
+        Add-Failure 'Routing catalog must have exactly one threshold policy for scoring.pass_score.'
+    }
+    else {
+        $scorePolicy = $scorePolicies[0]
+    }
     if ((-not (Test-Number $catalog.scoring.pass_score)) -or
         ([double] $catalog.scoring.pass_score -lt 1) -or
         ([double] $catalog.scoring.pass_score -gt 100)) {
@@ -255,6 +398,16 @@ try {
         ([double] $catalog.scoring.penalties.wrong_mode -le
             (100 - [double] $catalog.scoring.pass_score))) {
         Add-Failure 'Routing catalog wrong_mode penalty is compensatory.'
+    }
+    if ((Test-Number $catalog.scoring.penalties.missing_signal) -and
+        (Test-Number $catalog.scoring.pass_score) -and
+        ([double] $catalog.scoring.penalties.missing_signal -le
+            (100 - [double] $catalog.scoring.pass_score))) {
+        Add-Failure 'Routing catalog missing_signal penalty is compensatory.'
+    }
+    if ((-not (Test-Number $catalog.scoring.penalties.critical_underroute)) -or
+        ([double] $catalog.scoring.penalties.critical_underroute -ne 100)) {
+        Add-Failure 'Routing catalog critical_underroute penalty must be 100.'
     }
 }
 catch {
@@ -508,6 +661,12 @@ $result = [ordered]@{
     case_id = [string] $record.case_id
     score = $score
     threshold = [double] $catalog.scoring.pass_score
+    threshold_policy = [ordered]@{
+        id = [string] $scorePolicy.id
+        classification = [string] $scorePolicy.classification
+        status = [string] $scorePolicy.status
+        review_by = [string] $scorePolicy.review_by
+    }
     findings = @($findings)
     mandatory_failures = @($mandatoryFailures | Sort-Object -Unique)
     critical_failures = @($criticalFailures | Sort-Object -Unique)

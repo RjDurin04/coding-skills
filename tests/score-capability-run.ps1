@@ -2,7 +2,8 @@
 param(
     [Parameter(Mandatory = $true)]
     [string] $RunRecord,
-    [string] $Root
+    [string] $Root,
+    [string] $CatalogPath
 )
 
 Set-StrictMode -Version Latest
@@ -135,14 +136,144 @@ function Test-PathEquals {
     return [string]::Equals($Left, $Right, $comparison)
 }
 
+$canonicalCapabilityThresholdTargets = @(
+    'rubric.pass_score',
+    'rubric.critical_pass_score',
+    'rubric.dimensions.*.weight',
+    'rubric.dimensions.*.minimum_scores.trivial',
+    'rubric.dimensions.*.minimum_scores.standard',
+    'rubric.dimensions.*.minimum_scores.structural',
+    'rubric.dimensions.*.minimum_scores.critical',
+    'rubric.automatic_failure_reasons.*.id',
+    'manifest.capability_evaluations.minimum_cases',
+    'manifest.capability_evaluations.minimum_cases_per_routable_skill',
+    'skill_coverage.*.minimum_cases',
+    'coverage_requirements.maximum_cases',
+    'coverage_requirements.minimum_categories',
+    'coverage_requirements.minimum_cases_by_risk.trivial',
+    'coverage_requirements.minimum_cases_by_risk.standard',
+    'coverage_requirements.minimum_cases_by_risk.structural',
+    'coverage_requirements.minimum_cases_by_risk.critical',
+    'coverage_requirements.minimum_low_risk_ratio.numerator',
+    'coverage_requirements.minimum_low_risk_ratio.denominator',
+    'coverage_requirements.minimum_criteria_per_case.must_demonstrate',
+    'coverage_requirements.minimum_criteria_per_case.must_avoid',
+    'coverage_requirements.minimum_criteria_per_case.required_evidence'
+)
+
+function Assert-ThresholdPolicyAudit {
+    param($Policies)
+
+    if (($Policies -isnot [System.Array]) -or ($Policies -is [string])) {
+        Add-Finding 'Capability threshold_policies must be an array.'
+        return
+    }
+    $ids = @()
+    $targets = @()
+    foreach ($policy in @($Policies)) {
+        $fields = @(
+            'id',
+            'classification',
+            'status',
+            'owner',
+            'basis',
+            'evidence_refs',
+            'reviewed_on',
+            'review_by',
+            'targets'
+        )
+        if (-not (Assert-ObjectShape $policy $fields $fields 'Capability threshold policy')) {
+            continue
+        }
+        $ids += [string] $policy.id
+        if (@('derived', 'safety_policy', 'empirical', 'implementation_limit') -notcontains [string] $policy.classification) {
+            Add-Finding "Capability threshold policy '$($policy.id)' has an invalid classification."
+        }
+        if (@('candidate', 'accepted') -notcontains [string] $policy.status) {
+            Add-Finding "Capability threshold policy '$($policy.id)' has an invalid status."
+        }
+        foreach ($propertyName in @('owner', 'basis')) {
+            if (-not (Test-NonblankString $policy.$propertyName)) {
+                Add-Finding "Capability threshold policy '$($policy.id)' $propertyName must be nonblank."
+            }
+        }
+        if ($policy.evidence_refs -isnot [System.Array]) {
+            Add-Finding "Capability threshold policy '$($policy.id)' evidence_refs must be an array."
+        }
+        elseif (([string] $policy.classification -eq 'empirical') -and (@($policy.evidence_refs).Count -eq 0)) {
+            Add-Finding "Empirical capability threshold policy '$($policy.id)' requires evidence_refs."
+        }
+        foreach ($dateProperty in @('reviewed_on', 'review_by')) {
+            $parsedDate = [datetime]::MinValue
+            if (($policy.$dateProperty -isnot [string]) -or
+                (-not [datetime]::TryParseExact(
+                    [string] $policy.$dateProperty,
+                    'yyyy-MM-dd',
+                    [System.Globalization.CultureInfo]::InvariantCulture,
+                    [System.Globalization.DateTimeStyles]::None,
+                    [ref] $parsedDate
+                ))) {
+                Add-Finding "Capability threshold policy '$($policy.id)' $dateProperty must be YYYY-MM-DD."
+            }
+            elseif (($dateProperty -eq 'review_by') -and ($parsedDate.Date -lt [datetime]::UtcNow.Date)) {
+                Add-Finding "Capability threshold policy '$($policy.id)' review_by is expired."
+            }
+        }
+        if (($policy.targets -isnot [System.Array]) -or (@($policy.targets).Count -eq 0)) {
+            Add-Finding "Capability threshold policy '$($policy.id)' targets must be a nonempty array."
+            continue
+        }
+        foreach ($target in @($policy.targets)) {
+            if (-not (Test-NonblankString $target)) {
+                Add-Finding "Capability threshold policy '$($policy.id)' contains a blank or non-string target."
+                continue
+            }
+            $targets += [string] $target
+        }
+    }
+    foreach ($duplicate in @($ids | Group-Object | Where-Object Count -gt 1)) {
+        Add-Finding "Capability threshold policies contain duplicate id '$($duplicate.Name)'."
+    }
+    foreach ($duplicate in @($targets | Group-Object | Where-Object Count -gt 1)) {
+        Add-Finding "Capability threshold target '$($duplicate.Name)' has multiple owners."
+    }
+    foreach ($target in @($targets | Sort-Object -Unique)) {
+        if ($canonicalCapabilityThresholdTargets -notcontains $target) {
+            Add-Finding "Capability threshold target is unknown or non-leaf: $target"
+        }
+    }
+    foreach ($target in $canonicalCapabilityThresholdTargets) {
+        $ownerCount = @($targets | Where-Object { $_ -eq $target }).Count
+        if ($ownerCount -ne 1) {
+            Add-Finding "Capability threshold target '$target' must have exactly one owner; found $ownerCount."
+        }
+    }
+    $uniqueTargets = @($targets | Sort-Object -Unique)
+    for ($leftIndex = 0; $leftIndex -lt $uniqueTargets.Count; $leftIndex++) {
+        for ($rightIndex = $leftIndex + 1; $rightIndex -lt $uniqueTargets.Count; $rightIndex++) {
+            $left = [string] $uniqueTargets[$leftIndex]
+            $right = [string] $uniqueTargets[$rightIndex]
+            if ($left.StartsWith($right + '.', [System.StringComparison]::Ordinal) -or
+                $right.StartsWith($left + '.', [System.StringComparison]::Ordinal)) {
+                Add-Finding "Capability threshold targets overlap at parent/child paths: '$left' and '$right'."
+            }
+        }
+    }
+}
+
 $manifestPath = Join-Path $rootPath 'governance-manifest.json'
 try {
     $manifest = ConvertFrom-JsonDocument (
         Get-Content -Raw -Encoding UTF8 -LiteralPath $manifestPath
     )
-    $catalogPath = Join-Path $rootPath (
-        [string] $manifest.capability_evaluations.catalog -replace '/', [System.IO.Path]::DirectorySeparatorChar
-    )
+    $catalogPath = if ([string]::IsNullOrWhiteSpace($CatalogPath)) {
+        Join-Path $rootPath (
+            [string] $manifest.capability_evaluations.catalog -replace '/', [System.IO.Path]::DirectorySeparatorChar
+        )
+    }
+    else {
+        [System.IO.Path]::GetFullPath($CatalogPath)
+    }
     $catalog = ConvertFrom-JsonDocument (
         Get-Content -Raw -Encoding UTF8 -LiteralPath $catalogPath
     )
@@ -154,6 +285,19 @@ catch {
 }
 
 try {
+    if (($catalog.schema_version -isnot [int]) -or ([int] $catalog.schema_version -ne 3)) {
+        Add-Finding 'Capability catalog schema_version must be integer 3.'
+    }
+    Assert-ThresholdPolicyAudit $catalog.threshold_policies
+    $scorePolicies = @($catalog.threshold_policies | Where-Object {
+        @($_.targets) -contains 'rubric.pass_score'
+    })
+    if ($scorePolicies.Count -ne 1) {
+        Add-Finding 'Capability catalog must have exactly one threshold policy for rubric.pass_score.'
+    }
+    else {
+        $scorePolicy = $scorePolicies[0]
+    }
     foreach ($thresholdName in @('pass_score', 'critical_pass_score')) {
         $thresholdValue = $catalog.rubric.$thresholdName
         if ((-not (Test-JsonNumber $thresholdValue)) -or
@@ -622,12 +766,14 @@ $unverifiedCriteria = @(
 )
 
 $status = 'PASS'
+$attestationStatus = 'ATTESTED_THRESHOLD_MET'
 if (($weightedScore -lt $threshold) -or
     ($floorFailures.Count -gt 0) -or
     ($violatedCriteria.Count -gt 0) -or
     ($unverifiedCriteria.Count -gt 0) -or
     ($automaticReasonIds.Count -gt 0)) {
     $status = 'FAIL'
+    $attestationStatus = 'ATTESTED_THRESHOLD_NOT_MET'
 }
 
 $result = [ordered]@{
@@ -641,11 +787,18 @@ $result = [ordered]@{
     artifact_integrity = 'sha256_verified_at_scoring'
     weighted_score = $weightedScore
     threshold = $threshold
+    threshold_policy = [ordered]@{
+        id = [string] $scorePolicy.id
+        classification = [string] $scorePolicy.classification
+        status = [string] $scorePolicy.status
+        review_by = [string] $scorePolicy.review_by
+    }
     floor_failures = @($floorFailures)
     violated_criteria = @($violatedCriteria)
     unverified_criteria = @($unverifiedCriteria)
     automatic_failure_reason_ids = @($automaticReasonIds)
     status = $status
+    attestation_status = $attestationStatus
 }
 Write-Output ($result | ConvertTo-Json -Depth 10)
 

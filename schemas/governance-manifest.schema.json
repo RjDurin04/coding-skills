@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:portable-agent-governance:schema:governance-manifest:2",
-  "title": "Codex Governance Manifest v2",
+  "$id": "urn:portable-agent-governance:schema:governance-manifest:3",
+  "title": "Portable Agent Governance Manifest v3",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,11 +13,15 @@
     "project_profile_template",
     "schemas",
     "task_modes",
+    "behavioral_evaluations",
     "capability_evaluations",
     "routing_evaluations",
     "unified_delivery_fields",
     "risk_order",
     "confirmation_order",
+    "status_namespaces",
+    "policy_clauses",
+    "fast_path",
     "rules",
     "skills",
     "project_overlays",
@@ -29,7 +33,7 @@
       "const": "schemas/governance-manifest.schema.json"
     },
     "schema_version": {
-      "const": 2
+      "const": 3
     },
     "pack_version": {
       "type": "string",
@@ -58,6 +62,8 @@
         "governance_scenarios",
         "routing_evaluations",
         "routing_run",
+        "routing_model_adapter",
+        "routing_model_report",
         "capability_evaluations",
         "capability_run"
       ],
@@ -73,6 +79,12 @@
         },
         "routing_run": {
           "const": "schemas/routing-evaluation-run.schema.json"
+        },
+        "routing_model_adapter": {
+          "const": "schemas/routing-model-adapter.schema.json"
+        },
+        "routing_model_report": {
+          "const": "schemas/routing-model-evaluation-report.schema.json"
         },
         "capability_evaluations": {
           "const": "schemas/capability-evaluations.schema.json"
@@ -111,6 +123,26 @@
         },
         "operate": {
           "$ref": "#/$defs/taskMode"
+        }
+      }
+    },
+    "behavioral_evaluations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runner",
+        "runner_tests",
+        "adapter_template"
+      ],
+      "properties": {
+        "runner": {
+          "$ref": "#/$defs/packPath"
+        },
+        "runner_tests": {
+          "$ref": "#/$defs/packPath"
+        },
+        "adapter_template": {
+          "$ref": "#/$defs/packPath"
         }
       }
     },
@@ -216,6 +248,96 @@
         "explicit_authorization",
         "fresh_confirmation"
       ]
+    },
+    "status_namespaces": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_certainty",
+        "requirement_status",
+        "finding_severity",
+        "gate_assessment",
+        "evaluation_result",
+        "task_outcome",
+        "release_readiness",
+        "external_action"
+      ],
+      "properties": {
+        "claim_certainty": {
+          "const": [
+            "VERIFIED",
+            "INFERRED",
+            "ASSUMED",
+            "UNKNOWN"
+          ]
+        },
+        "requirement_status": {
+          "const": [
+            "APPROVED",
+            "CANDIDATE",
+            "UNKNOWN"
+          ]
+        },
+        "finding_severity": {
+          "const": [
+            "BLOCKER",
+            "WARNING",
+            "NOTE"
+          ]
+        },
+        "gate_assessment": {
+          "const": [
+            "PASS",
+            "FAIL",
+            "UNVERIFIED",
+            "N_A"
+          ]
+        },
+        "evaluation_result": {
+          "const": [
+            "PASS",
+            "FAIL",
+            "INVALID",
+            "ERROR",
+            "PARTIAL"
+          ]
+        },
+        "task_outcome": {
+          "const": [
+            "COMPLETE",
+            "PARTIAL",
+            "BLOCKED"
+          ]
+        },
+        "release_readiness": {
+          "const": [
+            "NOT_ASSESSED",
+            "READY",
+            "PARTIAL",
+            "NOT_READY"
+          ]
+        },
+        "external_action": {
+          "const": [
+            "NOT_REQUESTED",
+            "AWAITING_AUTHORIZATION",
+            "BLOCKED",
+            "PARTIAL",
+            "EXECUTED",
+            "FAILED"
+          ]
+        }
+      }
+    },
+    "policy_clauses": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/policyClause"
+      }
+    },
+    "fast_path": {
+      "$ref": "#/$defs/fastPath"
     },
     "rules": {
       "type": "array",
@@ -403,6 +525,75 @@
         "confirmation": {
           "$ref": "#/$defs/confirmation"
         }
+      }
+    },
+    "policyClause": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "owner_path",
+        "summary"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+        },
+        "owner_path": {
+          "$ref": "#/$defs/packPath"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 20
+        }
+      }
+    },
+    "fastPath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eligible_modes",
+        "allowed_signals",
+        "excluded_signals",
+        "exclusion_checks",
+        "policy_clause_ids",
+        "fallback_on_unknown"
+      ],
+      "properties": {
+        "eligible_modes": {
+          "$ref": "#/$defs/nonemptyStringSet"
+        },
+        "allowed_signals": {
+          "$ref": "#/$defs/nonemptyStringSet"
+        },
+        "excluded_signals": {
+          "$ref": "#/$defs/nonemptyStringSet"
+        },
+        "exclusion_checks": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 20
+          }
+        },
+        "policy_clause_ids": {
+          "$ref": "#/$defs/nonemptyStringSet"
+        },
+        "fallback_on_unknown": {
+          "const": true
+        }
+      }
+    },
+    "nonemptyStringSet": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
       }
     },
     "stringSet": {

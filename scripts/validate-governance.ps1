@@ -192,6 +192,33 @@ function Assert-SameSet {
     }
 }
 
+function Assert-SameSequence {
+    param(
+        [string[]] $Expected,
+        [string[]] $Actual,
+        [string] $Label
+    )
+
+    $expectedValues = @($Expected)
+    $actualValues = @($Actual)
+    $matches = $expectedValues.Count -eq $actualValues.Count
+    if ($matches) {
+        for ($index = 0; $index -lt $expectedValues.Count; $index++) {
+            if (-not [string]::Equals(
+                    $expectedValues[$index],
+                    $actualValues[$index],
+                    [System.StringComparison]::Ordinal
+                )) {
+                $matches = $false
+                break
+            }
+        }
+    }
+    if (-not $matches) {
+        Add-Failure "$Label must be exactly [$($expectedValues -join ', ')]; found [$($actualValues -join ', ')]."
+    }
+}
+
 function Get-FrontMatterValue {
     param(
         [string] $Path,
@@ -275,12 +302,16 @@ $manifestProperties = @(
     'task_modes',
     'risk_order',
     'confirmation_order',
+    'status_namespaces',
+    'policy_clauses',
+    'fast_path',
     'rules',
     'skills',
     'project_overlays',
     'risk_overlays',
     'routing_signals',
     'schemas',
+    'behavioral_evaluations',
     'routing_evaluations',
     'capability_evaluations'
 )
@@ -289,8 +320,8 @@ $manifestShapeValid = Assert-ObjectShape $manifest $manifestProperties @() 'Mani
 if (($manifest.PSObject.Properties.Name -contains '$schema') -and ([string] $manifest.'$schema' -ne 'schemas/governance-manifest.schema.json')) {
     Add-Failure "Manifest `$schema must be 'schemas/governance-manifest.schema.json'."
 }
-if (($manifest.PSObject.Properties.Name -contains 'schema_version') -and ((-not (Test-Integer $manifest.schema_version)) -or ([int] $manifest.schema_version -ne 2))) {
-    Add-Failure 'Manifest schema_version must be integer 2.'
+if (($manifest.PSObject.Properties.Name -contains 'schema_version') -and ((-not (Test-Integer $manifest.schema_version)) -or ([int] $manifest.schema_version -ne 3))) {
+    Add-Failure 'Manifest schema_version must be integer 3.'
 }
 if (($manifest.PSObject.Properties.Name -contains 'pack_version') -and
     ((-not (Assert-NonBlankString $manifest.pack_version 'Manifest pack_version')) -or ([string] $manifest.pack_version -notmatch $semverPattern))) {
@@ -324,6 +355,8 @@ $schemaProperties = @(
     'governance_scenarios',
     'routing_evaluations',
     'routing_run',
+    'routing_model_adapter',
+    'routing_model_report',
     'capability_evaluations',
     'capability_run'
 )
@@ -332,15 +365,19 @@ $schemaExpectedPaths = [ordered]@{
     governance_scenarios = 'schemas/governance-scenarios.schema.json'
     routing_evaluations = 'schemas/routing-evaluations.schema.json'
     routing_run = 'schemas/routing-evaluation-run.schema.json'
+    routing_model_adapter = 'schemas/routing-model-adapter.schema.json'
+    routing_model_report = 'schemas/routing-model-evaluation-report.schema.json'
     capability_evaluations = 'schemas/capability-evaluations.schema.json'
     capability_run = 'schemas/capability-evaluation-run.schema.json'
 }
 $schemaExpectedIds = [ordered]@{
-    governance_manifest = 'urn:portable-agent-governance:schema:governance-manifest:2'
+    governance_manifest = 'urn:portable-agent-governance:schema:governance-manifest:3'
     governance_scenarios = 'urn:portable-agent-governance:schema:governance-scenarios:2'
-    routing_evaluations = 'urn:portable-agent-governance:schema:routing-evaluations:1'
+    routing_evaluations = 'urn:portable-agent-governance:schema:routing-evaluations:2'
     routing_run = 'urn:portable-agent-governance:schema:routing-evaluation-run:1'
-    capability_evaluations = 'urn:portable-agent-governance:schema:capability-evaluations:2'
+    routing_model_adapter = 'urn:portable-agent-governance:schema:routing-model-adapter:1'
+    routing_model_report = 'urn:portable-agent-governance:schema:routing-model-evaluation-report:1'
+    capability_evaluations = 'urn:portable-agent-governance:schema:capability-evaluations:3'
     capability_run = 'urn:portable-agent-governance:schema:capability-evaluation-run:2'
 }
 if (($manifest.PSObject.Properties.Name -contains 'schemas') -and (Assert-ObjectShape $manifest.schemas $schemaProperties @() 'Manifest schemas')) {
@@ -576,6 +613,149 @@ else {
     Add-Failure 'Manifest routing_signals must be an object.'
 }
 
+$statusNamespaceValues = [ordered]@{
+    claim_certainty = @('VERIFIED', 'INFERRED', 'ASSUMED', 'UNKNOWN')
+    requirement_status = @('APPROVED', 'CANDIDATE', 'UNKNOWN')
+    finding_severity = @('BLOCKER', 'WARNING', 'NOTE')
+    gate_assessment = @('PASS', 'FAIL', 'UNVERIFIED', 'N_A')
+    evaluation_result = @('PASS', 'FAIL', 'INVALID', 'ERROR', 'PARTIAL')
+    task_outcome = @('COMPLETE', 'PARTIAL', 'BLOCKED')
+    release_readiness = @('NOT_ASSESSED', 'READY', 'PARTIAL', 'NOT_READY')
+    external_action = @('NOT_REQUESTED', 'AWAITING_AUTHORIZATION', 'BLOCKED', 'PARTIAL', 'EXECUTED', 'FAILED')
+}
+if (($manifest.PSObject.Properties.Name -contains 'status_namespaces') -and
+    (Assert-ObjectShape $manifest.status_namespaces @($statusNamespaceValues.Keys) @() 'Manifest status_namespaces')) {
+    foreach ($namespace in $statusNamespaceValues.Keys) {
+        $actualValues = @(Assert-StringArray $manifest.status_namespaces.$namespace "Status namespace '$namespace'")
+        Assert-SameSequence $statusNamespaceValues[$namespace] $actualValues "Status namespace '$namespace'"
+    }
+}
+
+$policyClauseIds = @()
+if ($manifest.PSObject.Properties.Name -contains 'policy_clauses') {
+    if (($manifest.policy_clauses -is [string]) -or ($manifest.policy_clauses -isnot [System.Array])) {
+        Add-Failure 'Manifest policy_clauses must be an array.'
+    }
+    else {
+        foreach ($clause in @($manifest.policy_clauses)) {
+            if (-not (Assert-ObjectShape $clause @('id', 'owner_path', 'summary') @() 'Policy clause')) {
+                continue
+            }
+            if ((-not (Assert-NonBlankString $clause.id 'Policy clause id')) -or
+                ([string] $clause.id -notmatch '^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$')) {
+                Add-Failure "Policy clause id must use lowercase kebab-case: $($clause.id)"
+            }
+            else {
+                $policyClauseIds += [string] $clause.id
+            }
+            [void](Assert-ExistingPackFile $clause.owner_path "Policy clause '$($clause.id)' owner_path")
+            if ((-not (Assert-NonBlankString $clause.summary "Policy clause '$($clause.id)' summary")) -or
+                ([string] $clause.summary).Trim().Length -lt 20) {
+                Add-Failure "Policy clause '$($clause.id)' summary must be at least 20 characters."
+            }
+        }
+        foreach ($duplicate in @($policyClauseIds | Group-Object | Where-Object Count -gt 1)) {
+            Add-Failure "Duplicate policy clause id: $($duplicate.Name)"
+        }
+    }
+}
+
+if (($manifest.PSObject.Properties.Name -contains 'fast_path') -and
+    (Assert-ObjectShape $manifest.fast_path @(
+        'eligible_modes',
+        'allowed_signals',
+        'excluded_signals',
+        'exclusion_checks',
+        'policy_clause_ids',
+        'fallback_on_unknown'
+    ) @() 'Manifest fast_path')) {
+    $fastModes = @(Assert-StringArray $manifest.fast_path.eligible_modes 'Fast path eligible_modes')
+    $fastAllowed = @(Assert-StringArray $manifest.fast_path.allowed_signals 'Fast path allowed_signals')
+    $fastExcluded = @(Assert-StringArray $manifest.fast_path.excluded_signals 'Fast path excluded_signals')
+    $fastChecks = @(Assert-StringArray $manifest.fast_path.exclusion_checks 'Fast path exclusion_checks')
+    $fastClauseIds = @(Assert-StringArray $manifest.fast_path.policy_clause_ids 'Fast path policy_clause_ids')
+    if (($manifest.fast_path.fallback_on_unknown -isnot [bool]) -or (-not [bool] $manifest.fast_path.fallback_on_unknown)) {
+        Add-Failure 'Manifest fast_path.fallback_on_unknown must be true.'
+    }
+    foreach ($modeName in $fastModes) {
+        if ($canonicalTaskModes -notcontains $modeName) {
+            Add-Failure "Fast path references unknown mode: $modeName"
+            continue
+        }
+        $mode = $manifest.task_modes.$modeName
+        if ([bool] $mode.allows_external_effects) {
+            Add-Failure "Fast path mode '$modeName' cannot allow external effects."
+        }
+        foreach ($requiredSignal in @($mode.required_signals)) {
+            if ($fastAllowed -notcontains [string] $requiredSignal) {
+                Add-Failure "Fast path mode '$modeName' requires non-allowed signal: $requiredSignal"
+            }
+        }
+    }
+    foreach ($signalName in $fastAllowed) {
+        if ($signalNames -notcontains $signalName) {
+            Add-Failure "Fast path references unknown allowed signal: $signalName"
+            continue
+        }
+        $signal = $manifest.routing_signals.$signalName
+        if (([string] $signal.minimum_risk -ne 'trivial') -or
+            ([string] $signal.confirmation -ne 'none') -or
+            ($null -ne $signal.lead_skill)) {
+            Add-Failure "Fast path signal '$signalName' must be trivial, require no confirmation, and have no lead skill."
+        }
+    }
+    foreach ($signalName in $fastExcluded) {
+        if ($signalNames -notcontains $signalName) {
+            Add-Failure "Fast path references unknown excluded signal: $signalName"
+        }
+        if ($fastAllowed -contains $signalName) {
+            Add-Failure "Fast path signal '$signalName' is both allowed and excluded."
+        }
+    }
+    Assert-SameSet $signalNames @($fastAllowed + $fastExcluded) 'Fast path signal classification'
+    if ($fastChecks.Count -lt 3) {
+        Add-Failure 'Fast path must define at least three compact exclusion checks.'
+    }
+    foreach ($clauseId in $fastClauseIds) {
+        if ($policyClauseIds -notcontains $clauseId) {
+            Add-Failure "Fast path references unknown policy clause: $clauseId"
+        }
+    }
+}
+
+foreach ($uiSignalName in @('user_interface', 'user_interface_with_data')) {
+    if (($signalNames -contains $uiSignalName) -and
+        (@($manifest.routing_signals.$uiSignalName.rules) -notcontains 'interface-and-accessibility-gate')) {
+        Add-Failure "Routing signal '$uiSignalName' must include interface-and-accessibility-gate."
+    }
+}
+$interfaceRulePath = Join-Path $rootPath (
+    ('rules/interface-and-accessibility-gate.md') -replace '/', [System.IO.Path]::DirectorySeparatorChar
+)
+if (Test-Path -LiteralPath $interfaceRulePath -PathType Leaf) {
+    $interfaceRule = Read-Utf8 $interfaceRulePath
+    if ($interfaceRule -notmatch '(?m)^## Material Accessibility Release Blocker\s*$') {
+        Add-Failure 'Interface and accessibility gate must define a material accessibility release blocker.'
+    }
+}
+$productionReadinessPath = Join-Path $rootPath (
+    ('rules/production-readiness-gate.md') -replace '/', [System.IO.Path]::DirectorySeparatorChar
+)
+if (Test-Path -LiteralPath $productionReadinessPath -PathType Leaf) {
+    $productionReadinessRule = Read-Utf8 $productionReadinessPath
+    if ($productionReadinessRule -match '(?<![A-Za-z0-9_])N/A(?![A-Za-z0-9_])') {
+        Add-Failure "Production readiness gate contains stale gate-assessment literal 'N/A'; use N_A."
+    }
+}
+$ruleIndexMatch = [regex]::Match(
+    $gemini,
+    '(?ms)^## 11\. Rule Index\s*(?<body>.*?)(?=^## 12\. Skill Index)'
+)
+if ((-not $ruleIndexMatch.Success) -or
+    ($ruleIndexMatch.Groups['body'].Value -notmatch [regex]::Escape('rules/interface-and-accessibility-gate.md'))) {
+    Add-Failure 'GEMINI.md Rule Index must include rules/interface-and-accessibility-gate.md.'
+}
+
 $riskOverlays = @()
 if ($manifest.PSObject.Properties.Name -contains 'risk_overlays') {
     if (($manifest.risk_overlays -is [string]) -or ($manifest.risk_overlays -isnot [System.Array])) {
@@ -794,6 +974,17 @@ foreach ($evaluationName in @('capability_evaluations', 'routing_evaluations')) 
     }
 }
 
+if (($manifest.PSObject.Properties.Name -contains 'behavioral_evaluations') -and
+    (Assert-ObjectShape $manifest.behavioral_evaluations @(
+        'runner',
+        'runner_tests',
+        'adapter_template'
+    ) @() 'Manifest behavioral_evaluations')) {
+    foreach ($property in @('runner', 'runner_tests', 'adapter_template')) {
+        [void](Assert-ExistingPackFile $manifest.behavioral_evaluations.$property "Manifest behavioral_evaluations.$property")
+    }
+}
+
 if ($manifest.PSObject.Properties.Name -contains 'unified_delivery_fields') {
     foreach ($field in @(Assert-StringArray $manifest.unified_delivery_fields 'Manifest unified_delivery_fields')) {
         if (-not $gemini.Contains($field + ':')) {
@@ -802,9 +993,14 @@ if ($manifest.PSObject.Properties.Name -contains 'unified_delivery_fields') {
     }
 }
 
-$standaloneOutputs = @(Select-String -Path (Join-Path $rootPath 'rules/*.md') -Pattern '^## Output$' -Encoding UTF8)
+$standaloneOutputFiles = @(
+    Get-ChildItem -File -LiteralPath (Join-Path $rootPath 'rules') -Filter '*.md'
+    Get-ChildItem -Recurse -File -LiteralPath (Join-Path $rootPath 'skills') -Filter 'SKILL.md'
+    Get-ChildItem -Recurse -File -LiteralPath (Join-Path $rootPath 'overlays') -Filter '*.md'
+)
+$standaloneOutputs = @($standaloneOutputFiles | Select-String -Pattern '^## Output$' -Encoding UTF8)
 foreach ($match in $standaloneOutputs) {
-    Add-Failure "Standalone rule output remains at $($match.Path):$($match.LineNumber)"
+    Add-Failure "Standalone rule or skill output remains at $($match.Path):$($match.LineNumber)"
 }
 
 $markdownFiles = @(Get-ChildItem -Recurse -File -LiteralPath $rootPath -Filter '*.md')
@@ -890,8 +1086,11 @@ else {
 
 if (($router -notmatch '<!-- BEGIN GENERATED: TASK MODES -->') -or
     ($router -notmatch '<!-- BEGIN GENERATED: ROUTING SIGNALS -->') -or
-    ($router -notmatch '<!-- BEGIN GENERATED: RISK OVERLAYS -->')) {
-    Add-Failure 'Governance router is missing one or more generated-section markers.'
+    ($router -notmatch '<!-- BEGIN GENERATED: RISK OVERLAYS -->') -or
+    ($router -notmatch '<!-- BEGIN GENERATED: POLICY CLAUSES -->') -or
+    ($gemini -notmatch '<!-- BEGIN GENERATED: FAST PATH -->') -or
+    ($gemini -notmatch '<!-- BEGIN GENERATED: STATUS NAMESPACES -->')) {
+    Add-Failure 'Governance entrypoints are missing one or more generated-section markers.'
 }
 else {
     $generatorPath = Join-Path $rootPath (('scripts/generate-governance-router.ps1') -replace '/', [System.IO.Path]::DirectorySeparatorChar)
@@ -905,11 +1104,11 @@ else {
             $childArguments += @('-File', $generatorPath, '-Root', $rootPath, '-Check')
             $generatorOutput = @(& $hostExecutable @childArguments 2>&1)
             if ($LASTEXITCODE -ne 0) {
-                Add-Failure "Governance router semantic parity check failed: $($generatorOutput -join ' ')"
+                Add-Failure "Generated governance semantic parity check failed: $($generatorOutput -join ' ')"
             }
         }
         catch {
-            Add-Failure "Governance router semantic parity check could not run: $($_.Exception.Message)"
+            Add-Failure "Generated governance semantic parity check could not run: $($_.Exception.Message)"
         }
     }
 }
@@ -922,5 +1121,5 @@ if ($failures.Count -gt 0) {
     exit 1
 }
 
-Write-Host "Governance validation PASS: $($manifest.rules.Count) rules, $($manifest.skills.Count) skills, $($signalProperties.Count) routing signals, $($manifest.project_overlays.Count) project overlays, schema v$($manifest.schema_version)." -ForegroundColor Green
+Write-Host "Governance structure validation PASS: $($manifest.rules.Count) rules, $($manifest.skills.Count) skills, $($signalProperties.Count) routing signals, $($manifest.project_overlays.Count) project overlays, schema v$($manifest.schema_version)." -ForegroundColor Green
 exit 0

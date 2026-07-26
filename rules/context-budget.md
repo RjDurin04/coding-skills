@@ -32,6 +32,20 @@ failing check needs diagnosis; risk tier rises.
 Changed file, surrounding style, behavior-defining tests/examples when present,
 and caller/entry point for behavior changes.
 
+## Session, Evidence, And Shared-Workspace Freshness
+
+Before durable edits, reread the current target and discover existing user
+changes. Re-orient after context compaction, resume, a user correction,
+delegated work, or a relevant workspace, configuration, or dependency change.
+Treat summaries, memory, and earlier tool output as pointers rather than current
+evidence; cheaply reverify drift-prone facts.
+
+Partition delegated work by file or seam where practical. Delegation carries
+only the scoped task authority. Record each contribution's purpose, files,
+checks, and unresolved assumptions. The coordinating agent must inspect the
+combined diff and verify material claims. If overlapping changes appear, do not
+overwrite them; reconcile deliberately or stop and disclose the conflict.
+
 ## Delivery Contribution
 
 Add only material context read, risk-floor source, and unknowns that affect the

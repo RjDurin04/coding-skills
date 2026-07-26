@@ -34,10 +34,10 @@ result, use `UNVERIFIED` rather than inferring a pass:
 
 ```text
 Gate: [rule/required project gate]
-Status: PASS | FAIL | UNVERIFIED | N/A
+Status: PASS | FAIL | UNVERIFIED | N_A
 Evidence: [artifact/check/source, environment, time]
 Owner: [for remediation or accepted risk]
-Reason: [required for FAIL, UNVERIFIED, or N/A]
+Reason: [required for FAIL, UNVERIFIED, or N_A]
 ```
 
 At minimum, consider whether routing triggered requirements/contract,

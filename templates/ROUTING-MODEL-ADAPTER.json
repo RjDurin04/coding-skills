@@ -1,0 +1,17 @@
+{
+  "$schema": "../schemas/routing-model-adapter.schema.json",
+  "schema_version": 1,
+  "id": "replace-with-adapter-id",
+  "argv": [
+    "replace-with-adapter-executable",
+    "--stdio"
+  ],
+  "environment_allowlist": [],
+  "model": {
+    "provider": "replace-with-provider",
+    "name": "replace-with-model-name",
+    "version": "replace-with-model-version",
+    "agent_surface": "replace-with-agent-surface"
+  },
+  "instruction_binding": "replace-with-how-the-governance-pack-is-bound"
+}

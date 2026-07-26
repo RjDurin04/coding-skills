@@ -15,6 +15,7 @@ if ([string]::IsNullOrWhiteSpace($Root)) {
 $rootPath = [System.IO.Path]::GetFullPath($Root)
 $manifestPath = Join-Path $rootPath 'governance-manifest.json'
 $routerPath = Join-Path $rootPath (('rules/governance-router.md') -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+$geminiPath = Join-Path $rootPath 'GEMINI.md'
 
 function Read-Utf8Text {
     param([string] $Path)
@@ -87,6 +88,9 @@ if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
 if (-not (Test-Path -LiteralPath $routerPath -PathType Leaf)) {
     throw "Missing governance router: $routerPath"
 }
+if (-not (Test-Path -LiteralPath $geminiPath -PathType Leaf)) {
+    throw "Missing compact governance entrypoint: $geminiPath"
+}
 
 try {
     $manifest = Read-Utf8Text $manifestPath | ConvertFrom-Json
@@ -95,10 +99,19 @@ catch {
     throw "Governance manifest is not valid JSON: $($_.Exception.Message)"
 }
 
-if (($manifest.PSObject.Properties.Name -notcontains 'schema_version') -or (([int] $manifest.schema_version) -ne 2)) {
-    throw 'Router generation requires governance manifest schema_version 2.'
+if (($manifest.PSObject.Properties.Name -notcontains 'schema_version') -or (([int] $manifest.schema_version) -ne 3)) {
+    throw 'Router generation requires governance manifest schema_version 3.'
 }
-foreach ($property in @('task_modes', 'risk_order', 'confirmation_order', 'risk_overlays', 'routing_signals')) {
+foreach ($property in @(
+    'task_modes',
+    'risk_order',
+    'confirmation_order',
+    'risk_overlays',
+    'routing_signals',
+    'fast_path',
+    'policy_clauses',
+    'status_namespaces'
+)) {
     if ($manifest.PSObject.Properties.Name -notcontains $property) {
         throw "Governance manifest is missing required router property: $property"
     }
@@ -173,29 +186,93 @@ if (@($manifest.risk_overlays).Count -eq 0) {
     $riskOverlayLines += '| none | none | none |'
 }
 
+$policyClauseLines = @(
+    '| Clause | Canonical owner | Generated summary |',
+    '|---|---|---|'
+)
+foreach ($clause in @($manifest.policy_clauses)) {
+    $policyClauseLines += '| ' +
+        (ConvertTo-CodeList @($clause.id)) + ' | ' +
+        (ConvertTo-CodeList @($clause.owner_path)) + ' | ' +
+        (ConvertTo-MarkdownCell $clause.summary) + ' |'
+}
+
+$fastPathLines = @(
+    ('Use the precompiled baseline only for mode ' +
+        (ConvertTo-CodeList @($manifest.fast_path.eligible_modes)) +
+        ' with signals ' +
+        (ConvertTo-CodeList @($manifest.fast_path.allowed_signals)) +
+        '.'),
+    '',
+    'Every check below must be demonstrably false:'
+)
+foreach ($exclusionCheck in @($manifest.fast_path.exclusion_checks)) {
+    $fastPathLines += "- $(ConvertTo-MarkdownCell $exclusionCheck)"
+}
+$fastPathLines += @(
+    '',
+    'If any exclusion is true or unknown, stop the fast path and apply the full',
+    'manifest router. On the baseline, inspect the supplied target/context, make',
+    'no state change or external effect, use the cheapest check that could',
+    'falsify the answer when one exists, and disclose material evidence gaps.',
+    'Task outcome, release readiness, and external-action status remain separate.'
+)
+
+$statusNamespaceLabels = [ordered]@{
+    claim_certainty = 'Claim certainty'
+    requirement_status = 'Requirement status'
+    finding_severity = 'Finding severity'
+    gate_assessment = 'Gate assessment'
+    evaluation_result = 'Evaluation result'
+    task_outcome = 'Task outcome'
+    release_readiness = 'Release readiness'
+    external_action = 'External action'
+}
+$statusNamespaceLines = @(
+    '| Namespace | Values |',
+    '|---|---|'
+)
+foreach ($namespace in $statusNamespaceLabels.Keys) {
+    $statusNamespaceLines += '| ' +
+        (ConvertTo-MarkdownCell $statusNamespaceLabels[$namespace]) + ' | ' +
+        (ConvertTo-CodeList @($manifest.status_namespaces.$namespace)) + ' |'
+}
+
 $current = ConvertTo-LfText (Read-Utf8Text $routerPath)
+$geminiCurrent = ConvertTo-LfText (Read-Utf8Text $geminiPath)
 $newLine = "`n"
 $generated = $current
 $generated = Replace-GeneratedSection $generated 'TASK MODES' $taskModeLines $newLine
 $generated = Replace-GeneratedSection $generated 'ROUTING SIGNALS' $routingSignalLines $newLine
 $generated = Replace-GeneratedSection $generated 'RISK OVERLAYS' $riskOverlayLines $newLine
+$generated = Replace-GeneratedSection $generated 'POLICY CLAUSES' $policyClauseLines $newLine
+$geminiGenerated = $geminiCurrent
+$geminiGenerated = Replace-GeneratedSection $geminiGenerated 'FAST PATH' $fastPathLines $newLine
+$geminiGenerated = Replace-GeneratedSection $geminiGenerated 'STATUS NAMESPACES' $statusNamespaceLines $newLine
 
 if ($Check) {
-    if (-not [string]::Equals($current, $generated, [System.StringComparison]::Ordinal)) {
-        Write-Host 'Governance router generated sections are stale. Run scripts/generate-governance-router.ps1.' -ForegroundColor Red
+    if ((-not [string]::Equals($current, $generated, [System.StringComparison]::Ordinal)) -or
+        (-not [string]::Equals($geminiCurrent, $geminiGenerated, [System.StringComparison]::Ordinal))) {
+        Write-Host 'Generated governance sections are stale. Run scripts/generate-governance-router.ps1.' -ForegroundColor Red
         exit 1
     }
 
-    Write-Host 'Governance router generated sections are current.' -ForegroundColor Green
+    Write-Host 'Generated governance sections are current.' -ForegroundColor Green
     exit 0
 }
 
-if ([string]::Equals($current, $generated, [System.StringComparison]::Ordinal)) {
-    Write-Host 'Governance router generated sections already current.' -ForegroundColor Green
+if ([string]::Equals($current, $generated, [System.StringComparison]::Ordinal) -and
+    [string]::Equals($geminiCurrent, $geminiGenerated, [System.StringComparison]::Ordinal)) {
+    Write-Host 'Generated governance sections already current.' -ForegroundColor Green
     exit 0
 }
 
 $utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
-[System.IO.File]::WriteAllText($routerPath, $generated, $utf8WithoutBom)
-Write-Host 'Updated generated sections in rules/governance-router.md.' -ForegroundColor Green
+if (-not [string]::Equals($current, $generated, [System.StringComparison]::Ordinal)) {
+    [System.IO.File]::WriteAllText($routerPath, $generated, $utf8WithoutBom)
+}
+if (-not [string]::Equals($geminiCurrent, $geminiGenerated, [System.StringComparison]::Ordinal)) {
+    [System.IO.File]::WriteAllText($geminiPath, $geminiGenerated, $utf8WithoutBom)
+}
+Write-Host 'Updated generated governance sections.' -ForegroundColor Green
 exit 0

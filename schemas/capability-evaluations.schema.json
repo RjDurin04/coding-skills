@@ -1,12 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:portable-agent-governance:schema:capability-evaluations:2",
-  "title": "Capability Evaluation Catalog v2",
+  "$id": "urn:portable-agent-governance:schema:capability-evaluations:3",
+  "title": "Capability Evaluation Catalog v3",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "$schema",
     "schema_version",
+    "threshold_policies",
+    "coverage_requirements",
     "rubric",
     "skill_coverage",
     "cases"
@@ -16,7 +18,17 @@
       "const": "../schemas/capability-evaluations.schema.json"
     },
     "schema_version": {
-      "const": 2
+      "const": 3
+    },
+    "threshold_policies": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/thresholdPolicy"
+      }
+    },
+    "coverage_requirements": {
+      "$ref": "#/$defs/capabilityCoverage"
     },
     "rubric": {
       "$ref": "#/$defs/rubric"
@@ -37,6 +49,202 @@
     }
   },
   "$defs": {
+    "capabilityCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maximum_cases",
+        "minimum_categories",
+        "minimum_cases_by_risk",
+        "minimum_low_risk_ratio",
+        "minimum_criteria_per_case"
+      ],
+      "properties": {
+        "maximum_cases": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minimum_categories": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minimum_cases_by_risk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trivial",
+            "standard",
+            "structural",
+            "critical"
+          ],
+          "properties": {
+            "trivial": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "standard": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "structural": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "critical": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "minimum_low_risk_ratio": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "numerator",
+            "denominator"
+          ],
+          "properties": {
+            "numerator": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "denominator": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "minimum_criteria_per_case": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "must_demonstrate",
+            "must_avoid",
+            "required_evidence"
+          ],
+          "properties": {
+            "must_demonstrate": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "must_avoid": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "required_evidence": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    "thresholdPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "classification",
+        "status",
+        "owner",
+        "basis",
+        "evidence_refs",
+        "reviewed_on",
+        "review_by",
+        "targets"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+        },
+        "classification": {
+          "enum": [
+            "derived",
+            "safety_policy",
+            "empirical",
+            "implementation_limit"
+          ]
+        },
+        "status": {
+          "enum": [
+            "candidate",
+            "accepted"
+          ]
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 20
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/stringSet"
+        },
+        "reviewed_on": {
+          "type": "string",
+          "format": "date"
+        },
+        "review_by": {
+          "type": "string",
+          "format": "date"
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "rubric.pass_score",
+              "rubric.critical_pass_score",
+              "rubric.dimensions.*.weight",
+              "rubric.dimensions.*.minimum_scores.trivial",
+              "rubric.dimensions.*.minimum_scores.standard",
+              "rubric.dimensions.*.minimum_scores.structural",
+              "rubric.dimensions.*.minimum_scores.critical",
+              "rubric.automatic_failure_reasons.*.id",
+              "manifest.capability_evaluations.minimum_cases",
+              "manifest.capability_evaluations.minimum_cases_per_routable_skill",
+              "skill_coverage.*.minimum_cases",
+              "coverage_requirements.maximum_cases",
+              "coverage_requirements.minimum_categories",
+              "coverage_requirements.minimum_cases_by_risk.trivial",
+              "coverage_requirements.minimum_cases_by_risk.standard",
+              "coverage_requirements.minimum_cases_by_risk.structural",
+              "coverage_requirements.minimum_cases_by_risk.critical",
+              "coverage_requirements.minimum_low_risk_ratio.numerator",
+              "coverage_requirements.minimum_low_risk_ratio.denominator",
+              "coverage_requirements.minimum_criteria_per_case.must_demonstrate",
+              "coverage_requirements.minimum_criteria_per_case.must_avoid",
+              "coverage_requirements.minimum_criteria_per_case.required_evidence"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "classification": {
+                "const": "empirical"
+              }
+            },
+            "required": [
+              "classification"
+            ]
+          },
+          "then": {
+            "properties": {
+              "evidence_refs": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
     "rubric": {
       "type": "object",
       "additionalProperties": false,
@@ -242,6 +450,14 @@
           "type": "string",
           "minLength": 1
         }
+      }
+    },
+    "stringSet": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
       }
     },
     "score": {

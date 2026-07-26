@@ -1,12 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:portable-agent-governance:schema:routing-evaluations:1",
-  "title": "Raw Request Routing Evaluations v1",
+  "$id": "urn:portable-agent-governance:schema:routing-evaluations:2",
+  "title": "Human Semantic Routing Evaluations v2",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "$schema",
     "schema_version",
+    "oracle",
+    "threshold_policies",
+    "coverage_requirements",
     "scoring",
     "cases"
   ],
@@ -15,7 +18,20 @@
       "const": "../schemas/routing-evaluations.schema.json"
     },
     "schema_version": {
-      "const": 1
+      "const": 2
+    },
+    "oracle": {
+      "$ref": "#/$defs/oracle"
+    },
+    "threshold_policies": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/thresholdPolicy"
+      }
+    },
+    "coverage_requirements": {
+      "$ref": "#/$defs/routingCoverage"
     },
     "scoring": {
       "$ref": "#/$defs/scoring"
@@ -29,6 +45,168 @@
     }
   },
   "$defs": {
+    "oracle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "owner",
+        "basis",
+        "reviewed_on",
+        "pack_version"
+      ],
+      "properties": {
+        "kind": {
+          "const": "human_semantic"
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 20
+        },
+        "reviewed_on": {
+          "type": "string",
+          "format": "date"
+        },
+        "pack_version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "routingCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maximum_cases",
+        "minimum_cases_per_signal",
+        "minimum_cases_per_mode",
+        "minimum_minimal_route_cases"
+      ],
+      "properties": {
+        "maximum_cases": {
+          "description": "Maximum total runnable cases across base cases plus inline and external variants.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "minimum_cases_per_signal": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minimum_cases_per_mode": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minimum_minimal_route_cases": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "thresholdPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "classification",
+        "status",
+        "owner",
+        "basis",
+        "evidence_refs",
+        "reviewed_on",
+        "review_by",
+        "targets"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+        },
+        "classification": {
+          "enum": [
+            "derived",
+            "safety_policy",
+            "empirical",
+            "implementation_limit"
+          ]
+        },
+        "status": {
+          "enum": [
+            "candidate",
+            "accepted"
+          ]
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 20
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/stringSet"
+        },
+        "reviewed_on": {
+          "type": "string",
+          "format": "date"
+        },
+        "review_by": {
+          "type": "string",
+          "format": "date"
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "scoring.pass_score",
+              "scoring.penalties.wrong_mode",
+              "scoring.penalties.missing_signal",
+              "scoring.penalties.unnecessary_signal",
+              "scoring.penalties.risk_underroute_per_level",
+              "scoring.penalties.risk_overroute_per_level",
+              "scoring.penalties.confirmation_underroute_per_level",
+              "scoring.penalties.confirmation_overroute_per_level",
+              "scoring.penalties.wrong_lead_skill",
+              "scoring.penalties.missing_supporting_skill",
+              "scoring.penalties.unnecessary_supporting_skill",
+              "scoring.penalties.critical_underroute",
+              "manifest.routing_evaluations.minimum_cases",
+              "coverage_requirements.maximum_cases",
+              "coverage_requirements.minimum_cases_per_signal",
+              "coverage_requirements.minimum_cases_per_mode",
+              "coverage_requirements.minimum_minimal_route_cases"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "classification": {
+                "const": "empirical"
+              }
+            },
+            "required": [
+              "classification"
+            ]
+          },
+          "then": {
+            "properties": {
+              "evidence_refs": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
     "scoring": {
       "type": "object",
       "additionalProperties": false,
@@ -125,6 +303,31 @@
         },
         "expected": {
           "$ref": "#/$defs/decision"
+        },
+        "variants": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/variant"
+          }
+        }
+      }
+    },
+    "variant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "request"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "request": {
+          "type": "string",
+          "minLength": 20
         }
       }
     },

@@ -1,17 +1,29 @@
 ---
 name: governance-router
 trigger: model_decision
-description: Mandatory compositional router for engineering task mode, risk, rules, specialist skills, authority, and confirmation.
+description: Full compositional fallback router when a generated fast-path exclusion is true or unknown.
 ---
 
 # Governance Router
 
-Use this router for every engineering task governed by the pack.
-`governance-manifest.json` is the sole machine-readable authority for task
-modes, routing signals, risk floors, confirmation levels, rules, skills, and
-project overlays. The generated sections below are views of that manifest; do
-not edit them by hand.
+Use this full router when the generated fast-path screen in `GEMINI.md` excludes
+the request or leaves any exclusion unknown. `governance-manifest.json` is the
+sole machine-readable authority for task modes, routing signals, risk floors,
+confirmation levels, rules, skills, and project overlays. The generated
+sections below are views of that manifest; do not edit them by hand.
 
+## Canonical Policy Clauses
+
+<!-- BEGIN GENERATED: POLICY CLAUSES -->
+| Clause | Canonical owner | Generated summary |
+|---|---|---|
+| `mode-bounds-actions` | `GEMINI.md` | Task mode limits allowed actions; it does not grant authority or expand the requested scope. |
+| `workspace-preservation` | `rules/agent-operation-safety.md` | Inspect current state and preserve unrelated user work before local mutation. |
+| `local-execution-safety` | `rules/agent-operation-safety.md` | Resolve a repository command and its filesystem, network, credential, cost, and target effects before execution. |
+| `evidence-scope` | `GEMINI.md` | A check supports only the property, artifact, environment, and time it actually observed. |
+| `delivery-status-separation` | `GEMINI.md` | Task outcome, release readiness, and external-action status are independent claims. |
+| `unknown-requires-full-route` | `rules/governance-router.md` | Any true or unknown fast-path exclusion requires full manifest routing. |
+<!-- END GENERATED: POLICY CLAUSES -->
 ## 1. Select One Task Mode
 
 Choose the mode that matches the user's requested outcome, not the actions that
@@ -42,8 +54,10 @@ If the requested outcome changes, route again before acting. In particular:
 Start with the mode's `required_signals`. Then add every signal whose
 description materially matches the task:
 
-1. After mode-required signals, put the signal for the user's explicitly stated
-   primary outcome first.
+1. Prompt mention order never determines the lead. After mode-required signals,
+   put the signal that owns the requested deliverable and its acceptance
+   evidence first. Consequence signals contribute gates and supporting skills
+   unless their review or mitigation is itself the requested outcome.
 2. If no single primary outcome is explicit, prefer the matching signal with
    the highest risk floor, then the highest confirmation level, then manifest
    declaration order. This is the deterministic tie-break.
@@ -51,6 +65,10 @@ description materially matches the task:
 4. Do not omit a signal merely because another signal already raises the risk.
 5. Record any apparently applicable signal deliberately excluded and the
    concrete reason its trigger does not apply.
+
+If two skills equally own a Structural or Critical deliverable and choosing one
+materially changes the procedure, ask. Otherwise select the narrower owner and
+record the assumption.
 
 Composition is deterministic:
 
@@ -77,7 +95,7 @@ Composition is deterministic:
 | `complex_reasoning_or_state_model` | `standard` | `none` | none | none | `cognitive-primitives` | The task needs explicit invariants, state transitions, multi-step decomposition, competing-constraint analysis, or a non-obvious approach decision. |
 | `configuration_or_feature_flag` | `standard` | `none` | `configuration-and-feature-flags` | none | `drift-guardian` | Runtime configuration, environment-dependent behavior, feature flags, kill switches, or temporary operational controls change. |
 | `credential_permission_financial_or_legal_action` | `critical` | `fresh_confirmation` | `agent-operation-safety`, `security-and-privacy-gate` | `security-reviewer` | none | An action changes production, shared, or privileged credentials or permissions; expands privilege; transfers ownership; commits funds; creates a legal obligation; or signs, approves, or makes one of those consequential decisions on another party's behalf. |
-| `credible_high_impact_harm` | `critical` | `none` | `adversarial-self-review`, `failure-mode-catalog`, `security-and-privacy-gate` | `risk-radar-scout` | `adversarial-test-forge`, `security-reviewer` | The task has a credible path to high-impact harm involving human safety, health, rights, employment, finances, privacy, or security, or material system integrity or availability, and no more specific Critical signal already represents the same consequence. |
+| `credible_high_impact_harm` | `critical` | `none` | `adversarial-self-review`, `failure-mode-catalog`, `security-and-privacy-gate` | `risk-radar-scout` | `adversarial-test-forge`, `security-reviewer` | A credible failure could materially harm human safety, health, civil rights, employment, or personal finances, or cause catastrophic system-integrity, system-availability, or organizational loss when no more specific Critical signal applies. |
 | `critical_data_integrity` | `critical` | `none` | `data-integrity-and-migrations`, `security-and-privacy-gate` | `data-and-database-engineer` | `security-reviewer`, `adversarial-test-forge` | A credible failure could corrupt, lose, duplicate, misattribute, or leak material data across an authorization or ownership scope. |
 | `cross_team_technical_leadership` | `standard` | `none` | none | `engineering-leadership` | none | Multi-person or cross-team prioritization, delegation, ownership, technical review, mentoring, or decision facilitation is needed. |
 | `database_design` | `structural` | `none` | `data-integrity-and-migrations` | `data-and-database-engineer` | none | A data model, query shape, index, transaction, isolation, ownership, or database architecture decision changes. |
@@ -87,7 +105,7 @@ Composition is deterministic:
 | `distributed_system` | `structural` | `none` | `testing-strategy`, `observability-by-design`, `operational-resilience` | `distributed-systems-engineer` | `adversarial-test-forge` | Cross-process, cross-service, queue, region, ordering, delivery, consistency, retry, or partition behavior changes. |
 | `documentation_stewardship` | `trivial` | `none` | none | `documentation-steward` | none | A durable README, API guide, architecture record, runbook, migration guide, or documentation-drift decision is needed. |
 | `durable_task` | `trivial` | `none` | `governance-router`, `context-budget`, `adversarial-self-review`, `agent-operation-safety` | none | none | Any engineering answer, review, diagnosis, design, implementation, or operation governed by this pack. |
-| `established_security_boundary` | `standard` | `none` | `security-and-privacy-gate` | `security-reviewer` | none | Bounded work touches an established, unchanged authentication, authorization, tenant-isolation, secret-handling, or other security boundary without expanding privilege, data exposure, or trust. |
+| `established_security_boundary` | `standard` | `none` | `security-and-privacy-gate` | `security-reviewer` | none | Current code, configuration, and test evidence establishes that bounded work touches an unchanged authentication, authorization, tenant-isolation, secret-handling, or other security boundary without expanding privilege, data exposure, or trust; when that evidence is unavailable, use security_sensitive. |
 | `existing_unfamiliar_code` | `standard` | `none` | `evolutionary-stewardship` | `code-archaeologist` | none | Work in an existing or unfamiliar codebase where behavior, ownership, or local conventions must be discovered before decisions are made. |
 | `external_side_effect` | `standard` | `explicit_authorization` | `agent-operation-safety` | none | none | An action will write to an external service, contact another person, publish content, create a remote resource, or otherwise cause an effect outside the local workspace. |
 | `formal_assurance` | `structural` | `none` | `testing-strategy` | `formal-assurance-engineer` | `adversarial-test-forge` | A material invariant, protocol, or algorithm needs property-based, model-based, static, proof-strength, or other formalized evidence. |
@@ -114,7 +132,7 @@ Composition is deterministic:
 | `schema_or_migration` | `structural` | `none` | `data-integrity-and-migrations` | `data-and-database-engineer` | `drift-guardian` | A schema, index, migration, backfill, or compatibility transition for persisted data changes. |
 | `security_relevant_configuration` | `structural` | `none` | `configuration-and-feature-flags`, `security-and-privacy-gate` | `security-reviewer` | `drift-guardian` | Configuration materially changes authentication, authorization, secrets, TLS, origin or network trust, security headers, execution permissions, or data-exposure controls. |
 | `security_sensitive` | `critical` | `none` | `security-and-privacy-gate` | `security-reviewer` | `adversarial-test-forge` | A new, changed, or high-impact authentication, authorization, tenant-isolation, secret-handling, or sensitive trust boundary is involved, or there is a material security vulnerability or credible regulated, bulk, or cross-tenant data exposure. |
-| `sensitive_data_handling` | `standard` | `none` | `security-and-privacy-gate` | `privacy-and-data-governance-engineer` | `security-reviewer` | Personal or sensitive data is handled within an established and approved trust boundary without creating a new high-impact boundary. |
+| `sensitive_data_handling` | `standard` | `none` | `security-and-privacy-gate` | `privacy-and-data-governance-engineer` | `security-reviewer` | Classified personal or sensitive data is handled at known volume and tenant scope within an established and approved trust boundary without creating a new high-impact boundary; unknown classification, volume, scope, or approval uses security_sensitive. |
 | `shared_environment_release_execution` | `critical` | `fresh_confirmation` | `production-readiness-gate`, `operational-resilience`, `agent-operation-safety` | `safe-release-conductor` | none | A production deployment, release, promotion, rollout, or a material or difficult-to-recover shared-environment release mutation will actually execute. |
 | `supply_chain_advisory_or_bounded_vulnerability` | `standard` | `none` | `supply-chain-and-build-integrity`, `security-and-privacy-gate` | `security-reviewer` | none | A dependency or build advisory, or a bounded vulnerability with no credible active compromise or material security impact, requires intake and assessment. |
 | `supply_chain_change` | `standard` | `none` | `supply-chain-and-build-integrity`, `security-and-privacy-gate` | none | `security-reviewer` | A package version, lockfile, package source, build script, CI action, generated artifact, or dependency trust decision changes. |
@@ -122,8 +140,8 @@ Composition is deterministic:
 | `test_logic_or_verification_change` | `standard` | `none` | `testing-strategy` | none | none | Executable tests, fixtures, assertions, test harnesses, or verification logic change without changing production behavior. |
 | `unfamiliar_or_privileged_repository_execution` | `standard` | `none` | `agent-operation-safety`, `supply-chain-and-build-integrity` | none | none | Repository-controlled code is unfamiliar, mutation-prone, networked, installer- or hook-driven, or would run with credentials, elevated privileges, broad filesystem access, or material cost. |
 | `untrusted_input_or_data_access` | `standard` | `none` | `security-and-privacy-gate` | none | none | Code parses untrusted input, constructs a database or search query, resolves an object scope, or exposes a data-access boundary. |
-| `user_interface` | `standard` | `none` | none | `interface-designer` | none | A user-facing interaction, workflow, accessibility behavior, or visual information hierarchy changes. |
-| `user_interface_with_data` | `standard` | `none` | `security-and-privacy-gate` | `interface-designer` | none | A form or user interface reads, submits, reveals, or transforms application data. |
+| `user_interface` | `standard` | `none` | `interface-and-accessibility-gate` | `interface-designer` | none | A user-facing interaction, workflow, accessibility behavior, or visual information hierarchy changes. |
+| `user_interface_with_data` | `standard` | `none` | `interface-and-accessibility-gate`, `security-and-privacy-gate` | `interface-designer` | none | A form or user interface reads, submits, reveals, or transforms application data. |
 | `vague_material_requirement` | `standard` | `none` | `requirements-precision-gate` | `requirements-crystallizer` | none | A material requirement, acceptance boundary, policy, or constraint is ambiguous or conflicting. |
 <!-- END GENERATED: ROUTING SIGNALS -->
 ## 3. Apply Risk Overlays
@@ -151,6 +169,10 @@ Risk is consequence-based:
 Small diffs do not lower risk. Conversely, the mere presence of routine data,
 formal methods, leadership, or release planning does not make a task Critical;
 the consequence trigger must match.
+
+When no more specific Critical signal represents the consequence, route a
+credible catastrophic or material system-integrity or availability failure, or
+material organizational loss, through `credible_high_impact_harm`.
 
 ## 4. Resolve Authority and Conflicts
 

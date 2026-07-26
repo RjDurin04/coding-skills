@@ -27,6 +27,7 @@ $tempBase = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())
 $tempRoot = Join-Path $tempBase ('agents-capability-score-tests-' + [guid]::NewGuid().ToString('N'))
 $failures = New-Object 'System.Collections.Generic.List[string]'
 $passed = 0
+$catalogPolicyTests = @()
 
 function New-RunRecord {
     param(
@@ -110,7 +111,10 @@ function Find-CriterionResult {
 }
 
 function Invoke-ScorerProcess {
-    param([string] $RecordPath)
+    param(
+        [string] $RecordPath,
+        [string] $CatalogOverridePath
+    )
 
     $hostExecutable = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
     $arguments = @('-NoProfile', '-NonInteractive')
@@ -125,6 +129,9 @@ function Invoke-ScorerProcess {
         '-Root',
         $rootPath
     )
+    if (-not [string]::IsNullOrWhiteSpace($CatalogOverridePath)) {
+        $arguments += @('-CatalogPath', $CatalogOverridePath)
+    }
     $output = @(& $hostExecutable @arguments 2>&1)
     return [pscustomobject]@{
         ExitCode = $LASTEXITCODE
@@ -156,7 +163,6 @@ function Invoke-DirectScorerTest {
             'PASS' { 0 }
             'FAIL' { 1 }
             'INVALID' { 2 }
-            default { throw "Unknown expected status: $ExpectedStatus" }
         }
         if ($processResult.ExitCode -ne $expectedExit) {
             $failures.Add(
@@ -170,6 +176,29 @@ function Invoke-DirectScorerTest {
         if ([string] $parsed.status -ne $ExpectedStatus) {
             $failures.Add("[$Name] Expected status $ExpectedStatus, got '$($parsed.status)'. Output: $outputText")
             return
+        }
+        if ($ExpectedStatus -in @('PASS', 'FAIL')) {
+            $expectedAttestationStatus = if ($ExpectedStatus -eq 'PASS') {
+                'ATTESTED_THRESHOLD_MET'
+            }
+            else {
+                'ATTESTED_THRESHOLD_NOT_MET'
+            }
+            if ([string] $parsed.attestation_status -ne $expectedAttestationStatus) {
+                $failures.Add(
+                    "[$Name] Expected attestation_status $expectedAttestationStatus, got " +
+                    "'$($parsed.attestation_status)'. Output: $outputText"
+                )
+                return
+            }
+            if (($null -eq $parsed.threshold_policy) -or
+                [string]::IsNullOrWhiteSpace([string] $parsed.threshold_policy.id) -or
+                [string]::IsNullOrWhiteSpace([string] $parsed.threshold_policy.classification) -or
+                [string]::IsNullOrWhiteSpace([string] $parsed.threshold_policy.status) -or
+                [string]::IsNullOrWhiteSpace([string] $parsed.threshold_policy.review_by)) {
+                $failures.Add("[$Name] Expected complete threshold_policy metadata. Output: $outputText")
+                return
+            }
         }
         if ((-not [string]::IsNullOrWhiteSpace($ExpectedJsonPattern)) -and
             ($outputText -notmatch $ExpectedJsonPattern)) {
@@ -201,12 +230,68 @@ function Invoke-ExitContractTest {
         return
     }
     $outputText = [string] $processResult.Output
-    if ($outputText -notmatch ('"status"\s*:\s*"' + $ExpectedStatus + '"')) {
+    $parsed = $outputText | ConvertFrom-Json
+    if ([string] $parsed.status -ne $ExpectedStatus) {
         $failures.Add("[$Name] Expected process status $ExpectedStatus. Output: $outputText")
         return
     }
+    if ($ExpectedStatus -in @('PASS', 'FAIL')) {
+        $expectedAttestationStatus = if ($ExpectedStatus -eq 'PASS') {
+            'ATTESTED_THRESHOLD_MET'
+        }
+        else {
+            'ATTESTED_THRESHOLD_NOT_MET'
+        }
+        if ([string] $parsed.attestation_status -ne $expectedAttestationStatus) {
+            $failures.Add(
+                "[$Name] Expected process attestation_status $expectedAttestationStatus. Output: $outputText"
+            )
+            return
+        }
+        if (($null -eq $parsed.threshold_policy) -or
+            [string]::IsNullOrWhiteSpace([string] $parsed.threshold_policy.id) -or
+            [string]::IsNullOrWhiteSpace([string] $parsed.threshold_policy.classification) -or
+            [string]::IsNullOrWhiteSpace([string] $parsed.threshold_policy.status) -or
+            [string]::IsNullOrWhiteSpace([string] $parsed.threshold_policy.review_by)) {
+            $failures.Add("[$Name] Expected process threshold_policy metadata. Output: $outputText")
+            return
+        }
+    }
     $script:passed++
     Write-Host "PASS $Name`: exit=$ExpectedExit status=$ExpectedStatus" -ForegroundColor Green
+}
+
+function Invoke-CatalogPolicyTest {
+    param(
+        [string] $Name,
+        [string] $RecordPath,
+        [scriptblock] $Mutation,
+        [string] $ExpectedPattern
+    )
+
+    $catalogCopy = (
+        $catalog | ConvertTo-Json -Depth 30 | ConvertFrom-Json
+    )
+    & $Mutation $catalogCopy
+    $mutatedCatalogPath = Join-Path $tempRoot ($Name + '-catalog.json')
+    $catalogCopy | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $mutatedCatalogPath -Encoding UTF8
+    $processResult = Invoke-ScorerProcess $RecordPath $mutatedCatalogPath
+    $outputText = [string] $processResult.Output
+    if ($processResult.ExitCode -ne 2) {
+        $failures.Add("[$Name] Expected INVALID exit 2. Output: $outputText")
+        return
+    }
+    $parsed = $outputText | ConvertFrom-Json
+    if ([string] $parsed.status -ne 'INVALID') {
+        $failures.Add("[$Name] Expected status INVALID. Output: $outputText")
+        return
+    }
+    if ($outputText -notmatch $ExpectedPattern) {
+        $failures.Add("[$Name] Expected policy finding '$ExpectedPattern'. Output: $outputText")
+        return
+    }
+    $script:passed++
+    Write-Host "PASS $Name`: status=INVALID" -ForegroundColor Green
 }
 
 try {
@@ -480,6 +565,57 @@ try {
             -ExpectedExit $exitRecord.ExpectedExit `
             -ExpectedStatus $exitRecord.ExpectedStatus
     }
+
+    $policyRecordPath = Join-Path $tempRoot 'policy-audit-record.json'
+    (New-RunRecord $standardCaseId 100 $artifactHash) |
+        ConvertTo-Json -Depth 20 |
+        Set-Content -LiteralPath $policyRecordPath -Encoding UTF8
+    $catalogPolicyTests = @(
+        [pscustomobject]@{
+            Name = 'policy-missing-leaf-owner'
+            ExpectedPattern = 'must have exactly one owner'
+            Mutation = {
+                param($CatalogCopy)
+                $policy = @($CatalogCopy.threshold_policies | Where-Object {
+                    @($_.targets) -contains 'coverage_requirements.maximum_cases'
+                })[0]
+                $policy.targets = @($policy.targets | Where-Object {
+                    $_ -ne 'coverage_requirements.maximum_cases'
+                })
+            }
+        },
+        [pscustomobject]@{
+            Name = 'policy-duplicate-leaf-owner'
+            ExpectedPattern = 'has multiple owners'
+            Mutation = {
+                param($CatalogCopy)
+                $CatalogCopy.threshold_policies[1].targets += 'rubric.pass_score'
+            }
+        },
+        [pscustomobject]@{
+            Name = 'policy-unknown-target'
+            ExpectedPattern = 'unknown or non-leaf'
+            Mutation = {
+                param($CatalogCopy)
+                $CatalogCopy.threshold_policies[0].targets += 'rubric.unknown_threshold'
+            }
+        },
+        [pscustomobject]@{
+            Name = 'policy-parent-child-overlap'
+            ExpectedPattern = 'overlap at parent/child paths'
+            Mutation = {
+                param($CatalogCopy)
+                $CatalogCopy.threshold_policies[0].targets += 'rubric.dimensions'
+            }
+        }
+    )
+    foreach ($policyTest in $catalogPolicyTests) {
+        Invoke-CatalogPolicyTest `
+            -Name $policyTest.Name `
+            -RecordPath $policyRecordPath `
+            -Mutation $policyTest.Mutation `
+            -ExpectedPattern $policyTest.ExpectedPattern
+    }
 }
 finally {
     $resolvedTempRoot = [System.IO.Path]::GetFullPath($tempRoot)
@@ -490,7 +626,7 @@ finally {
     }
 }
 
-$totalTests = $tests.Count + $exitRecords.Count
+$totalTests = $tests.Count + $exitRecords.Count + $catalogPolicyTests.Count
 if ($failures.Count -gt 0) {
     Write-Host "Capability scorer tests FAILED: $passed/$totalTests passed." -ForegroundColor Red
     foreach ($failure in $failures) {

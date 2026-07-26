@@ -201,8 +201,8 @@ if ($failures.Count -gt 0) {
     $failures | ForEach-Object { Write-Host "- $_" -ForegroundColor Red }
     exit 1
 }
-if ([int] $manifest.schema_version -ne 2) {
-    Add-Failure 'Governance scenarios require manifest schema_version 2.'
+if ([int] $manifest.schema_version -ne 3) {
+    Add-Failure 'Governance scenarios require manifest schema_version 3.'
 }
 
 if (Assert-ObjectShape $scenarioDocument @('$schema', 'schema_version', 'scenarios') @() 'Scenario catalog') {

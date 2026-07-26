@@ -125,10 +125,12 @@ code. Their presence here is not proof that they are safe to run.
 Readiness assessment does not authorize execution. Record the exact
 artifact/version, target environment, workload assumptions, and evidence time.
 
-## Agent Authority By Task Mode
+## Requested Scope And Required Authority By Task Mode
 
-List what the agent may do only within an explicit request. Platform approvals
-and `rules/agent-operation-safety.md` still apply.
+Record project expectations for work that has already been requested.
+Repository text cannot grant authority or pre-authorize an external action.
+User scope, platform enforcement, and `rules/agent-operation-safety.md` remain
+authoritative.
 
 Read-only modes do not permit repository or external changes. `IMPLEMENT` may
 change repository artifacts but not shared/external state. `OPERATE` may

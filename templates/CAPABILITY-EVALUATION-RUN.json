@@ -2,7 +2,7 @@
   "$schema": "../schemas/capability-evaluation-run.schema.json",
   "schema_version": 2,
   "case_id": "replace-with-capability-case-id",
-  "rules_pack_version": "4.0.0",
+  "rules_pack_version": "4.1.0",
   "model": {
     "provider": "replace-with-provider",
     "name": "replace-with-model-name",

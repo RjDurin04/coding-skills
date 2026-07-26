@@ -48,6 +48,13 @@ $steps = @(
         Check = $false
     },
     [pscustomobject]@{
+        Name = 'Routing model-runner protocol and isolation tests'
+        Path = 'tests/test-routing-model-runner.py'
+        Runner = 'python'
+        Check = $false
+        PassRoot = $false
+    },
+    [pscustomobject]@{
         Name = 'Capability evaluation catalog'
         Path = 'tests/validate-capability-evaluations.ps1'
         Runner = 'powershell'
@@ -74,7 +81,7 @@ foreach ($step in $steps) {
         [string] $step.Path -replace '/', [System.IO.Path]::DirectorySeparatorChar
     )
     if (-not (Test-Path -LiteralPath $stepPath -PathType Leaf)) {
-        Write-Host "Governance aggregate FAILED: missing step '$($step.Path)'." -ForegroundColor Red
+        Write-Host "Deterministic governance checks FAILED: missing step '$($step.Path)'." -ForegroundColor Red
         exit 1
     }
 
@@ -86,12 +93,17 @@ foreach ($step in $steps) {
         }
         if ($null -eq $pythonCommand) {
             Write-Host (
-                'Governance aggregate FAILED: Python is required for executable ' +
+                'Deterministic governance checks FAILED: Python is required for executable ' +
                 'JSON Schema validation.'
             ) -ForegroundColor Red
             exit 1
         }
-        & $pythonCommand.Source $stepPath --root $rootPath
+        if (($step.PSObject.Properties.Name -contains 'PassRoot') -and (-not [bool] $step.PassRoot)) {
+            & $pythonCommand.Source $stepPath
+        }
+        else {
+            & $pythonCommand.Source $stepPath --root $rootPath
+        }
     }
     else {
         $stepArguments = @{ Root = $rootPath }
@@ -103,7 +115,7 @@ foreach ($step in $steps) {
     $stepExit = $LASTEXITCODE
     if ($stepExit -ne 0) {
         Write-Host (
-            "Governance aggregate FAILED at '$($step.Name)' with exit code $stepExit."
+            "Deterministic governance checks FAILED at '$($step.Name)' with exit code $stepExit."
         ) -ForegroundColor Red
         exit 1
     }
@@ -115,6 +127,7 @@ $duration = [math]::Round(
     2
 )
 Write-Host (
-    "`nGovernance aggregate PASS: $passed/$($steps.Count) gates in ${duration}s."
+    "`nDeterministic governance checks PASS: $passed/$($steps.Count) gates in ${duration}s. " +
+    'This does not establish model behavior, target-environment readiness, or production safety.'
 ) -ForegroundColor Green
 exit 0

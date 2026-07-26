@@ -5,7 +5,7 @@ the authoritative machine-readable inventory and routing source. `rules/*.md`
 are triggered gates; `skills/<name>/SKILL.md` are specialist procedures.
 Project preferences are explicit overlays, not global defaults.
 
-Governance pack version: **4.0.0**.
+Governance pack version: **4.1.0**.
 
 ## 0. Operating Standard
 
@@ -42,10 +42,29 @@ permission to implement, publish, deploy, or operate.
 
 ## 2. Governance Composition
 
-For an engineering task, route with `governance-manifest.json`; use
-`rules/governance-router.md` as its human-readable view. The manifest owns
-signals, risk floors, confirmation levels, rule inventory, and skill routing.
-This file owns the principles for interpreting and composing them.
+### Generated Fast-Path Screen
+
+<!-- BEGIN GENERATED: FAST PATH -->
+Use the precompiled baseline only for mode `answer` with signals `durable_task`.
+
+Every check below must be demonstrably false:
+- The request needs repository, project, environment, current-state, or specialist context.
+- The request may change code, behavior, contracts, data, UI, configuration, dependencies, artifacts, or runtime state.
+- Security, privacy, credentials, permissions, money, legal effect, untrusted input, or credible high-impact harm may be involved.
+- Execution, network access, an external or shared effect, production, destruction, or difficult recovery may be involved.
+- The request is ambiguous enough that another routing signal may match.
+
+If any exclusion is true or unknown, stop the fast path and apply the full
+manifest router. On the baseline, inspect the supplied target/context, make
+no state change or external effect, use the cheapest check that could
+falsify the answer when one exists, and disclose material evidence gaps.
+Task outcome, release readiness, and external-action status remain separate.
+<!-- END GENERATED: FAST PATH -->
+When the generated fast-path screen excludes the request or leaves any
+exclusion unknown, use `governance-manifest.json` for full routing and
+`rules/governance-router.md` as its human-readable fallback view. The manifest
+owns signals, risk floors, confirmation levels, rule inventory, and skill
+routing. This file owns the principles for interpreting and composing them.
 
 - Effective risk is the highest triggered risk floor.
 - Effective confirmation is the highest triggered confirmation:
@@ -56,8 +75,9 @@ This file owns the principles for interpreting and composing them.
 - A project profile or overlay may raise rigor or narrow authority, never lower
   a floor or grant authority beyond the user and platform.
 - If routing sources drift, apply the higher risk and confirmation plus the
-  union of gates, disclose the drift, and repair the authoritative source before
-  relying on the weaker route.
+  union of gates, disclose the drift, and do not rely on the weaker route.
+  Repairing a routing source changes repository state and requires a separately
+  authorized `IMPLEMENT` cycle.
 
 Higher-authority instructions win. At equal authority, use the requirement that
 better protects safety, security, privacy, data integrity, public contracts, and
@@ -110,6 +130,22 @@ routes, packages, results, or production status. A proposed number must be
 labeled `CANDIDATE` until supplied by an authority or validated against
 measurement and accepted. Never hide errors or claim a check ran when it did not.
 
+### Status Namespace Glossary
+
+<!-- BEGIN GENERATED: STATUS NAMESPACES -->
+| Namespace | Values |
+|---|---|
+| Claim certainty | `VERIFIED`, `INFERRED`, `ASSUMED`, `UNKNOWN` |
+| Requirement status | `APPROVED`, `CANDIDATE`, `UNKNOWN` |
+| Finding severity | `BLOCKER`, `WARNING`, `NOTE` |
+| Gate assessment | `PASS`, `FAIL`, `UNVERIFIED`, `N_A` |
+| Evaluation result | `PASS`, `FAIL`, `INVALID`, `ERROR`, `PARTIAL` |
+| Task outcome | `COMPLETE`, `PARTIAL`, `BLOCKED` |
+| Release readiness | `NOT_ASSESSED`, `READY`, `PARTIAL`, `NOT_READY` |
+| External action | `NOT_REQUESTED`, `AWAITING_AUTHORIZATION`, `BLOCKED`, `PARTIAL`, `EXECUTED`, `FAILED` |
+<!-- END GENERATED: STATUS NAMESPACES -->
+Never substitute one namespace for another.
+
 ## 5. Rigor By Consequence
 
 | Tier | Consequence posture |
@@ -127,6 +163,10 @@ regulated handling, bulk access, cross-tenant paths, secret exposure, or
 high-impact sensitive-data behavior remains Critical. Highest matching floor
 wins. Discovery may change the matching signals, but never downshift while a
 higher-floor trigger remains.
+
+When no more specific Critical signal represents the consequence,
+`credible_high_impact_harm` also covers a credible catastrophic or material
+system-integrity or availability failure, or material organizational loss.
 
 ## 6. Non-Negotiables
 
@@ -230,13 +270,15 @@ invariants. Report accepted risk separately from resolved findings.
 
 ## 11. Rule Index
 
-- `rules/governance-router.md`: all engineering tasks; authoritative routing is
-  in the manifest.
+- `rules/governance-router.md`: full/fallback routing when a fast-path exclusion
+  is true or unknown; authoritative routing is in the manifest.
 - `rules/implementation-execution-protocol.md`: `IMPLEMENT` tasks only.
 - `rules/context-budget.md`: proportional discovery and verification.
 - `rules/requirements-precision-gate.md`: ambiguous or significant requirements.
 - `rules/testing-strategy.md`: behavior, fixes, refactors, and critical logic.
 - `rules/security-and-privacy-gate.md`: trust, auth, sensitive data, and privacy.
+- `rules/interface-and-accessibility-gate.md`: user-interface behavior and
+  accessibility.
 - `rules/agent-operation-safety.md`: action authority, code execution, external
   effects, destructive actions, and confirmation.
 - `rules/data-integrity-and-migrations.md`: persisted state and destructive data.

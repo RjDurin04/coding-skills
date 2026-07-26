@@ -4,10 +4,9 @@ trigger: model_decision
 description: Apply when code touches trust boundaries, auth, sensitive data, secrets, external input, data-bearing forms/UI, or security-relevant configuration.
 ---
 
-Security and privacy are design constraints at every trust boundary. For general
-UI accessibility with no form, data, or trust boundary, use the
-`interface-designer` skill; the checks below cover accessibility where this gate
-already applies.
+Security and privacy are design constraints at every trust boundary. User
+interface and accessibility behavior is owned by
+`rules/interface-and-accessibility-gate.md`.
 
 ## Trigger
 Use for authn/authz, user input, DB queries, secrets, telemetry that contains
@@ -54,18 +53,9 @@ use `rules/configuration-and-feature-flags.md`.
   standards-heavy parsers merely to avoid a package. Prefer a maintained,
   appropriately scoped dependency when custom code is riskier.
 
-### 4. Accessibility
-- **Keyboard & Semantics:** Ensure semantic HTML. Every control is reachable by keyboard.
-- **Errors & Contrast:** Errors must identify the field. Follow the project's
-  applicable, versioned accessibility target. For new web work without an
-  adopted target, use WCAG 2.2 AA as a provisional engineering baseline, record
-  that it is not an adopted contractual or compliance claim, and surface target
-  adoption to the responsible owner.
-
 ## Block Release If:
 Authorization is unknown; a secret is exposed; sensitive telemetry cannot be
-redacted; a material dependency/build-integrity risk is unresolved; or critical
-UI is inaccessible.
+redacted; or a material dependency/build-integrity risk is unresolved.
 
 ## Delivery Contribution
 

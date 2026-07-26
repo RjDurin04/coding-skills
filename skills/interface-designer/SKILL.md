@@ -29,11 +29,9 @@ undo for consequential actions when practical.
 
 ## 3. Meet The Applicable Accessibility Target
 
-Discover the project's contractual, regulatory, platform, and product target.
-If none is established for new web work, use WCAG 2.2 AA as a provisional
-engineering baseline, record that it is not an adopted contractual or
-compliance claim, and surface adoption to the responsible owner. Do not claim
-compliance from intent.
+Apply the target resolved under
+`rules/interface-and-accessibility-gate.md`. Do not claim compliance from
+intent or automated checks alone.
 
 Verify as relevant:
 

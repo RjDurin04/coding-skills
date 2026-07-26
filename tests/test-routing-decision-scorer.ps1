@@ -276,7 +276,10 @@ function ConvertTo-ProcessArgument {
 }
 
 function Start-ScorerProcess {
-    param([string] $RecordPath)
+    param(
+        [string] $RecordPath,
+        [string] $CatalogOverridePath
+    )
 
     $arguments = @(
         '-NoProfile',
@@ -288,6 +291,9 @@ function Start-ScorerProcess {
         '-Root',
         $rootPath
     )
+    if (-not [string]::IsNullOrWhiteSpace($CatalogOverridePath)) {
+        $arguments += @('-CatalogPath', $CatalogOverridePath)
+    }
     $startInfo = New-Object System.Diagnostics.ProcessStartInfo
     $startInfo.FileName = $currentHostExecutable
     $startInfo.Arguments = @($arguments | ForEach-Object { ConvertTo-ProcessArgument ([string] $_) }) -join ' '
@@ -330,6 +336,8 @@ function Complete-ScorerProcess {
         $process.Dispose()
     }
 }
+
+$catalogPolicyTests = @()
 
 try {
     [void](New-Item -ItemType Directory -Path $tempRoot -Force)
@@ -375,16 +383,27 @@ try {
             $failures.Add("[$($test.Name)] Expected finding '$($test.ExpectedFinding)'. Output: $outputText")
             continue
         }
-        if ($test.Name -eq 'same-route-unnecessary-signal-penalty') {
+        $result = $null
+        if ([string] $test.ExpectedStatus -in @('PASS', 'FAIL')) {
             try {
                 $result = $outputText | ConvertFrom-Json
-                if (([double] $result.score -ge 100) -or ([double] $result.score -lt [double] $catalog.scoring.pass_score)) {
-                    $failures.Add("[$($test.Name)] Expected a visible non-failing penalty, got score $($result.score).")
-                    continue
-                }
             }
             catch {
                 $failures.Add("[$($test.Name)] Could not parse scorer JSON: $($_.Exception.Message)")
+                continue
+            }
+            if (($null -eq $result.threshold_policy) -or
+                [string]::IsNullOrWhiteSpace([string] $result.threshold_policy.id) -or
+                [string]::IsNullOrWhiteSpace([string] $result.threshold_policy.classification) -or
+                [string]::IsNullOrWhiteSpace([string] $result.threshold_policy.status) -or
+                [string]::IsNullOrWhiteSpace([string] $result.threshold_policy.review_by)) {
+                $failures.Add("[$($test.Name)] Expected complete threshold_policy metadata. Output: $outputText")
+                continue
+            }
+        }
+        if ($test.Name -eq 'same-route-unnecessary-signal-penalty') {
+            if (([double] $result.score -ge 100) -or ([double] $result.score -lt [double] $catalog.scoring.pass_score)) {
+                $failures.Add("[$($test.Name)] Expected a visible non-failing penalty, got score $($result.score).")
                 continue
             }
         }
@@ -432,8 +451,116 @@ try {
             $failures.Add("[$($test.Name)] Expected process status $($test.ExpectedStatus). Output: $outputText")
             continue
         }
+        if ([string] $test.ExpectedStatus -in @('PASS', 'FAIL')) {
+            try {
+                $result = $outputText | ConvertFrom-Json
+            }
+            catch {
+                $failures.Add("[$($test.Name)] Could not parse process scorer JSON: $($_.Exception.Message)")
+                continue
+            }
+            if (($null -eq $result.threshold_policy) -or
+                [string]::IsNullOrWhiteSpace([string] $result.threshold_policy.id) -or
+                [string]::IsNullOrWhiteSpace([string] $result.threshold_policy.classification) -or
+                [string]::IsNullOrWhiteSpace([string] $result.threshold_policy.status) -or
+                [string]::IsNullOrWhiteSpace([string] $result.threshold_policy.review_by)) {
+                $failures.Add("[$($test.Name)] Expected process threshold_policy metadata. Output: $outputText")
+                continue
+            }
+        }
         $passed++
         Write-Host "PASS $($test.Name): real-exit=$exitCode status=$($test.ExpectedStatus)" -ForegroundColor Green
+    }
+
+    $policyRecordPath = Join-Path $tempRoot 'policy-audit-record.json'
+    [System.IO.File]::WriteAllText(
+        $policyRecordPath,
+        (((New-RunRecord 'answer-engineering-explanation') | ConvertTo-Json -Depth 20) + "`n"),
+        $utf8WithoutBom
+    )
+    $catalogPolicyTests = @(
+        [pscustomobject]@{
+            Name = 'policy-missing-leaf-owner'
+            ExpectedPattern = 'must have exactly one owner'
+            Mutation = {
+                param($CatalogCopy)
+                $policy = @($CatalogCopy.threshold_policies | Where-Object {
+                    @($_.targets) -contains 'coverage_requirements.maximum_cases'
+                })[0]
+                $policy.targets = @($policy.targets | Where-Object {
+                    $_ -ne 'coverage_requirements.maximum_cases'
+                })
+            }
+        },
+        [pscustomobject]@{
+            Name = 'policy-duplicate-leaf-owner'
+            ExpectedPattern = 'has multiple owners'
+            Mutation = {
+                param($CatalogCopy)
+                $CatalogCopy.threshold_policies[1].targets += 'scoring.pass_score'
+            }
+        },
+        [pscustomobject]@{
+            Name = 'policy-unknown-target'
+            ExpectedPattern = 'unknown or non-leaf'
+            Mutation = {
+                param($CatalogCopy)
+                $CatalogCopy.threshold_policies[0].targets += 'scoring.unknown_threshold'
+            }
+        },
+        [pscustomobject]@{
+            Name = 'policy-parent-child-overlap'
+            ExpectedPattern = 'overlap at parent/child paths'
+            Mutation = {
+                param($CatalogCopy)
+                $CatalogCopy.threshold_policies[0].targets += 'scoring.penalties'
+            }
+        },
+        [pscustomobject]@{
+            Name = 'policy-critical-owner-not-derived'
+            ExpectedPattern = 'must be owned only by one derived policy'
+            Mutation = {
+                param($CatalogCopy)
+                $criticalPolicy = @($CatalogCopy.threshold_policies | Where-Object {
+                    @($_.targets) -contains 'scoring.penalties.critical_underroute'
+                })[0]
+                $criticalPolicy.classification = 'safety_policy'
+            }
+        }
+    )
+    foreach ($policyTest in $catalogPolicyTests) {
+        $catalogCopy = $catalog | ConvertTo-Json -Depth 30 | ConvertFrom-Json
+        & $policyTest.Mutation $catalogCopy
+        $mutatedCatalogPath = Join-Path $tempRoot ($policyTest.Name + '-catalog.json')
+        [System.IO.File]::WriteAllText(
+            $mutatedCatalogPath,
+            (($catalogCopy | ConvertTo-Json -Depth 30) + "`n"),
+            $utf8WithoutBom
+        )
+        try {
+            $processResult = Complete-ScorerProcess (
+                Start-ScorerProcess $policyRecordPath $mutatedCatalogPath
+            )
+        }
+        catch {
+            $failures.Add("[$($policyTest.Name)] Scorer child process failed: $($_.Exception.Message)")
+            continue
+        }
+        $outputText = [string] $processResult.Output
+        if ($processResult.ExitCode -ne 2) {
+            $failures.Add("[$($policyTest.Name)] Expected INVALID exit 2. Output: $outputText")
+            continue
+        }
+        if ($outputText -notmatch '"status"\s*:\s*"INVALID"') {
+            $failures.Add("[$($policyTest.Name)] Expected status INVALID. Output: $outputText")
+            continue
+        }
+        if ($outputText -notmatch [regex]::Escape([string] $policyTest.ExpectedPattern)) {
+            $failures.Add("[$($policyTest.Name)] Expected policy finding '$($policyTest.ExpectedPattern)'. Output: $outputText")
+            continue
+        }
+        $passed++
+        Write-Host "PASS $($policyTest.Name): status=INVALID" -ForegroundColor Green
     }
 }
 finally {
@@ -445,7 +572,7 @@ finally {
     }
 }
 
-$totalTests = $tests.Count + $processTests.Count
+$totalTests = $tests.Count + $processTests.Count + $catalogPolicyTests.Count
 if ($failures.Count -gt 0) {
     Write-Host "Routing scorer tests FAILED: $passed/$totalTests passed." -ForegroundColor Red
     foreach ($failure in $failures) {

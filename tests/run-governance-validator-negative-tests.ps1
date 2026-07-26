@@ -154,6 +154,131 @@ $cases = @(
         }
     },
     [pscustomobject]@{
+        Name = 'unclassified-fast-path-signal'
+        Validator = 'scripts/validate-governance.ps1'
+        Expected = 'Fast path signal classification mismatch'
+        Mutate = {
+            param($CaseRoot)
+            $path = Join-Path $CaseRoot 'governance-manifest.json'
+            $manifest = Read-Json $path
+            $manifest.fast_path.excluded_signals = @(
+                $manifest.fast_path.excluded_signals | Where-Object {
+                    [string] $_ -ne 'behavior_change'
+                }
+            )
+            Write-Json $path $manifest
+        }
+    },
+    [pscustomobject]@{
+        Name = 'nontrivial-fast-path-signal'
+        Validator = 'scripts/validate-governance.ps1'
+        Expected = "Fast path signal 'behavior_change' must be trivial"
+        Mutate = {
+            param($CaseRoot)
+            $path = Join-Path $CaseRoot 'governance-manifest.json'
+            $manifest = Read-Json $path
+            $manifest.fast_path.allowed_signals += 'behavior_change'
+            $manifest.fast_path.excluded_signals = @(
+                $manifest.fast_path.excluded_signals | Where-Object {
+                    [string] $_ -ne 'behavior_change'
+                }
+            )
+            Write-Json $path $manifest
+        }
+    },
+    [pscustomobject]@{
+        Name = 'external-effect-fast-path-mode'
+        Validator = 'scripts/validate-governance.ps1'
+        Expected = "Fast path mode 'operate' cannot allow external effects"
+        Mutate = {
+            param($CaseRoot)
+            $path = Join-Path $CaseRoot 'governance-manifest.json'
+            $manifest = Read-Json $path
+            $manifest.fast_path.eligible_modes += 'operate'
+            Write-Json $path $manifest
+        }
+    },
+    [pscustomobject]@{
+        Name = 'false-fast-path-fallback'
+        Validator = 'scripts/validate-governance.ps1'
+        Expected = 'Manifest fast_path.fallback_on_unknown must be true'
+        Mutate = {
+            param($CaseRoot)
+            $path = Join-Path $CaseRoot 'governance-manifest.json'
+            $manifest = Read-Json $path
+            $manifest.fast_path.fallback_on_unknown = $false
+            Write-Json $path $manifest
+        }
+    },
+    [pscustomobject]@{
+        Name = 'missing-interface-accessibility-gate'
+        Validator = 'scripts/validate-governance.ps1'
+        Expected = "Routing signal 'user_interface' must include interface-and-accessibility-gate"
+        Mutate = {
+            param($CaseRoot)
+            $path = Join-Path $CaseRoot 'governance-manifest.json'
+            $manifest = Read-Json $path
+            $manifest.routing_signals.user_interface.rules = @(
+                $manifest.routing_signals.user_interface.rules | Where-Object {
+                    [string] $_ -ne 'interface-and-accessibility-gate'
+                }
+            )
+            Write-Json $path $manifest
+        }
+    },
+    [pscustomobject]@{
+        Name = 'missing-accessibility-release-blocker'
+        Validator = 'scripts/validate-governance.ps1'
+        Expected = 'must define a material accessibility release blocker'
+        Mutate = {
+            param($CaseRoot)
+            $path = Join-Path $CaseRoot 'rules/interface-and-accessibility-gate.md'
+            $content = Get-Content -Raw -Encoding UTF8 -LiteralPath $path
+            $content = $content -replace (
+                '## Material Accessibility Release Blocker',
+                '## Accessibility Advisory'
+            )
+            Write-Utf8 $path $content
+        }
+    },
+    [pscustomobject]@{
+        Name = 'stale-gate-assessment-literal'
+        Validator = 'scripts/validate-governance.ps1'
+        Expected = "contains stale gate-assessment literal 'N/A'"
+        Mutate = {
+            param($CaseRoot)
+            $path = Join-Path $CaseRoot 'rules/production-readiness-gate.md'
+            $content = Get-Content -Raw -Encoding UTF8 -LiteralPath $path
+            $content = $content -replace 'N_A', 'N/A'
+            Write-Utf8 $path $content
+        }
+    },
+    [pscustomobject]@{
+        Name = 'missing-interface-rule-index-entry'
+        Validator = 'scripts/validate-governance.ps1'
+        Expected = 'GEMINI.md Rule Index must include rules/interface-and-accessibility-gate.md'
+        Mutate = {
+            param($CaseRoot)
+            $path = Join-Path $CaseRoot 'GEMINI.md'
+            $content = Get-Content -Raw -Encoding UTF8 -LiteralPath $path
+            $content = $content -replace (
+                [regex]::Escape('rules/interface-and-accessibility-gate.md'),
+                'rules/security-and-privacy-gate.md'
+            )
+            Write-Utf8 $path $content
+        }
+    },
+    [pscustomobject]@{
+        Name = 'standalone-skill-output'
+        Validator = 'scripts/validate-governance.ps1'
+        Expected = 'Standalone rule or skill output remains'
+        Mutate = {
+            param($CaseRoot)
+            $path = Join-Path $CaseRoot 'skills/performance-engineer/SKILL.md'
+            Add-Content -LiteralPath $path -Value "`n## Output`n" -Encoding UTF8
+        }
+    },
+    [pscustomobject]@{
         Name = 'unpinned-ci-action'
         Validator = 'scripts/validate-governance.ps1'
         Expected = 'must pin external action'
@@ -215,7 +340,7 @@ $cases = @(
     [pscustomobject]@{
         Name = 'uncovered-raw-routing-signal'
         Validator = 'tests/validate-routing-evaluations.ps1'
-        Expected = 'has no raw-request evaluation case'
+        Expected = 'does not meet the raw-request coverage floor'
         Mutate = {
             param($CaseRoot)
             $path = Join-Path $CaseRoot 'governance-manifest.json'
@@ -242,6 +367,42 @@ $cases = @(
             $path = Join-Path $CaseRoot 'tests/routing-evaluations.json'
             $catalog = Read-Json $path
             $catalog.scoring.penalties.wrong_mode = 1
+            Write-Json $path $catalog
+        }
+    },
+    [pscustomobject]@{
+        Name = 'expired-routing-threshold-policy'
+        Validator = 'tests/validate-routing-evaluations.ps1'
+        Expected = 'review_by is expired'
+        Mutate = {
+            param($CaseRoot)
+            $path = Join-Path $CaseRoot 'tests/routing-evaluations.json'
+            $catalog = Read-Json $path
+            $catalog.threshold_policies[0].review_by = '2000-01-01'
+            Write-Json $path $catalog
+        }
+    },
+    [pscustomobject]@{
+        Name = 'compensatory-missing-signal-penalty'
+        Validator = 'tests/validate-routing-evaluations.ps1'
+        Expected = 'missing_signal penalty must make one omitted expected signal fail'
+        Mutate = {
+            param($CaseRoot)
+            $path = Join-Path $CaseRoot 'tests/routing-evaluations.json'
+            $catalog = Read-Json $path
+            $catalog.scoring.penalties.missing_signal = 1
+            Write-Json $path $catalog
+        }
+    },
+    [pscustomobject]@{
+        Name = 'compensatory-critical-underroute-penalty'
+        Validator = 'tests/validate-routing-evaluations.ps1'
+        Expected = 'critical_underroute penalty must be 100'
+        Mutate = {
+            param($CaseRoot)
+            $path = Join-Path $CaseRoot 'tests/routing-evaluations.json'
+            $catalog = Read-Json $path
+            $catalog.scoring.penalties.critical_underroute = 99
             Write-Json $path $catalog
         }
     },

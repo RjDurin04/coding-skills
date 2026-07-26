@@ -133,6 +133,131 @@ function Assert-SameSet {
     return $true
 }
 
+$canonicalRoutingThresholdTargets = @(
+    'scoring.pass_score',
+    'scoring.penalties.wrong_mode',
+    'scoring.penalties.missing_signal',
+    'scoring.penalties.unnecessary_signal',
+    'scoring.penalties.risk_underroute_per_level',
+    'scoring.penalties.risk_overroute_per_level',
+    'scoring.penalties.confirmation_underroute_per_level',
+    'scoring.penalties.confirmation_overroute_per_level',
+    'scoring.penalties.wrong_lead_skill',
+    'scoring.penalties.missing_supporting_skill',
+    'scoring.penalties.unnecessary_supporting_skill',
+    'scoring.penalties.critical_underroute',
+    'manifest.routing_evaluations.minimum_cases',
+    'coverage_requirements.maximum_cases',
+    'coverage_requirements.minimum_cases_per_signal',
+    'coverage_requirements.minimum_cases_per_mode',
+    'coverage_requirements.minimum_minimal_route_cases'
+)
+
+function Assert-ThresholdPolicies {
+    param(
+        [AllowNull()] [object] $Policies,
+        [string] $Label
+    )
+
+    if (($null -eq $Policies) -or ($Policies -is [string]) -or ($Policies -isnot [System.Array])) {
+        Add-Failure "$Label must be an array."
+        return
+    }
+    $ids = @()
+    $targets = @()
+    $policiesByTarget = @{}
+    foreach ($policy in @($Policies)) {
+        if (-not (Assert-ObjectShape $policy @(
+            'id',
+            'classification',
+            'status',
+            'owner',
+            'basis',
+            'evidence_refs',
+            'reviewed_on',
+            'review_by',
+            'targets'
+        ) @() "$Label policy")) {
+            continue
+        }
+        $ids += [string] $policy.id
+        if (@('derived', 'safety_policy', 'empirical', 'implementation_limit') -notcontains [string] $policy.classification) {
+            Add-Failure "$Label policy '$($policy.id)' has invalid classification."
+        }
+        if (@('candidate', 'accepted') -notcontains [string] $policy.status) {
+            Add-Failure "$Label policy '$($policy.id)' has invalid status."
+        }
+        foreach ($propertyName in @('owner', 'basis')) {
+            if (($policy.$propertyName -isnot [string]) -or [string]::IsNullOrWhiteSpace([string] $policy.$propertyName)) {
+                Add-Failure "$Label policy '$($policy.id)' $propertyName must be nonblank."
+            }
+        }
+        $evidenceRefs = @(Get-StringArray $policy.evidence_refs "$Label policy '$($policy.id)' evidence_refs" -AllowEmpty)
+        if (([string] $policy.classification -eq 'empirical') -and ($evidenceRefs.Count -eq 0)) {
+            Add-Failure "$Label empirical policy '$($policy.id)' requires evidence_refs."
+        }
+        foreach ($dateProperty in @('reviewed_on', 'review_by')) {
+            $parsedDate = [datetime]::MinValue
+            if (($policy.$dateProperty -isnot [string]) -or
+                (-not [datetime]::TryParseExact(
+                    [string] $policy.$dateProperty,
+                    'yyyy-MM-dd',
+                    [System.Globalization.CultureInfo]::InvariantCulture,
+                    [System.Globalization.DateTimeStyles]::None,
+                    [ref] $parsedDate
+                ))) {
+                Add-Failure "$Label policy '$($policy.id)' $dateProperty must be YYYY-MM-DD."
+            }
+            elseif (($dateProperty -eq 'review_by') -and ($parsedDate.Date -lt [datetime]::UtcNow.Date)) {
+                Add-Failure "$Label policy '$($policy.id)' review_by is expired."
+            }
+        }
+        foreach ($target in @(Get-StringArray $policy.targets "$Label policy '$($policy.id)' targets")) {
+            $targets += $target
+            if (-not $policiesByTarget.ContainsKey($target)) {
+                $policiesByTarget[$target] = @()
+            }
+            $policiesByTarget[$target] += $policy
+        }
+    }
+    foreach ($duplicate in @($ids | Group-Object | Where-Object Count -gt 1)) {
+        Add-Failure "$Label contains duplicate policy id: $($duplicate.Name)"
+    }
+    foreach ($duplicate in @($targets | Group-Object | Where-Object Count -gt 1)) {
+        Add-Failure "$Label target has multiple owners: $($duplicate.Name)"
+    }
+    foreach ($target in @($targets | Sort-Object -Unique)) {
+        if ($canonicalRoutingThresholdTargets -notcontains $target) {
+            Add-Failure "$Label target is unknown or non-leaf: $target"
+        }
+    }
+    foreach ($target in $canonicalRoutingThresholdTargets) {
+        $ownerCount = @($targets | Where-Object { $_ -eq $target }).Count
+        if ($ownerCount -ne 1) {
+            Add-Failure "$Label target '$target' must have exactly one owner; found $ownerCount."
+        }
+    }
+    $uniqueTargets = @($targets | Sort-Object -Unique)
+    for ($leftIndex = 0; $leftIndex -lt $uniqueTargets.Count; $leftIndex++) {
+        for ($rightIndex = $leftIndex + 1; $rightIndex -lt $uniqueTargets.Count; $rightIndex++) {
+            $left = [string] $uniqueTargets[$leftIndex]
+            $right = [string] $uniqueTargets[$rightIndex]
+            if ($left.StartsWith($right + '.', [System.StringComparison]::Ordinal) -or
+                $right.StartsWith($left + '.', [System.StringComparison]::Ordinal)) {
+                Add-Failure "$Label targets overlap at parent/child paths: '$left' and '$right'."
+            }
+        }
+    }
+    $criticalTarget = 'scoring.penalties.critical_underroute'
+    if ($policiesByTarget.ContainsKey($criticalTarget)) {
+        $criticalOwners = @($policiesByTarget[$criticalTarget])
+        if (($criticalOwners.Count -ne 1) -or
+            ([string] $criticalOwners[0].classification -ne 'derived')) {
+            Add-Failure "$Label target '$criticalTarget' must be owned only by one derived policy."
+        }
+    }
+}
+
 function Get-ComposedRoute {
     param(
         [object] $Manifest,
@@ -190,8 +315,8 @@ if ($failures.Count -gt 0) {
     $failures | ForEach-Object { Write-Host "- $_" -ForegroundColor Red }
     exit 1
 }
-if ([int] $manifest.schema_version -ne 2) {
-    Add-Failure 'Routing evaluations require manifest schema_version 2.'
+if ([int] $manifest.schema_version -ne 3) {
+    Add-Failure 'Routing evaluations require manifest schema_version 3.'
 }
 
 $catalogPath = Join-Path $rootPath (([string] $manifest.routing_evaluations.catalog) -replace '/', [System.IO.Path]::DirectorySeparatorChar)
@@ -206,12 +331,42 @@ if (($null -eq $catalog) -or ($null -eq $template) -or ($null -eq $scenarioDocum
     exit 1
 }
 
-if (Assert-ObjectShape $catalog @('$schema', 'schema_version', 'scoring', 'cases') @() 'Routing evaluation catalog') {
+if (Assert-ObjectShape $catalog @(
+    '$schema',
+    'schema_version',
+    'oracle',
+    'threshold_policies',
+    'coverage_requirements',
+    'scoring',
+    'cases'
+) @() 'Routing evaluation catalog') {
     if ([string] $catalog.'$schema' -ne '../schemas/routing-evaluations.schema.json') {
         Add-Failure "Routing evaluation catalog `$schema must be '../schemas/routing-evaluations.schema.json'."
     }
-    if ((($catalog.schema_version -isnot [int]) -and ($catalog.schema_version -isnot [long])) -or ([int] $catalog.schema_version -ne 1)) {
-        Add-Failure 'Routing evaluation catalog schema_version must be integer 1.'
+    if ((($catalog.schema_version -isnot [int]) -and ($catalog.schema_version -isnot [long])) -or ([int] $catalog.schema_version -ne 2)) {
+        Add-Failure 'Routing evaluation catalog schema_version must be integer 2.'
+    }
+}
+if (Assert-ObjectShape $catalog.oracle @('kind', 'owner', 'basis', 'reviewed_on', 'pack_version') @() 'Routing semantic oracle') {
+    if ([string] $catalog.oracle.kind -ne 'human_semantic') {
+        Add-Failure "Routing semantic oracle kind must be 'human_semantic'."
+    }
+    if ([string] $catalog.oracle.pack_version -ne [string] $manifest.pack_version) {
+        Add-Failure 'Routing semantic oracle pack_version must match the manifest.'
+    }
+}
+Assert-ThresholdPolicies $catalog.threshold_policies 'Routing threshold_policies'
+if (-not (Assert-ObjectShape $catalog.coverage_requirements @(
+    'maximum_cases',
+    'minimum_cases_per_signal',
+    'minimum_cases_per_mode',
+    'minimum_minimal_route_cases'
+) @() 'Routing coverage_requirements')) {
+    $catalog.coverage_requirements = [pscustomobject]@{
+        maximum_cases = 0
+        minimum_cases_per_signal = 0
+        minimum_cases_per_mode = 0
+        minimum_minimal_route_cases = 0
     }
 }
 
@@ -266,8 +421,9 @@ else {
     Add-Failure 'Routing evaluation cases must be an array.'
 }
 $minimumCases = [int] $manifest.routing_evaluations.minimum_cases
-if (($cases.Count -lt $minimumCases) -or ($cases.Count -gt 150)) {
-    Add-Failure "Expected $minimumCases-150 routing evaluation cases, found $($cases.Count)."
+$maximumCases = [int] $catalog.coverage_requirements.maximum_cases
+if (($cases.Count -lt $minimumCases) -or ($cases.Count -gt $maximumCases)) {
+    Add-Failure "Expected $minimumCases-$maximumCases routing evaluation cases, found $($cases.Count)."
 }
 foreach ($duplicate in @($cases | Group-Object -Property id | Where-Object Count -gt 1)) {
     Add-Failure "Duplicate routing evaluation id: $($duplicate.Name)"
@@ -295,9 +451,10 @@ foreach ($modeName in $modeNames) {
     $modeCoverage[$modeName] = 0
 }
 $minimalRouteCases = 0
+$variantIds = @()
 
 foreach ($case in $cases) {
-    if (-not (Assert-ObjectShape $case @('id', 'request', 'rationale', 'expected') @() 'Routing evaluation case')) {
+    if (-not (Assert-ObjectShape $case @('id', 'request', 'rationale', 'expected') @('variants') 'Routing evaluation case')) {
         continue
     }
     $caseId = if (($case.id -is [string]) -and (-not [string]::IsNullOrWhiteSpace([string] $case.id))) { [string] $case.id } else { '<missing-id>' }
@@ -309,6 +466,28 @@ foreach ($case in $cases) {
     }
     if (($case.rationale -isnot [string]) -or ([string] $case.rationale).Trim().Length -lt 20) {
         Add-Failure "Routing case '$caseId' rationale must be at least 20 nonblank characters."
+    }
+    if ($case.PSObject.Properties.Name -contains 'variants') {
+        if (($case.variants -is [string]) -or ($case.variants -isnot [System.Array])) {
+            Add-Failure "Routing case '$caseId' variants must be an array."
+        }
+        else {
+            foreach ($variant in @($case.variants)) {
+                if (-not (Assert-ObjectShape $variant @('id', 'request') @() "Routing case '$caseId' variant")) {
+                    continue
+                }
+                $variantId = [string] $variant.id
+                if ($variantId -notmatch '^[a-z0-9]+(?:-[a-z0-9]+)*$') {
+                    Add-Failure "Routing case '$caseId' variant id must use lowercase kebab-case."
+                }
+                else {
+                    $variantIds += $variantId
+                }
+                if (($variant.request -isnot [string]) -or ([string] $variant.request).Trim().Length -lt 20) {
+                    Add-Failure "Routing variant '$variantId' request must be at least 20 nonblank characters."
+                }
+            }
+        }
     }
     if (-not (Assert-ObjectShape $case.expected @('mode', 'signals', 'risk', 'confirmation', 'lead_skill', 'supporting_skills') @() "Routing case '$caseId' expected decision")) {
         continue
@@ -372,21 +551,30 @@ foreach ($case in $cases) {
         [void](Assert-SameSet $computed.Supports $supports "Routing case '$caseId' supporting_skills")
     }
 }
+foreach ($duplicate in @($variantIds | Group-Object | Where-Object Count -gt 1)) {
+    Add-Failure "Duplicate routing variant id: $($duplicate.Name)"
+}
+foreach ($variantId in $variantIds) {
+    if (@($cases.id) -contains $variantId) {
+        Add-Failure "Routing variant id duplicates a base case id: $variantId"
+    }
+}
 
 foreach ($signalName in $signalNames) {
-    if ($signalCoverage[$signalName] -lt 1) {
-        Add-Failure "Routing signal '$signalName' has no raw-request evaluation case."
+    if ($signalCoverage[$signalName] -lt [int] $catalog.coverage_requirements.minimum_cases_per_signal) {
+        Add-Failure "Routing signal '$signalName' does not meet the raw-request coverage floor."
     }
 }
 foreach ($modeName in $modeNames) {
-    if ($modeCoverage[$modeName] -lt 1) {
-        Add-Failure "Task mode '$modeName' has no raw-request evaluation case."
+    if ($modeCoverage[$modeName] -lt [int] $catalog.coverage_requirements.minimum_cases_per_mode) {
+        Add-Failure "Task mode '$modeName' does not meet the raw-request coverage floor."
     }
 }
-if ($minimalRouteCases -lt 2) {
-    Add-Failure "Routing catalog needs at least two minimal-route anti-ceremony cases; found $minimalRouteCases."
+if ($minimalRouteCases -lt [int] $catalog.coverage_requirements.minimum_minimal_route_cases) {
+    Add-Failure "Routing catalog does not meet its minimal-route anti-ceremony floor; found $minimalRouteCases."
 }
 
+$oracleCompositionDiscrepancies = New-Object 'System.Collections.Generic.List[string]'
 $scenariosById = @{}
 foreach ($scenario in @($scenarioDocument.scenarios)) {
     $scenariosById[[string] $scenario.id] = $scenario
@@ -394,26 +582,28 @@ foreach ($scenario in @($scenarioDocument.scenarios)) {
 foreach ($case in $cases) {
     $caseId = [string] $case.id
     if (-not $scenariosById.ContainsKey($caseId)) {
-        Add-Failure "Routing case '$caseId' has no matching governance composition scenario."
         continue
     }
     $scenario = $scenariosById[$caseId]
     if ([string] $case.request -ne [string] $scenario.request) {
-        Add-Failure "Routing case '$caseId' request differs from its governance scenario."
+        $oracleCompositionDiscrepancies.Add("case '$caseId' request text differs")
     }
     if ([string] $case.expected.mode -ne [string] $scenario.expected_mode) {
-        Add-Failure "Routing case '$caseId' mode differs from its governance scenario."
+        $oracleCompositionDiscrepancies.Add("case '$caseId' mode differs")
     }
-    [void](Assert-SameSet @($scenario.signals) @($case.expected.signals) "Routing case '$caseId' signal parity")
+    $signalDifference = @(Compare-Object -ReferenceObject @($scenario.signals | Sort-Object -Unique) -DifferenceObject @($case.expected.signals | Sort-Object -Unique))
+    if ($signalDifference.Count -gt 0) {
+        $oracleCompositionDiscrepancies.Add("case '$caseId' signal selection differs")
+    }
     if (([string] $case.expected.risk -ne [string] $scenario.expected_risk) -or
         ([string] $case.expected.confirmation -ne [string] $scenario.expected_confirmation) -or
         (-not [object]::Equals($case.expected.lead_skill, $scenario.expected_lead_skill))) {
-        Add-Failure "Routing case '$caseId' risk, confirmation, or lead differs from its governance scenario."
+        $oracleCompositionDiscrepancies.Add("case '$caseId' composed route differs")
     }
-    [void](Assert-SameSet @($scenario.expected_supporting_skills) @($case.expected.supporting_skills) "Routing case '$caseId' supporting-skill parity")
-}
-if ($cases.Count -ne @($scenarioDocument.scenarios).Count) {
-    Add-Failure "Routing catalog and governance scenario counts differ: $($cases.Count) versus $(@($scenarioDocument.scenarios).Count)."
+    $supportDifference = @(Compare-Object -ReferenceObject @($scenario.expected_supporting_skills | Sort-Object -Unique) -DifferenceObject @($case.expected.supporting_skills | Sort-Object -Unique))
+    if ($supportDifference.Count -gt 0) {
+        $oracleCompositionDiscrepancies.Add("case '$caseId' supporting skills differ")
+    }
 }
 
 if (Assert-ObjectShape $template @('$schema', 'schema_version', 'case_id', 'rules_pack_version', 'model', 'runner', 'started_at', 'duration_seconds', 'decision', 'notes') @() 'Routing run template') {
@@ -436,5 +626,8 @@ if ($failures.Count -gt 0) {
     exit 1
 }
 
-Write-Host "Routing evaluation validation PASS: $($cases.Count) raw requests, $($signalNames.Count) signal routes, $minimalRouteCases minimal anti-ceremony cases." -ForegroundColor Green
+foreach ($discrepancy in $oracleCompositionDiscrepancies) {
+    Write-Host "Semantic oracle/composition discrepancy: $discrepancy" -ForegroundColor Yellow
+}
+Write-Host "Routing semantic-oracle validation PASS: $($cases.Count) raw requests, $($signalNames.Count) signal routes, $minimalRouteCases minimal anti-ceremony cases, $($oracleCompositionDiscrepancies.Count) surfaced composition discrepancy item(s)." -ForegroundColor Green
 exit 0

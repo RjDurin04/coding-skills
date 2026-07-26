@@ -69,20 +69,13 @@ Baseline with profiler, benchmark, query plan, or production metric; change one 
 
 Use the lightest useful guard: unit/property tests for boundary/invariants, ORM query-count tests, stable algorithm benchmarks, load/soak tests, or alerts for p95/p99 latency, saturation, queue depth, and cache hit rate.
 
-## Output
+## Delivery Contribution
 
-When performance matters, report:
-
-```
-Performance review: PASS | PARTIAL | RISK
-Workload: [...]
-Complexity: time [...], space [...], I/O [...]
-Data structures / query plan: [...]
-Weaker options rejected: [...]
-Measurement: [...]
-Regression guard: [...]
-Remaining risk: BLOCKER | WARNING | NOTE - [...]
-```
+When performance matters, add the relevant workload, time/space/I/O
+complexity, data-structure or query-plan decision, rejected weaker option,
+measurement evidence, regression guard, and residual risk to the unified
+delivery record in `GEMINI.md`. Do not introduce a second status vocabulary or
+use a local performance result to imply aggregate release readiness.
 
 ## Hard Rules
 
