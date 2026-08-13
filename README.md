@@ -8,8 +8,9 @@ without overstating certainty or release readiness.
 
 The pack is intended for real software repositories. It covers implementation,
 review, diagnosis, design, testing, security, privacy, data integrity,
-performance, architecture, operations, documentation, AI systems, supply-chain
-integrity, and release readiness.
+performance, local concurrency and resource lifecycle, distributed systems,
+network/edge platforms, architecture, operations, documentation, AI systems,
+supply-chain integrity, and release readiness.
 
 ## What This Pack Does
 

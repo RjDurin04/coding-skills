@@ -1,7 +1,7 @@
 {
   "$schema": "schemas/governance-manifest.schema.json",
   "schema_version": 3,
-  "pack_version": "4.1.0",
+  "pack_version": "4.2.0",
   "entrypoints": [
     "AGENTS.md",
     "GEMINI.md"
@@ -200,6 +200,7 @@
       "schema_or_migration",
       "critical_data_integrity",
       "algorithmic_efficiency",
+      "runtime_concurrency_or_resource_lifecycle",
       "production_runtime_flow",
       "running_system_symptom",
       "recurring_or_bounded_operational_failure",
@@ -322,6 +323,10 @@
       "path": "rules/requirements-precision-gate.md"
     },
     {
+      "name": "runtime-resource-safety",
+      "path": "rules/runtime-resource-safety.md"
+    },
+    {
       "name": "security-and-privacy-gate",
       "path": "rules/security-and-privacy-gate.md"
     },
@@ -442,6 +447,11 @@
     {
       "name": "risk-radar-scout",
       "path": "skills/risk-radar-scout/SKILL.md"
+    },
+    {
+      "name": "runtime-and-concurrency-engineer",
+      "path": "skills/runtime-and-concurrency-engineer/SKILL.md",
+      "ui_metadata": "skills/runtime-and-concurrency-engineer/agents/openai.yaml"
     },
     {
       "name": "safe-release-conductor",
@@ -619,7 +629,7 @@
       "confirmation": "none"
     },
     "supply_chain_change": {
-      "description": "A package version, lockfile, package source, build script, CI action, generated artifact, or dependency trust decision changes.",
+      "description": "A package version or range, resolver/lockfile, package source, build or dependency cache, build script, CI action, generated artifact, or dependency trust decision changes.",
       "minimum_risk": "standard",
       "rules": [
         "supply-chain-and-build-integrity",
@@ -770,13 +780,27 @@
       "confirmation": "none"
     },
     "algorithmic_efficiency": {
-      "description": "A hot path, query, loop, transform, cache, queue, latency target, or user-sized and growing workload needs complexity or performance analysis.",
+      "description": "A hot path, query, loop, transform, cache, queue, memory or allocation pressure, throughput or tail-latency target, or user-sized and growing workload needs complexity or performance analysis.",
       "minimum_risk": "standard",
       "rules": [
         "algorithmic-efficiency-gate"
       ],
       "lead_skill": "performance-engineer",
       "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "runtime_concurrency_or_resource_lifecycle": {
+      "description": "Process-local threads, async tasks, event loops, synchronization, cancellation, pools, blocking behavior, memory leaks, garbage collection, handles, sockets, timers, or shutdown/resource lifecycle changes.",
+      "minimum_risk": "standard",
+      "rules": [
+        "runtime-resource-safety",
+        "testing-strategy"
+      ],
+      "lead_skill": "runtime-and-concurrency-engineer",
+      "supporting_skills": [
+        "performance-engineer",
+        "adversarial-test-forge"
+      ],
       "confirmation": "none"
     },
     "production_runtime_flow": {
@@ -935,7 +959,7 @@
       "confirmation": "none"
     },
     "security_relevant_configuration": {
-      "description": "Configuration materially changes authentication, authorization, secrets, TLS, origin or network trust, security headers, execution permissions, or data-exposure controls.",
+      "description": "Configuration materially changes authentication, authorization, OAuth/OIDC or JWT validation, secrets, TLS, origin/proxy/network trust, WAF or edge security, security headers, execution permissions, or data-exposure controls.",
       "minimum_risk": "structural",
       "rules": [
         "configuration-and-feature-flags",
@@ -1053,7 +1077,7 @@
       "confirmation": "none"
     },
     "api_contract": {
-      "description": "A public API, event, webhook, protocol, schema, SDK-facing surface, versioning policy, or compatibility contract changes.",
+      "description": "A public API, event, webhook, WebSocket/SSE/long-poll stream, HTTP/RPC/gRPC protocol, schema, SDK-facing surface, versioning policy, or compatibility contract changes.",
       "minimum_risk": "structural",
       "rules": [
         "testing-strategy",
@@ -1068,7 +1092,7 @@
       "confirmation": "none"
     },
     "database_design": {
-      "description": "A data model, query shape, index, transaction, isolation, ownership, or database architecture decision changes.",
+      "description": "A data model, query shape, index, transaction, isolation, optimistic or pessimistic locking, ownership, or database architecture decision changes.",
       "minimum_risk": "structural",
       "rules": [
         "data-integrity-and-migrations"
@@ -1078,7 +1102,7 @@
       "confirmation": "none"
     },
     "distributed_system": {
-      "description": "Cross-process, cross-service, queue, region, ordering, delivery, consistency, retry, or partition behavior changes.",
+      "description": "Cross-process, cross-service, queue or Pub/Sub, distributed transaction, region, ordering, delivery, consistency, retry, coordination, or partition behavior changes.",
       "minimum_risk": "structural",
       "rules": [
         "testing-strategy",
@@ -1092,7 +1116,7 @@
       "confirmation": "none"
     },
     "platform_infrastructure": {
-      "description": "Cloud, infrastructure as code, network, identity, compute, storage, runtime platform, or environment topology changes.",
+      "description": "Cloud, infrastructure as code, network/edge, load balancer, reverse proxy, API gateway, service discovery, CDN, identity, compute, container/orchestration, serverless, storage, runtime platform, or environment topology changes.",
       "minimum_risk": "structural",
       "rules": [
         "operational-resilience",

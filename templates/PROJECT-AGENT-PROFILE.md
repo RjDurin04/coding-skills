@@ -68,13 +68,16 @@ code. Their presence here is not proof that they are safe to run.
 - Modules/services/feature areas and owners:
 - Allowed dependency direction:
 - Public APIs/events/schemas and compatibility policy:
+- HTTP/RPC/streaming transports, intermediaries, and supported client versions:
 - Source-of-truth state and derived/cache state:
 - Important invariants and enforcement locations:
+- Local concurrency model, mutable-state owners, resource lifecycle, and shutdown:
 - Relevant ADRs, runbooks, failure catalog, and documentation:
 
 ## Security, Privacy, And Data
 
 - Authentication, authorization, and tenant model:
+- OAuth/OIDC flows, JWT issuer/audience/key-rotation, and session/token lifecycle:
 - Data classifications, purposes, and prohibited destinations:
 - Retention, deletion, export, residency, and legal-review requirements:
 - Secret/key management and rotation mechanism:
@@ -95,8 +98,11 @@ code. Their presence here is not proof that they are safe to run.
 
 - Environments and purpose:
 - Services, workers, queues, schedulers, storage, and third-party dependencies:
+- Load balancer/reverse proxy/API gateway/service discovery/DNS/CDN/WAF topology:
+- Container/orchestrator/serverless limits, scaling model, and probe semantics:
 - SLOs/SLIs and error-budget policy:
 - Expected/peak workload, quotas, and accepted cost budgets:
+- Latency distributions, cold-start behavior, runtime memory/handle/pool bounds:
 - Logs/metrics/traces/health/alerts, consumers, and owners:
 - Backup scope, latest restore evidence, RTO, and RPO:
 - Known failure modes, incident authority, and escalation path:
@@ -107,6 +113,7 @@ code. Their presence here is not proof that they are safe to run.
 - Trusted package registries/sources and dependency policy:
 - Lock/pin/update policy and install-script/native-code restrictions:
 - CI/build identity, isolation, permissions, and network policy:
+- Build/dependency cache trust partitions, key inputs, validation, and invalidation:
 - Artifact identity, provenance, SBOM, signing, and retention expectations:
 - Secret/static/dependency/dynamic scan gates and finding owners:
 - Vulnerability intake, severity/triage owner, patch SLA, embargo/access policy:
@@ -120,6 +127,7 @@ code. Their presence here is not proof that they are safe to run.
 - Blast-radius strategy (flag/canary/staged/blue-green/other):
 - Rollback/roll-forward procedure and latest evidence:
 - Release abort signals:
+- Startup/liveness/readiness, connection draining, and graceful-shutdown contract:
 - Post-release verification and observation window:
 
 Readiness assessment does not authorize execution. Record the exact

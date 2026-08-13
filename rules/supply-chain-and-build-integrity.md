@@ -11,7 +11,8 @@ integrity nor artifact safety.
 
 ## Trigger
 
-Dependency add/update/remove; package install; lockfiles; plugins/actions/images;
+Dependency add/update/remove; package install; lockfiles; version or resolver
+policy; plugins/actions/images; build or dependency caches;
 unfamiliar, privileged, dependency-resolving, or artifact-producing
 tests/builds/hooks/generators; CI runners; compilers/toolchains; artifact
 packaging, signing, publishing, or provenance; dependency/source compromise; and
@@ -31,6 +32,9 @@ trigger matches.
 - Pin or lock inputs according to the project delivery model. Review lockfile and
   resolved-source changes; package names and version strings alone are not
   identity evidence.
+- Treat Semantic Versioning ranges as compatibility claims, not proof. Inspect
+  the actual public surface, changelog/advisory, resolver result, peer/runtime
+  constraints, and lock diff; bound duplicate versions and resolver drift.
 
 ## 2. Safe Build Execution
 
@@ -45,6 +49,13 @@ CI/build identities should have only required permissions, immutable or reviewed
 workflow definitions, isolated untrusted contributions, protected secrets, and
 scoped artifact/repository write access. Do not run untrusted change code with
 release credentials.
+
+Build caches need a declared trust and correctness contract: key all material
+source, dependency, toolchain, platform, feature, and configuration inputs;
+separate untrusted forks/tenants from privileged jobs; prevent path traversal
+and cache poisoning; avoid caching secrets or signed outputs; verify restored
+artifacts before promotion; and provide bounded invalidation or clean rebuild.
+A faster stale or attacker-controlled build is a failed build.
 
 ## 3. Artifact Identity And Provenance
 

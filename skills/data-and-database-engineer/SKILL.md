@@ -1,6 +1,6 @@
 ---
 name: data-and-database-engineer
-description: Design or review data models and database behavior. Use for schemas, relationships, constraints, indexes, query plans, transactions, isolation, locking, replication, partitioning, retention, analytical versus transactional workloads, database selection, or persistent-state performance and correctness. Pair with the migration rule for schema rollout and destructive data work.
+description: Design or review data models and database behavior. Use for schemas, relationships, constraints, indexes, query plans, transactions, isolation, optimistic or pessimistic locking, replication, partitioning, retention, analytical versus transactional workloads, database selection, or persistent-state performance and correctness. Pair with the migration rule for schema rollout and destructive data work.
 ---
 
 # Data And Database Engineer
@@ -34,21 +34,25 @@ process.
 
 ## 3. Define Transaction And Concurrency Semantics
 
-Map transaction boundaries and failure points. Choose isolation, locking,
-optimistic concurrency, compare-and-swap, idempotency, or serialization based on
-actual anomalies to prevent: lost update, dirty/non-repeatable read, write skew,
-duplicate effect, phantom, and deadlock.
+Map transaction boundaries and failure points. Choose isolation, optimistic
+concurrency, compare-and-swap, pessimistic row/range locking, advisory locking,
+idempotency, or serialization based on actual anomalies to prevent: lost
+update, dirty/non-repeatable read, write skew, duplicate effect, phantom, and
+deadlock. Define conflict behavior, lock wait/timeout, scope, ordering, and
+whether a retry can safely repeat external effects.
 
 Keep transactions bounded and avoid network calls while holding database locks
-unless the failure model explicitly requires it. Define retry safety and lock
-ordering.
+unless the failure model explicitly requires it. A database or process-local
+lock is not a distributed lock; use leases plus fencing under
+`distributed-systems-engineer` when ownership spans processes.
 
 ## 4. Design Physical Access
 
 For material queries, inspect or predict query plans and row/cardinality shape.
 Choose indexes by predicates, joins, ordering, selectivity, write cost, and
 storage—not by column popularity. Check N+1 behavior, full scans, deep offsets,
-hot keys, connection pools, batch sizes, and materialization.
+hot keys, connection-pool sizing and exhaustion, transaction duration, batch
+sizes, and materialization.
 
 Use partitioning, replicas, sharding, search stores, caches, or warehouses only
 when a named scale/availability/analytics force justifies their consistency and

@@ -6,7 +6,7 @@
                     "owner":  "governance-pack-maintainers",
                     "basis":  "Requests and expected signal selections are reviewed as a semantic oracle independently of the manifest-composition scenarios.",
                     "reviewed_on":  "2026-07-26",
-                    "pack_version":  "4.1.0"
+                    "pack_version":  "4.2.0"
                 },
     "threshold_policies":  [
                                {
@@ -1291,6 +1291,30 @@
                                        "lead_skill":  "quality-engineering-lead",
                                        "supporting_skills":  [
                                                                  "safe-release-conductor"
+                                                             ]
+                                   }
+                  },
+                  {
+                      "id":  "implement-runtime-concurrency-safety",
+                      "request":  "Implement a bounded asynchronous worker pool that updates process-local shared state, propagates cancellation, drains on shutdown, and does not leak tasks, timers, handles, connections, or memory.",
+                      "rationale":  "Process-local concurrency and resource lifecycle is the requested deliverable, while algorithmic efficiency contributes bounded-work analysis without displacing the runtime lead.",
+                      "expected":  {
+                                       "mode":  "implement",
+                                       "signals":  [
+                                                       "durable_task",
+                                                       "implementation_task",
+                                                       "runtime_concurrency_or_resource_lifecycle",
+                                                       "algorithmic_efficiency",
+                                                       "behavior_change",
+                                                       "repository_code_execution",
+                                                       "nontrivial_ai_assisted_work"
+                                                   ],
+                                       "risk":  "standard",
+                                       "confirmation":  "none",
+                                       "lead_skill":  "runtime-and-concurrency-engineer",
+                                       "supporting_skills":  [
+                                                                 "performance-engineer",
+                                                                 "adversarial-test-forge"
                                                              ]
                                    }
                   }

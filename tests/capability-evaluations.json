@@ -366,14 +366,20 @@
                                "minimum_cases":  2,
                                "reason":  "This skill is selected as a lead_skill by at least one manifest routing signal."
                            },
-                           {
-                               "skill":  "risk-radar-scout",
-                               "role":  "primary",
-                               "minimum_cases":  2,
-                               "reason":  "This skill is selected as a lead_skill by at least one manifest routing signal."
-                           },
-                           {
-                               "skill":  "safe-release-conductor",
+                            {
+                                "skill":  "risk-radar-scout",
+                                "role":  "primary",
+                                "minimum_cases":  2,
+                                "reason":  "This skill is selected as a lead_skill by at least one manifest routing signal."
+                            },
+                            {
+                                "skill":  "runtime-and-concurrency-engineer",
+                                "role":  "primary",
+                                "minimum_cases":  2,
+                                "reason":  "This skill is selected as a lead_skill by at least one manifest routing signal."
+                            },
+                            {
+                                "skill":  "safe-release-conductor",
                                "role":  "primary",
                                "minimum_cases":  2,
                                "reason":  "This skill is selected as a lead_skill by at least one manifest routing signal."
@@ -2910,9 +2916,492 @@
                                          }
                                      ],
                       "required_evidence":  [
+                                                 {
+                                                     "id":  "evidence_1",
+                                                     "description":  "one-line diff and targeted text check"
+                                                 }
+                                             ]
+                  },
+                  {
+                      "id":  "runtime-race-cancellation",
+                      "category":  "runtime",
+                      "risk":  "standard",
+                      "primary_skill":  "runtime-and-concurrency-engineer",
+                      "prompt":  "Implement a bounded asynchronous worker that updates shared state while requests may time out, cancel, complete twice, or race with graceful shutdown.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "define task, state, and resource ownership plus the atomicity invariant"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "handle cancellation, duplicate completion, shutdown, and lock or message ordering"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "bound workers, in-flight work, buffers, and drain time"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "using sleeps or an unexplained global lock as proof of thread safety"
+                                         }
+                                     ],
+                      "required_evidence":  [
                                                 {
                                                     "id":  "evidence_1",
-                                                    "description":  "one-line diff and targeted text check"
+                                                    "description":  "deterministic concurrency, race-detector, or bounded repeated stress evidence"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "runtime-memory-resource-leak",
+                      "category":  "runtime",
+                      "risk":  "standard",
+                      "primary_skill":  "runtime-and-concurrency-engineer",
+                      "prompt":  "Diagnose and correct a long-running service whose heap, open handles, timers, and connection-pool usage grow after each request batch.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "separate retained leaks from bounded caches, temporary high-water marks, fragmentation, and delayed garbage collection"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "trace deterministic cleanup across success, error, timeout, cancellation, and shutdown"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "bound pool, listener, timer, handle, and retained-memory lifecycles"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "tuning garbage collection or forcing collection before establishing the allocation and retention cause"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "before-after heap, allocation, handle, pool, and load/soak evidence"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "api-realtime-stream-contract",
+                      "category":  "api",
+                      "risk":  "structural",
+                      "primary_skill":  "api-and-contract-engineer",
+                      "prompt":  "Choose and design WebSocket, Server-Sent Events, or long polling for reconnecting clients behind proxies where updates must remain ordered and slow consumers cannot exhaust the service.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "compare transport fit from directionality, intermediaries, scale, client support, and failure semantics"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "define authentication lifetime, heartbeat or idle timeout, reconnect, resume cursor, ordering, and duplicate or gap behavior"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "bound per-client buffering and fan-out with explicit slow-consumer and graceful-drain behavior"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "selecting WebSockets by fashion or leaving proxy timeouts and reconnect semantics implicit"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "contract and integration tests for disconnect, resume, slow consumer, proxy timeout, and shutdown"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "api-grpc-http-evolution",
+                      "category":  "api",
+                      "risk":  "structural",
+                      "primary_skill":  "api-and-contract-engineer",
+                      "prompt":  "Evaluate migrating a public JSON HTTP API to gRPC over HTTP/2 while old clients, browsers, gateways, and proxies must continue to work.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "inventory client and intermediary protocol support plus the actual compatibility boundary"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "define deadlines, cancellation, streaming, status/error mapping, metadata limits, and fallback or coexistence"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "separate measured transport benefit from serialization, query, and downstream latency"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "assuming HTTP/2 or gRPC is faster or compatible without representative clients and intermediaries"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "old/new client contract tests and representative end-to-end latency evidence"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "platform-edge-routing",
+                      "category":  "platform",
+                      "risk":  "structural",
+                      "primary_skill":  "platform-infrastructure-engineer",
+                      "prompt":  "Design the load balancer, reverse proxy, API gateway, service discovery, CDN, and origin-protection path for a multi-tenant internet service.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "map termination, trust boundaries, routing, trusted headers, client identity, health checks, draining, and timeout or retry ownership"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "define discovery registration, TTL/cache, stale endpoint, DNS, partition, and failover behavior"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "define tenant-safe CDN keys and invalidation plus WAF/DDoS defense in depth and origin resource limits"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "stacking gateways, proxy retries, or edge controls without ownership, failure, and origin-bypass analysis"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "topology, reachability, header-spoof, discovery-staleness, cache-isolation, and failover checks"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "platform-serverless-cold-start",
+                      "category":  "platform",
+                      "risk":  "structural",
+                      "primary_skill":  "platform-infrastructure-engineer",
+                      "prompt":  "Decide whether a bursty latency-sensitive API should move to serverless despite cold starts, concurrency quotas, execution limits, and a connection-limited database.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "measure cold and warm latency distributions, burst/concurrency quotas, payload/time/storage limits, and downstream connection capacity"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "compare workload shaping, vertical scaling, horizontal scaling, provisioned capacity, and serverless from requirements"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "bound retries, fan-out, maximum cost, scale-down, and partial-outage behavior"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "choosing serverless for fashion or autoscaling without a downstream and cost envelope"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "cold/warm load test, quota validation, connection-saturation test, and cost estimate"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "platform-network-protocol-fit",
+                      "category":  "platform",
+                      "risk":  "structural",
+                      "primary_skill":  "platform-infrastructure-engineer",
+                      "prompt":  "Choose between TCP, UDP, HTTP/2, and HTTP/3 for latency-sensitive telemetry crossing mobile networks, NAT, proxies, and intermittent packet loss.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "derive transport needs from reliability, ordering, congestion control, multiplexing, handshake, security, and message semantics"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "account for MTU, loss, head-of-line blocking, NAT/middleboxes, fallback, connection migration, and TLS requirements"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "preserve application-level idempotency, backpressure, observability, and compatibility regardless of transport"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "selecting UDP or HTTP/3 from a low-latency slogan without loss, fallback, and deployment evidence"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "network-impairment, interoperability, fallback, and representative latency-distribution tests"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "security-oauth-jwt-rotation",
+                      "category":  "security",
+                      "risk":  "critical",
+                      "primary_skill":  "security-reviewer",
+                      "prompt":  "Design an OAuth/OIDC browser login with PKCE and rotate JWT signing keys without accepting forged, substituted, expired, or prematurely rejected tokens.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "bind client type, redirect URI, PKCE, state, nonce, issuer, audience, signature algorithm, and time validation"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "define JWKS cache refresh, old/new key overlap, unknown-key behavior, revocation, refresh-token rotation, and reuse detection"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "model provider outage, clock skew, compromised key, rollback, audit, and session consequences"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "treating successful JWT decoding or possession of a library as complete validation"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "negative protocol tests plus a staged key-rotation and rollback rehearsal"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "supply-chain-build-cache",
+                      "category":  "supply-chain",
+                      "risk":  "critical",
+                      "primary_skill":  "security-reviewer",
+                      "prompt":  "Allow pull requests and privileged release jobs to use remote dependency and build caches without accepting stale, cross-tenant, or attacker-poisoned artifacts.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "partition cache read/write trust between forks, branches, tenants, and privileged jobs"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "key all material source, dependency, toolchain, platform, feature, and configuration inputs with bounded invalidation"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "verify restored artifact identity and preserve a clean rebuild and compromise-recovery path"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "sharing writable caches from untrusted code with release credentials or treating a cache hit as provenance"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "cache-poisoning, stale-key, isolation, artifact-verification, and clean-rebuild tests"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "release-probe-rollout",
+                      "category":  "release",
+                      "risk":  "structural",
+                      "primary_skill":  "safe-release-conductor",
+                      "prompt":  "Design Kubernetes startup, liveness, and readiness probes plus rolling shutdown for a slow-starting service whose database dependency can fail independently.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "separate startup, unrecoverable local liveness, traffic readiness, and dependency health semantics"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "coordinate readiness removal, connection draining, termination grace, in-flight work, and rollout availability"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "define alert, abort, rollback or roll-forward, and observation criteria from accepted objectives"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "using a failing remote dependency as a liveness restart loop or treating process existence as readiness"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "startup, dependency-outage, drain, restart-loop, and rolling-availability tests"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "distributed-pubsub-partition",
+                      "category":  "distributed",
+                      "risk":  "structural",
+                      "primary_skill":  "distributed-systems-engineer",
+                      "prompt":  "Design a Pub/Sub event-driven workflow that must continue through partitions, duplicates, reordering, poison messages, and stale replicas.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "state per-operation consistency and CAP behavior during unavailable communication"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "define delivery, ordering, idempotency identity, dedupe retention, dead letters, replay, and reconciliation"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "bound queue, retry, fan-out, lag, and recovery amplification with observable ownership"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "claiming exactly-once, global order, or consistency from the broker product label"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "partition, duplicate, reorder, poison, stale-replica, and replay recovery tests"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "data-pessimistic-lock-contention",
+                      "category":  "data",
+                      "risk":  "structural",
+                      "primary_skill":  "data-and-database-engineer",
+                      "prompt":  "Choose whether pessimistic locking, optimistic concurrency, or an atomic update should protect the last inventory units under heavy contention.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "name the lost-update or write-skew anomaly, isolation behavior, and authoritative invariant"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "compare lock duration, wait timeout, ordering, deadlock, retry safety, fairness, and throughput"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "keep external calls outside the lock or transaction and define conflict-visible behavior"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "adding a broad lock without query, contention, failure, and retry evidence"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "concurrent invariant tests plus lock-wait, deadlock, rollback, and representative throughput evidence"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "performance-tail-latency-measurement",
+                      "category":  "performance",
+                      "risk":  "standard",
+                      "primary_skill":  "performance-engineer",
+                      "prompt":  "Improve an endpoint whose average latency is stable but p99 spikes during warm-up, queueing, garbage collection, and burst traffic.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "measure a representative latency distribution and correlate outliers with queue, allocation, pause, dependency, and saturation signals"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "control warm-up, coordinated omission, concurrency, payload mix, and throughput before comparing results"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "claiming a tail-latency improvement from an average or an unrepresentative single-user benchmark"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "before-after latency histogram or percentiles with workload, throughput, saturation, warm-up, and error context"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "data-connection-pool-exhaustion",
+                      "category":  "data",
+                      "risk":  "standard",
+                      "primary_skill":  "data-and-database-engineer",
+                      "prompt":  "Correct intermittent database timeouts caused by long transactions and connection-pool exhaustion during a bounded traffic burst.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "map request concurrency, pool acquisition, transaction duration, query shape, database limits, and timeout ownership"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "shorten or shape work and define backpressure before changing pool size"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "raising the application pool above database capacity or hiding leaks and slow transactions with retries"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "pool wait, active connection, transaction, query, timeout, and representative burst evidence"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "security-edge-abuse-controls",
+                      "category":  "security",
+                      "risk":  "standard",
+                      "primary_skill":  "security-reviewer",
+                      "prompt":  "Review bounded rate-limit, CDN, WAF, and origin settings for an established public endpoint so application-layer abuse is contained without bypassing server authorization or blocking normal clients.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "identify authoritative identity and resource keys, trusted proxy boundaries, origin bypass paths, and downstream cost limits"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "define layered rate, payload, concurrency, cache, and degradation controls plus false-positive observation and rollback"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "treating WAF or CDN presence as authorization, DDoS immunity, or proof that the origin is protected"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "authorized bounded abuse, header-spoof, origin-reachability, false-positive, and resource-saturation checks"
                                                 }
                                             ]
                   }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Runtime And Concurrency Engineer"
+  short_description: "Engineer safe concurrency and resource lifecycles"
+  default_prompt: "Use $runtime-and-concurrency-engineer to design or review this concurrent runtime behavior and its resource lifecycle."

@@ -5,7 +5,7 @@ the authoritative machine-readable inventory and routing source. `rules/*.md`
 are triggered gates; `skills/<name>/SKILL.md` are specialist procedures.
 Project preferences are explicit overlays, not global defaults.
 
-Governance pack version: **4.1.0**.
+Governance pack version: **4.2.0**.
 
 ## 0. Operating Standard
 
@@ -214,6 +214,15 @@ patch, explain it rather than hiding it behind a symptom change.
 
 ## 8. Engineering Standards
 
+For every Standard-or-higher durable task, screen the material dimensions before
+selecting an approach: user/contract behavior; data and consistency; local
+runtime concurrency and resource lifetime; cross-process distribution;
+algorithmic and I/O performance; security and privacy; platform/network and
+deployment; observability, recovery, and ownership; build/supply-chain; and UI
+or accessibility. Add every matching manifest signal and load only its relevant
+gates/skills. A dimension that is demonstrably irrelevant needs no ceremony; an
+unknown dimension with material consequence must remain visible or be resolved.
+
 - Preserve public behavior unless the request explicitly changes it.
 - Enforce invariants with the strongest fitting layer: types, authorization,
   constraints, transactions, idempotency, validation, checks, and tests.
@@ -275,6 +284,8 @@ invariants. Report accepted risk separately from resolved findings.
 - `rules/implementation-execution-protocol.md`: `IMPLEMENT` tasks only.
 - `rules/context-budget.md`: proportional discovery and verification.
 - `rules/requirements-precision-gate.md`: ambiguous or significant requirements.
+- `rules/runtime-resource-safety.md`: local concurrency, cancellation, shutdown,
+  and memory/resource lifecycle.
 - `rules/testing-strategy.md`: behavior, fixes, refactors, and critical logic.
 - `rules/security-and-privacy-gate.md`: trust, auth, sensitive data, and privacy.
 - `rules/interface-and-accessibility-gate.md`: user-interface behavior and
@@ -307,7 +318,7 @@ only when its procedure materially applies.
 | `requirements-crystallizer`, `product-and-domain-strategist`, `risk-radar-scout` | requirement, product/domain, and major uncertainty discovery |
 | `code-archaeologist`, `debugging-strategist`, `observability-detective` | unfamiliar code, defect diagnosis, and running-system evidence |
 | `staff-architect`, `drift-guardian`, `refactoring-mechanic` | durable architecture, boundary drift, and behavior-preserving structure |
-| `api-and-contract-engineer`, `data-and-database-engineer`, `distributed-systems-engineer` | public contracts, persistent state, and cross-process coordination |
+| `api-and-contract-engineer`, `data-and-database-engineer`, `distributed-systems-engineer`, `runtime-and-concurrency-engineer` | public contracts, persistent state, cross-process coordination, and process-local runtime safety |
 | `platform-infrastructure-engineer`, `safe-release-conductor`, `incident-commander` | platform design, authorized release, and incident coordination |
 | `security-reviewer`, `privacy-and-data-governance-engineer` | security boundaries and privacy/data governance |
 | `ai-system-and-evaluation-engineer` | runtime AI design, evaluation, drift, and controls |

@@ -28,11 +28,16 @@ use `rules/configuration-and-feature-flags.md`.
 - **Secrets:** No secrets in source, client bundles, logs, errors, tests, or analytics.
 - **Browser & Session:** As applicable, verify CSRF and CORS boundaries, secure
   cookie/session/token handling, safe redirects, and content-rendering controls.
+  For OAuth/OIDC or JWT, verify flow/client type, redirect URI, PKCE/state/nonce,
+  issuer/audience/signature/time validation, refresh/reuse behavior, and signing
+  key discovery/rotation overlap as applicable.
 - **Files & URLs:** Bound size/type/archive expansion, normalize paths, prevent
   traversal and unsafe serving, and constrain outbound URLs against SSRF,
   redirect, DNS, and internal-network abuse.
 - **Abuse & Resources:** Bound replay, attempts, rate, concurrency, fan-out,
-  payload, and expensive operations at the authoritative boundary.
+  payload, and expensive operations at the authoritative boundary. Treat CDN,
+  WAF, bot management, and DDoS protection as defense in depth; protect the
+  origin and preserve server-side authorization, validation, and resource caps.
 
 ### 2. Privacy & Data Governance
 - **Classification & minimization:** Classify sensitive data and collect only required fields.

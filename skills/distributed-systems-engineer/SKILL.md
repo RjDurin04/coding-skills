@@ -1,6 +1,6 @@
 ---
 name: distributed-systems-engineer
-description: Design and review workflows spanning processes, services, queues, regions, replicas, schedulers, or unreliable networks. Use for delivery semantics, ordering, consistency, coordination, clocks, retries, idempotency, sagas, outboxes, leader election, partitions, split brain, distributed concurrency, or cross-service failure handling. Do not use for a local synchronous call graph.
+description: Design and review workflows spanning processes, services, queues, Pub/Sub, regions, replicas, schedulers, or unreliable networks. Use for event-driven architecture, delivery semantics, distributed transactions, ordering, CAP trade-offs, consistency, coordination, clocks, retries, idempotency, sagas, outboxes, leader election, partitions, split brain, distributed locks, or cross-service failure handling. Do not use for a local synchronous call graph.
 ---
 
 # Distributed Systems Engineer
@@ -29,6 +29,11 @@ Define:
   time.
 - Behavior during partitions, dependency outage, and ambiguous timeout.
 
+Apply the CAP trade-off to the specific operation and partition behavior, not
+as a database label. State whether the operation rejects, waits, serves stale
+data, accepts divergent writes, or degrades when required communication is
+unavailable.
+
 Do not claim exactly-once end-to-end effects without proving every stateful
 boundary. Prefer at-least-once delivery plus idempotent effects when it fits.
 
@@ -37,6 +42,12 @@ boundary. Prefer at-least-once delivery plus idempotent effects when it fits.
 Model durable states, transitions, guards, terminal states, and compensations.
 Choose local transaction, outbox/inbox, saga, lease, fencing token, quorum,
 consensus, or coordinator only when its guarantees match the invariant.
+
+For a distributed transaction, compare redesigning the ownership boundary,
+local transaction plus outbox, saga/compensation, and a consensus-backed or
+two-phase commit coordinator. Include blocking, coordinator failure,
+availability, irreversibility, and operational recovery; do not choose 2PC from
+the word "transaction" alone.
 
 Prevent stale leaders and expired workers from committing effects. Define
 ownership transfer, lease renewal, lock/fencing scope, recovery after crash, and
@@ -71,6 +82,8 @@ unified delivery record in `GEMINI.md`.
 - A timeout does not prove whether the remote effect occurred.
 - No exactly-once, global order, strong consistency, or failover claim without a
   precise scope and evidence.
+- No distributed lock without expiry/renewal, ownership identity, fencing, and
+  recovery from a stale holder.
 - No unbounded retry, queue, fan-out, lease, or replay behavior.
 - Prefer removing a distributed boundary when it does not buy a required outcome.
 

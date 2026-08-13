@@ -39,6 +39,12 @@ Check applicable evidence for:
 - capacity, cost, availability, observability, health checks, and alert coverage;
 - runbook, support window, escalation path, and likely failure modes.
 
+For orchestrated workloads, distinguish startup, liveness, readiness, and
+serving/dependency health. A liveness probe should detect an unrecoverable local
+process, not restart healthy instances because a dependency is down. Readiness
+must remove traffic before shutdown or unsafe dependency loss, and rollout
+timing must include startup, drain, termination, and in-flight work.
+
 Choose direct, rolling, canary, blue-green, shadow, flag-controlled, or other
 delivery based on consequence, traffic, observability, state compatibility, and
 recovery speed. Do not require a progressive pattern when a bounded direct

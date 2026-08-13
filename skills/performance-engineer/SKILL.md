@@ -1,6 +1,6 @@
 ---
 name: performance-engineer
-description: Use when code touches hot paths, growing datasets, algorithm/data-structure choices, database query shape, memory pressure, batching, caching, or user-visible latency. Designs and reviews efficient implementations without speculative cleverness.
+description: Use when code touches hot paths, growing datasets, algorithm/data-structure choices, database query shape, memory or allocation pressure, garbage-collection pauses, batching, caching, throughput, tail latency, or user-visible latency. Designs and reviews efficient implementations without speculative cleverness; pair with runtime-and-concurrency-engineer for leaks, resource lifetime, or synchronization correctness.
 ---
 
 # Performance Engineer
@@ -17,7 +17,7 @@ m = related items
 d = depth / fan-out
 k = page or batch size
 growth = current -> expected 12-month size
-target = p95/p99, throughput, memory, CPU, API cost
+target = distribution such as p50/p95/p99/max, throughput, memory, CPU, API cost
 ```
 
 If no target exists: choose a low-stakes `[ASSUMED]` default only when it does
@@ -28,7 +28,8 @@ behavior; otherwise ask.
 
 For each material path, state:
 - **Time:** common/worst/expected when they differ.
-- **Space:** temp arrays/maps, buffers, caches, recursion, materialized results.
+- **Space:** temp arrays/maps, buffers, caches, recursion, materialized results,
+  allocation rate, retained memory, and garbage-collection pressure.
 - **I/O:** DB queries, network calls, file ops, locks, queue ops.
 
 Red flags: nested independently growing inputs; repeated sort/filter/find in a loop; query/network call in a loop; full scan, missing index, deep offset pagination; unbounded recursion, fan-out, queue, cache, or payload.
@@ -56,6 +57,9 @@ choice explicitly instead of accepting accidental slow paths.
 - Batch network calls with concurrency limits.
 - Stream large files/results; materialize only bounded data.
 - Define backpressure when producers can outrun consumers.
+- Separate throughput from latency distribution. Check queueing, coordinated
+  omission, warm-up, cold starts, pauses, and outliers before claiming a tail
+  improvement.
 
 ### 5. Cache Carefully
 
@@ -63,7 +67,11 @@ Cache only for measured/structurally obvious repeated work. Define key/scope, TT
 
 ### 6. Measure Before Cleverness
 
-Baseline with profiler, benchmark, query plan, or production metric; change one bottleneck; re-measure with representative data. Keep clearer code unless the faster version materially meets a requirement or removes risk. Micro-optimize only after algorithm, I/O shape, and memory bounds are sane.
+Baseline with profiler, benchmark, query plan, allocation/heap profile, or
+production metric; change one bottleneck; re-measure with representative data.
+Keep clearer code unless the faster version materially meets a requirement or
+removes risk. Micro-optimize only after algorithm, I/O shape, memory bounds,
+runtime warm-up, and measurement bias are sane.
 
 ### 7. Guard Regression
 
@@ -85,3 +93,5 @@ use a local performance result to imply aggregate release readiness.
 - If input is unbounded, the implementation must bound memory, latency, or concurrency.
 - If performance is a requirement, at least one scoped check must measure it or
   a monitoring guard must detect violation.
+- An average does not establish tail behavior; report the relevant distribution
+  and workload.

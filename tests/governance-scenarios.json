@@ -49,10 +49,11 @@
                                                    "pure_refactor",
                                                    "quality_strategy",
                                                    "recurring_or_bounded_operational_failure",
-                                                   "release_design_or_configuration",
-                                                   "repository_code_execution",
-                                                   "running_system_symptom",
-                                                   "schema_or_migration",
+                             "release_design_or_configuration",
+                             "repository_code_execution",
+                             "running_system_symptom",
+                             "runtime_concurrency_or_resource_lifecycle",
+                             "schema_or_migration",
                                                    "security_relevant_configuration",
                                                    "security_sensitive",
                                                    "sensitive_data_handling",
@@ -4008,6 +4009,46 @@
                           "expected_lead_skill":  "security-reviewer",
                           "expected_supporting_skills":  [
 
+                                                         ]
+                      },
+                      {
+                          "id":  "implement-runtime-concurrency-safety",
+                          "request":  "Implement a bounded asynchronous worker pool that updates process-local shared state, propagates cancellation, drains on shutdown, and does not leak tasks, timers, handles, connections, or memory.",
+                          "expected_mode":  "implement",
+                          "signals":  [
+                                          "durable_task",
+                                          "implementation_task",
+                                          "runtime_concurrency_or_resource_lifecycle",
+                                          "algorithmic_efficiency",
+                                          "behavior_change",
+                                          "repository_code_execution",
+                                          "nontrivial_ai_assisted_work"
+                                      ],
+                          "negative_signals":  [
+                                                   "api_contract",
+                                                   "database_design",
+                                                   "distributed_system",
+                                                   "platform_infrastructure",
+                                                   "production_runtime_flow",
+                                                   "security_sensitive"
+                                               ],
+                          "expected_risk":  "standard",
+                          "expected_confirmation":  "none",
+                          "expected_rules":  [
+                                                 "adversarial-self-review",
+                                                 "agent-operation-safety",
+                                                 "ai-provenance-disclosure",
+                                                 "algorithmic-efficiency-gate",
+                                                 "context-budget",
+                                                 "governance-router",
+                                                 "implementation-execution-protocol",
+                                                 "runtime-resource-safety",
+                                                 "testing-strategy"
+                                             ],
+                          "expected_lead_skill":  "runtime-and-concurrency-engineer",
+                          "expected_supporting_skills":  [
+                                                             "adversarial-test-forge",
+                                                             "performance-engineer"
                                                          ]
                       }
                   ]
