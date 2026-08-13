@@ -453,7 +453,7 @@ if os.name == "nt":
             )
             if not process_handle:
                 error = ctypes.get_last_error()
-                if error == _ERROR_INVALID_PARAMETER:
+                if error in (_ERROR_INVALID_PARAMETER, _ERROR_ACCESS_DENIED):
                     return False
                 raise OSError(
                     error,

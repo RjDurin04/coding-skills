@@ -1540,6 +1540,48 @@ class RoutingModelRunnerTests(unittest.TestCase):
         self.assertEqual(fake_kernel.open_calls, 0)
         self.assertEqual(job.descendant_handles, {201: ["expired-handle"]})
 
+    @unittest.skipUnless(os.name == "nt", "Windows process contract")
+    def test_windows_access_denied_in_retain_descendant_is_ignored(self) -> None:
+        runner = load_runner_module()
+
+        class FakeKernel:
+            def __init__(self) -> None:
+                self.open_calls = 0
+
+            def WaitForSingleObject(
+                self,
+                process_handle: str,
+                timeout_ms: int,
+            ) -> int:
+                del timeout_ms, process_handle
+                return runner._WAIT_TIMEOUT
+
+            def OpenProcess(self, *arguments: Any) -> Any:
+                del arguments
+                self.open_calls += 1
+                runner.ctypes.set_last_error(runner._ERROR_ACCESS_DENIED)
+                return None
+
+        job = runner._WindowsProcessJob.__new__(runner._WindowsProcessJob)
+        job.root_pid = 100
+        job.root_process_handle = "live-root-handle"
+        job.descendant_handles = {}
+        job.handle = None
+        job.completion_port = None
+        fake_kernel = FakeKernel()
+        original_kernel = runner._kernel32
+        original_parents = runner._windows_process_parents
+        runner._kernel32 = fake_kernel
+        runner._windows_process_parents = lambda: {202: 100}
+        try:
+            job.observe_descendants()
+        finally:
+            runner._windows_process_parents = original_parents
+            runner._kernel32 = original_kernel
+
+        self.assertEqual(fake_kernel.open_calls, 1)
+        self.assertEqual(job.descendant_handles, {})
+
     def test_new_json_contracts_and_template_are_strict_json(self) -> None:
         adapter_schema = json.loads(
             (ROOT / "schemas" / "routing-model-adapter.schema.json").read_text(
