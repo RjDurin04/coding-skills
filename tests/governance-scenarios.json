@@ -4050,6 +4050,285 @@
                                                              "adversarial-test-forge",
                                                              "performance-engineer"
                                                          ]
+                      },
+                      {
+                          "id":  "design-interface-visual-direction",
+                          "request":  "Define a context-specific visual direction for an established consumer finance dashboard without changing its workflow or inventing brand proof.",
+                          "expected_mode":  "design",
+                          "signals":  [
+                                          "durable_task",
+                                          "user_interface_visual_design",
+                                          "nontrivial_ai_assisted_work"
+                                      ],
+                          "negative_signals":  [
+                                                   "user_interface",
+                                                   "user_interface_accessibility",
+                                                   "user_interface_design_system",
+                                                   "user_interface_frontend_implementation",
+                                                   "user_interface_interaction_motion",
+                                                   "user_interface_quality_review",
+                                                   "user_interface_with_data"
+                                               ],
+                          "expected_risk":  "standard",
+                          "expected_confirmation":  "none",
+                          "expected_rules":  [
+                                                 "adversarial-self-review",
+                                                 "agent-operation-safety",
+                                                 "ai-provenance-disclosure",
+                                                 "context-budget",
+                                                 "governance-router",
+                                                 "interface-and-accessibility-gate"
+                                             ],
+                          "expected_lead_skill":  "visual-design-specialist",
+                          "expected_supporting_skills":  [
+
+                                                         ]
+                      },
+                      {
+                          "id":  "design-interface-motion-system",
+                          "request":  "Specify purposeful, interruptible motion and reduced-motion behavior for a developer tool whose interaction model is already defined.",
+                          "expected_mode":  "design",
+                          "signals":  [
+                                          "durable_task",
+                                          "user_interface_interaction_motion",
+                                          "nontrivial_ai_assisted_work"
+                                      ],
+                          "negative_signals":  [
+                                                   "user_interface",
+                                                   "user_interface_accessibility",
+                                                   "user_interface_design_system",
+                                                   "user_interface_frontend_implementation",
+                                                   "user_interface_quality_review",
+                                                   "user_interface_visual_design",
+                                                   "user_interface_with_data"
+                                               ],
+                          "expected_risk":  "standard",
+                          "expected_confirmation":  "none",
+                          "expected_rules":  [
+                                                 "adversarial-self-review",
+                                                 "agent-operation-safety",
+                                                 "ai-provenance-disclosure",
+                                                 "context-budget",
+                                                 "governance-router",
+                                                 "interface-and-accessibility-gate"
+                                             ],
+                          "expected_lead_skill":  "interaction-and-motion-designer",
+                          "expected_supporting_skills":  [
+
+                                                         ]
+                      },
+                      {
+                          "id":  "review-interface-accessibility",
+                          "request":  "Review a canvas-based analytics interface with custom controls for keyboard, screen-reader, cognitive, zoom, and live-update accessibility; make no changes.",
+                          "expected_mode":  "review",
+                          "signals":  [
+                                          "durable_task",
+                                          "user_interface_accessibility",
+                                          "nontrivial_ai_assisted_work"
+                                      ],
+                          "negative_signals":  [
+                                                   "implementation_task",
+                                                   "user_interface",
+                                                   "user_interface_design_system",
+                                                   "user_interface_frontend_implementation",
+                                                   "user_interface_interaction_motion",
+                                                   "user_interface_quality_review",
+                                                   "user_interface_visual_design"
+                                               ],
+                          "expected_risk":  "standard",
+                          "expected_confirmation":  "none",
+                          "expected_rules":  [
+                                                 "adversarial-self-review",
+                                                 "agent-operation-safety",
+                                                 "ai-provenance-disclosure",
+                                                 "context-budget",
+                                                 "governance-router",
+                                                 "interface-and-accessibility-gate"
+                                             ],
+                          "expected_lead_skill":  "accessible-interface-engineer",
+                          "expected_supporting_skills":  [
+
+                                                         ]
+                      },
+                      {
+                          "id":  "design-interface-system",
+                          "request":  "Design reusable semantic tokens, component contracts, governance, and migration for several products without implementing a one-off screen.",
+                          "expected_mode":  "design",
+                          "signals":  [
+                                          "durable_task",
+                                          "user_interface_design_system",
+                                          "nontrivial_ai_assisted_work"
+                                      ],
+                          "negative_signals":  [
+                                                   "user_interface",
+                                                   "user_interface_accessibility",
+                                                   "user_interface_frontend_implementation",
+                                                   "user_interface_interaction_motion",
+                                                   "user_interface_quality_review",
+                                                   "user_interface_visual_design"
+                                               ],
+                          "expected_risk":  "structural",
+                          "expected_confirmation":  "none",
+                          "expected_rules":  [
+                                                 "adversarial-self-review",
+                                                 "agent-operation-safety",
+                                                 "ai-provenance-disclosure",
+                                                 "complexity-budget",
+                                                 "context-budget",
+                                                 "evolutionary-stewardship",
+                                                 "governance-router",
+                                                 "interface-and-accessibility-gate"
+                                             ],
+                          "expected_lead_skill":  "design-system-engineer",
+                          "expected_supporting_skills":  [
+
+                                                         ]
+                      },
+                      {
+                          "id":  "implement-frontend-interface",
+                          "request":  "Implement an already approved responsive product-page design in the incumbent frontend stack with complete states and no new UI library.",
+                          "expected_mode":  "implement",
+                          "signals":  [
+                                          "durable_task",
+                                          "implementation_task",
+                                          "user_interface_frontend_implementation",
+                                          "behavior_change",
+                                          "repository_code_execution",
+                                          "nontrivial_ai_assisted_work"
+                                      ],
+                          "negative_signals":  [
+                                                   "dependency_change",
+                                                   "user_interface",
+                                                   "user_interface_accessibility",
+                                                   "user_interface_design_system",
+                                                   "user_interface_interaction_motion",
+                                                   "user_interface_quality_review",
+                                                   "user_interface_visual_design"
+                                               ],
+                          "expected_risk":  "standard",
+                          "expected_confirmation":  "none",
+                          "expected_rules":  [
+                                                 "adversarial-self-review",
+                                                 "agent-operation-safety",
+                                                 "ai-provenance-disclosure",
+                                                 "context-budget",
+                                                 "governance-router",
+                                                 "implementation-execution-protocol",
+                                                 "interface-and-accessibility-gate",
+                                                 "testing-strategy"
+                                             ],
+                          "expected_lead_skill":  "frontend-interface-engineer",
+                          "expected_supporting_skills":  [
+
+                                                         ]
+                      },
+                      {
+                          "id":  "review-interface-quality",
+                          "request":  "Audit an existing image-heavy portfolio across responsive behavior, motion, accessibility, content integrity, and implementation evidence without editing it.",
+                          "expected_mode":  "review",
+                          "signals":  [
+                                          "durable_task",
+                                          "user_interface_quality_review",
+                                          "nontrivial_ai_assisted_work"
+                                      ],
+                          "negative_signals":  [
+                                                   "implementation_task",
+                                                   "user_interface",
+                                                   "user_interface_accessibility",
+                                                   "user_interface_design_system",
+                                                   "user_interface_frontend_implementation",
+                                                   "user_interface_interaction_motion",
+                                                   "user_interface_visual_design"
+                                               ],
+                          "expected_risk":  "standard",
+                          "expected_confirmation":  "none",
+                          "expected_rules":  [
+                                                 "adversarial-self-review",
+                                                 "agent-operation-safety",
+                                                 "ai-provenance-disclosure",
+                                                 "context-budget",
+                                                 "governance-router",
+                                                 "interface-and-accessibility-gate"
+                                             ],
+                          "expected_lead_skill":  "interface-quality-reviewer",
+                          "expected_supporting_skills":  [
+
+                                                         ]
+                      },
+                      {
+                          "id":  "design-interface-multidisciplinary",
+                          "request":  "Design a new SaaS operations surface whose workflow, visual language, and motion hierarchy are all unresolved and must be synthesized coherently.",
+                          "expected_mode":  "design",
+                          "signals":  [
+                                          "durable_task",
+                                          "user_interface",
+                                          "user_interface_visual_design",
+                                          "user_interface_interaction_motion",
+                                          "nontrivial_ai_assisted_work"
+                                      ],
+                          "negative_signals":  [
+                                                   "user_interface_accessibility",
+                                                   "user_interface_design_system",
+                                                   "user_interface_frontend_implementation",
+                                                   "user_interface_quality_review",
+                                                   "user_interface_with_data"
+                                               ],
+                          "expected_risk":  "standard",
+                          "expected_confirmation":  "none",
+                          "expected_rules":  [
+                                                 "adversarial-self-review",
+                                                 "agent-operation-safety",
+                                                 "ai-provenance-disclosure",
+                                                 "context-budget",
+                                                 "governance-router",
+                                                 "interface-and-accessibility-gate"
+                                             ],
+                          "expected_lead_skill":  "interface-designer",
+                          "expected_supporting_skills":  [
+                                                             "interaction-and-motion-designer",
+                                                             "visual-design-specialist"
+                                                         ]
+                      },
+                      {
+                          "id":  "implement-frontend-interface-with-data",
+                          "request":  "Implement an approved account-settings interface that reads and submits established profile data while preserving server validation and authorization.",
+                          "expected_mode":  "implement",
+                          "signals":  [
+                                          "durable_task",
+                                          "implementation_task",
+                                          "user_interface_frontend_implementation",
+                                          "user_interface_with_data",
+                                          "untrusted_input_or_data_access",
+                                          "behavior_change",
+                                          "repository_code_execution",
+                                          "nontrivial_ai_assisted_work"
+                                      ],
+                          "negative_signals":  [
+                                                   "sensitive_data_handling",
+                                                   "user_interface",
+                                                   "user_interface_accessibility",
+                                                   "user_interface_design_system",
+                                                   "user_interface_interaction_motion",
+                                                   "user_interface_quality_review",
+                                                   "user_interface_visual_design"
+                                               ],
+                          "expected_risk":  "standard",
+                          "expected_confirmation":  "none",
+                          "expected_rules":  [
+                                                 "adversarial-self-review",
+                                                 "agent-operation-safety",
+                                                 "ai-provenance-disclosure",
+                                                 "context-budget",
+                                                 "governance-router",
+                                                 "implementation-execution-protocol",
+                                                 "interface-and-accessibility-gate",
+                                                 "security-and-privacy-gate",
+                                                 "testing-strategy"
+                                             ],
+                          "expected_lead_skill":  "frontend-interface-engineer",
+                          "expected_supporting_skills":  [
+                                                             "interface-designer"
+                                                         ]
                       }
                   ]
 }

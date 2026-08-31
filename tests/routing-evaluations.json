@@ -1317,6 +1317,169 @@
                                                                  "adversarial-test-forge"
                                                              ]
                                    }
+                  },
+                  {
+                      "id":  "design-interface-visual-direction",
+                      "request":  "Define the visual hierarchy, typography, palette, composition, and imagery direction for an established finance dashboard without changing its workflow.",
+                      "rationale":  "The primary unresolved decision is visual language, so the focused visual specialist leads instead of the generic interface fallback.",
+                      "expected":  {
+                                       "mode":  "design",
+                                       "signals":  [
+                                                       "durable_task",
+                                                       "user_interface_visual_design",
+                                                       "nontrivial_ai_assisted_work"
+                                                   ],
+                                       "risk":  "standard",
+                                       "confirmation":  "none",
+                                       "lead_skill":  "visual-design-specialist",
+                                       "supporting_skills":  [
+
+                                                             ]
+                                   }
+                  },
+                  {
+                      "id":  "design-interface-motion-system",
+                      "request":  "Specify purposeful transitions, interruption behavior, reduced-motion alternatives, and temporal feedback for an otherwise defined developer-tool interface.",
+                      "rationale":  "Motion and temporal interaction are the requested primary deliverable, not incidental styling or general implementation.",
+                      "expected":  {
+                                       "mode":  "design",
+                                       "signals":  [
+                                                       "durable_task",
+                                                       "user_interface_interaction_motion",
+                                                       "nontrivial_ai_assisted_work"
+                                                   ],
+                                       "risk":  "standard",
+                                       "confirmation":  "none",
+                                       "lead_skill":  "interaction-and-motion-designer",
+                                       "supporting_skills":  [
+
+                                                             ]
+                                   }
+                  },
+                  {
+                      "id":  "review-interface-accessibility",
+                      "request":  "Review a canvas chart and custom controls for keyboard, screen-reader, live-update, zoom, reflow, cognitive, and motion accessibility without editing files.",
+                      "rationale":  "Explicit complex accessibility review warrants the accessibility specialist while remaining read-only.",
+                      "expected":  {
+                                       "mode":  "review",
+                                       "signals":  [
+                                                       "durable_task",
+                                                       "user_interface_accessibility",
+                                                       "nontrivial_ai_assisted_work"
+                                                   ],
+                                       "risk":  "standard",
+                                       "confirmation":  "none",
+                                       "lead_skill":  "accessible-interface-engineer",
+                                       "supporting_skills":  [
+
+                                                             ]
+                                   }
+                  },
+                  {
+                      "id":  "design-interface-system",
+                      "request":  "Design shared semantic tokens, reusable component contracts, contribution governance, versioning, and migration across several products.",
+                      "rationale":  "Cross-surface UI reuse and governance are a structural design-system concern rather than a one-off screen or generic architecture request.",
+                      "expected":  {
+                                       "mode":  "design",
+                                       "signals":  [
+                                                       "durable_task",
+                                                       "user_interface_design_system",
+                                                       "nontrivial_ai_assisted_work"
+                                                   ],
+                                       "risk":  "structural",
+                                       "confirmation":  "none",
+                                       "lead_skill":  "design-system-engineer",
+                                       "supporting_skills":  [
+
+                                                             ]
+                                   }
+                  },
+                  {
+                      "id":  "implement-frontend-interface",
+                      "request":  "Implement an approved responsive product-page design in the incumbent frontend stack with complete runtime states and no new component library.",
+                      "rationale":  "The design intent is resolved and faithful, robust code realization is the primary outcome.",
+                      "expected":  {
+                                       "mode":  "implement",
+                                       "signals":  [
+                                                       "durable_task",
+                                                       "implementation_task",
+                                                       "user_interface_frontend_implementation",
+                                                       "behavior_change",
+                                                       "repository_code_execution",
+                                                       "nontrivial_ai_assisted_work"
+                                                   ],
+                                       "risk":  "standard",
+                                       "confirmation":  "none",
+                                       "lead_skill":  "frontend-interface-engineer",
+                                       "supporting_skills":  [
+
+                                                             ]
+                                   }
+                  },
+                  {
+                      "id":  "review-interface-quality",
+                      "request":  "Audit an existing portfolio's UX, responsive behavior, visual hierarchy, motion, accessibility, content integrity, and implementation evidence without making changes.",
+                      "rationale":  "The user requested an independent read-only UI quality assessment, so the reviewer owns findings and evidence calibration.",
+                      "expected":  {
+                                       "mode":  "review",
+                                       "signals":  [
+                                                       "durable_task",
+                                                       "user_interface_quality_review",
+                                                       "nontrivial_ai_assisted_work"
+                                                   ],
+                                       "risk":  "standard",
+                                       "confirmation":  "none",
+                                       "lead_skill":  "interface-quality-reviewer",
+                                       "supporting_skills":  [
+
+                                                             ]
+                                   }
+                  },
+                  {
+                      "id":  "design-interface-multidisciplinary",
+                      "request":  "Design a new operations surface whose workflow, visual direction, and motion hierarchy are all unresolved and need one coherent synthesis.",
+                      "rationale":  "A genuinely multidisciplinary interface uses the generic core as orchestrator and composes only the visual and motion specialists that materially apply.",
+                      "expected":  {
+                                       "mode":  "design",
+                                       "signals":  [
+                                                       "durable_task",
+                                                       "user_interface",
+                                                       "user_interface_visual_design",
+                                                       "user_interface_interaction_motion",
+                                                       "nontrivial_ai_assisted_work"
+                                                   ],
+                                       "risk":  "standard",
+                                       "confirmation":  "none",
+                                       "lead_skill":  "interface-designer",
+                                       "supporting_skills":  [
+                                                                 "interaction-and-motion-designer",
+                                                                 "visual-design-specialist"
+                                                             ]
+                                   }
+                  },
+                  {
+                      "id":  "implement-frontend-interface-with-data",
+                      "request":  "Implement an approved settings interface that reads and submits established profile data while preserving server-side validation and authorization.",
+                      "rationale":  "Frontend realization remains the lead while the data-bearing UI signal contributes security and privacy gates without replacing the focused specialist.",
+                      "expected":  {
+                                       "mode":  "implement",
+                                       "signals":  [
+                                                       "durable_task",
+                                                       "implementation_task",
+                                                       "user_interface_frontend_implementation",
+                                                       "user_interface_with_data",
+                                                       "untrusted_input_or_data_access",
+                                                       "behavior_change",
+                                                       "repository_code_execution",
+                                                       "nontrivial_ai_assisted_work"
+                                                   ],
+                                       "risk":  "standard",
+                                       "confirmation":  "none",
+                                       "lead_skill":  "frontend-interface-engineer",
+                                       "supporting_skills":  [
+                                                                 "interface-designer"
+                                                             ]
+                                   }
                   }
               ]
 }

@@ -324,7 +324,7 @@ only when its procedure materially applies.
 | `ai-system-and-evaluation-engineer` | runtime AI design, evaluation, drift, and controls |
 | `adversarial-test-forge`, `quality-engineering-lead`, `formal-assurance-engineer` | risk-driven testing, quality systems, and critical-property assurance |
 | `performance-engineer` | algorithms, queries, capacity, latency, and resource cost |
-| `interface-designer`, `documentation-steward` | user interfaces/accessibility and durable documentation |
+| `interface-designer`, `accessible-interface-engineer`, `design-system-engineer`, `frontend-interface-engineer`, `interaction-and-motion-designer`, `interface-quality-reviewer`, `visual-design-specialist`, `documentation-steward` | user interfaces, visual design, motion, frontend realization, design systems, accessibility, UI quality reviews, and durable documentation |
 | `engineering-leadership` | multi-person ownership, review, and technical alignment |
 | `graceful-sunset-steward` | deprecation, migration, replacement, and removal |
 

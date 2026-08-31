@@ -229,6 +229,12 @@
                },
     "skill_coverage":  [
                            {
+                               "skill":  "accessible-interface-engineer",
+                               "role":  "primary",
+                               "minimum_cases":  2,
+                               "reason":  "This skill is selected as a lead_skill by the focused interface accessibility routing signal."
+                           },
+                           {
                                "skill":  "adversarial-test-forge",
                                "role":  "support_only",
                                "minimum_cases":  0,
@@ -271,6 +277,12 @@
                                "reason":  "This skill is selected as a lead_skill by at least one manifest routing signal."
                            },
                            {
+                               "skill":  "design-system-engineer",
+                               "role":  "primary",
+                               "minimum_cases":  2,
+                               "reason":  "This skill is selected as a lead_skill by the focused interface design-system routing signal."
+                           },
+                           {
                                "skill":  "distributed-systems-engineer",
                                "role":  "primary",
                                "minimum_cases":  2,
@@ -301,6 +313,12 @@
                                "reason":  "This skill is selected as a lead_skill by at least one manifest routing signal."
                            },
                            {
+                               "skill":  "frontend-interface-engineer",
+                               "role":  "primary",
+                               "minimum_cases":  2,
+                               "reason":  "This skill is selected as a lead_skill by the focused frontend interface implementation routing signal."
+                           },
+                           {
                                "skill":  "graceful-sunset-steward",
                                "role":  "primary",
                                "minimum_cases":  2,
@@ -317,6 +335,18 @@
                                "role":  "primary",
                                "minimum_cases":  2,
                                "reason":  "This skill is selected as a lead_skill by at least one manifest routing signal."
+                           },
+                           {
+                               "skill":  "interface-quality-reviewer",
+                               "role":  "primary",
+                               "minimum_cases":  2,
+                               "reason":  "This skill is selected as a lead_skill by the focused interface quality-review routing signal."
+                           },
+                           {
+                               "skill":  "interaction-and-motion-designer",
+                               "role":  "primary",
+                               "minimum_cases":  2,
+                               "reason":  "This skill is selected as a lead_skill by the focused interaction and motion routing signal."
                            },
                            {
                                "skill":  "observability-detective",
@@ -395,6 +425,12 @@
                                "role":  "primary",
                                "minimum_cases":  2,
                                "reason":  "This skill is selected as a lead_skill by at least one manifest routing signal."
+                           },
+                           {
+                               "skill":  "visual-design-specialist",
+                               "role":  "primary",
+                               "minimum_cases":  2,
+                               "reason":  "This skill is selected as a lead_skill by the focused visual interface design routing signal."
                            }
                        ],
     "cases":  [
@@ -3402,6 +3438,402 @@
                                                 {
                                                     "id":  "evidence_1",
                                                     "description":  "authorized bounded abuse, header-spoof, origin-reachability, false-positive, and resource-saturation checks"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "ui-visual-finance-dashboard",
+                      "category":  "interface",
+                      "risk":  "standard",
+                      "primary_skill":  "visual-design-specialist",
+                      "prompt":  "Define a visual redesign direction for an established debt-paydown dashboard when an executive requests a fashionable purple-gradient glass aesthetic without user or brand evidence.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "establish visual authority from product purpose, audience, content, incumbent brand assets, and explicit constraints before selecting a direction"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "specify hierarchy, composition, typography, color roles, density, surfaces, imagery, and interaction-state treatment as one coherent system"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "preserve legibility, non-color cues, long content, responsive variation, and factual product truth while explaining material tradeoffs"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "obeying a trend, enforcing a house-style ban, or fabricating brand proof, testimonials, metrics, logos, or realistic data"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "a rendered-state comparison across representative content and viewports plus token, contrast, and content-integrity checks"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "ui-visual-publication-system",
+                      "category":  "interface",
+                      "risk":  "standard",
+                      "primary_skill":  "visual-design-specialist",
+                      "prompt":  "Create a distinctive but readable visual system for a content-heavy publication with essays, breaking news, data graphics, captions, and very long localized headlines.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "derive emphasis, reading rhythm, type roles, measure, spacing, grid, and image behavior from editorial hierarchy and reading context"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "differentiate article, index, breaking-news, and data-rich surfaces without fragmenting the visual language"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "define responsive and localization stress behavior for long titles, captions, pull quotes, and mixed media"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "turning every story into a card, optimizing for novelty over reading, or applying English-specific line and copy limits as universal rules"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "representative rendered pages with short, long, localized, image-free, and data-rich content at narrow and wide widths"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "ui-motion-developer-tool",
+                      "category":  "interface",
+                      "risk":  "standard",
+                      "primary_skill":  "interaction-and-motion-designer",
+                      "prompt":  "Design motion for a command palette, split panes, diagnostics, and deployment progress in a developer tool when two animation libraries are installed and a deadline encourages animating everything.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "assign each material transition a purpose tied to orientation, causality, feedback, hierarchy, or continuity and omit motion without such a purpose"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "define interruption, reversal, cancellation, repeated-input, focus, cleanup, and degraded behavior for every stateful animation"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "provide an intentional reduced-motion path and choose the smallest fitting implementation mechanism from incumbent capabilities"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "animating every element, mixing libraries without an ownership reason, or presenting invented durations and performance budgets as adopted requirements"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "runtime interaction captures and keyboard, reduced-motion, rapid-input, cleanup, and representative performance checks"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "ui-motion-mobile-commerce",
+                      "category":  "interface",
+                      "risk":  "standard",
+                      "primary_skill":  "interaction-and-motion-designer",
+                      "prompt":  "Specify gesture, optimistic feedback, route transitions, cart updates, and latency behavior for a mobile commerce flow across touch, keyboard, reduced motion, and interrupted network requests.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "map temporal behavior to user intent and durable state without letting animation imply success before authoritative confirmation"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "provide non-gesture and non-motion equivalents, preserve focus and announcements, and keep actions operable during interruption"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "bound animation ownership, concurrency, cancellation, and fallback when requests fail, arrive late, or complete out of order"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "using motion to hide unresolved state, making gestures exclusive, or treating spring physics and fixed timings as universally correct"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "device-level tests for reduced motion, alternate inputs, slow and failed networks, repeated actions, focus, announcements, and frame stability"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "ui-accessibility-live-dashboard",
+                      "category":  "interface",
+                      "risk":  "structural",
+                      "primary_skill":  "accessible-interface-engineer",
+                      "prompt":  "Assess and redesign accessibility for a real-time canvas analytics dashboard with custom filters, toast-only errors, and values that update every second.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "resolve the adopted target and model semantic alternatives, keyboard operation, focus, names, relationships, status, error, zoom, reflow, and non-color communication"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "provide equivalent access to chart meaning and control while bounding, pausing, or summarizing live announcements to avoid overload"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "separate release blockers from unverified coverage and preserve a usable degraded path when advanced visualization is unavailable"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "claiming compliance from Lighthouse, an overlay, ARIA added to divs, or an automated score without representative assistive-technology evidence"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "documented keyboard, screen-reader, zoom, reflow, forced-colors, update-frequency, error, and alternative-data-view checks in named environments"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "ui-accessibility-onboarding-flow",
+                      "category":  "interface",
+                      "risk":  "standard",
+                      "primary_skill":  "accessible-interface-engineer",
+                      "prompt":  "Design and verify an accessible multi-step onboarding flow with conditional fields, identity verification, timeouts, validation, saved progress, localization, and error recovery.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "use semantic controls and instructions with predictable focus movement, error association, status announcements, and recovery across steps"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "address cognitive load, timing, saved progress, text expansion, bidirectionality, zoom, orientation, and assistive-technology continuity"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "identify consequential blockers, privacy-sensitive announcement boundaries, and what remains unverified"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "using disabled progression, color-only errors, focus jumps, inaccessible timeouts, or a checklist as evidence that users can complete the flow"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "end-to-end keyboard and screen-reader completion across validation, timeout, resume, localization, narrow viewport, and failure paths"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "ui-system-multi-product-tokens",
+                      "category":  "interface",
+                      "risk":  "structural",
+                      "primary_skill":  "design-system-engineer",
+                      "prompt":  "Unify divergent color and spacing tokens plus incompatible modal components across five products, including one legacy framework, dark mode, compact density, and no current governance owner.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "inventory actual consumers and separate primitives, semantic tokens, component contracts, patterns, themes, and product exceptions"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "define accessible state contracts, platform adapters, ownership, contribution, versioning, deprecation, and compatibility boundaries"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "stage adoption with measurable migrations, escape hatches, rollback, and a legacy path rather than requiring synchronous replacement"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "creating a second token universe, big-bang rewrite, prop explosion, or unowned shared library because centralization sounds cleaner"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "consumer inventory, token and API contract checks, representative visual and accessibility regression, and staged migration evidence"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "ui-system-component-contract",
+                      "category":  "interface",
+                      "risk":  "structural",
+                      "primary_skill":  "design-system-engineer",
+                      "prompt":  "Define reusable dialog, combobox, data-table, and notification contracts for web and native surfaces with variants, composition, accessibility, theming, density, and evolution.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "derive component boundaries from stable behavior and state invariants rather than visual resemblance alone"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "specify controlled and uncontrolled state, composition, semantics, keyboard and focus behavior, theming, density, localization, and escape hatches"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "define documentation, ownership, adoption, compatibility, versioning, deprecation, and regression responsibilities"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "encoding every product variation as a boolean prop or forcing web implementation details onto native platforms"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "contract, interaction, accessibility, visual-regression, consumer-fixture, and migration tests for representative variants and exceptions"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "ui-frontend-ecommerce-product-page",
+                      "category":  "interface",
+                      "risk":  "standard",
+                      "primary_skill":  "frontend-interface-engineer",
+                      "prompt":  "Implement an approved responsive e-commerce product-page comp in an existing React application while preserving cart and data contracts and using the incumbent design system.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "inspect the actual component, data, routing, asset, styling, and design-system seams before choosing the smallest implementation fit"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "realize semantic responsive structure plus loading, out-of-stock, error, long-content, localization, keyboard, focus, and mobile-media behavior"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "preserve server authority and data contracts while bounding assets, rendering, hydration, interaction, and animation cost"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "adding a new UI library for deadline convenience, coding only the screenshot state, or claiming pixel-perfect or production readiness from visual similarity"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "focused component and flow tests plus rendered narrow and wide, state, input-mode, localization, accessibility, and performance checks"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "ui-frontend-developer-tool",
+                      "category":  "interface",
+                      "risk":  "standard",
+                      "primary_skill":  "frontend-interface-engineer",
+                      "prompt":  "Implement a keyboard-first developer-tool workspace with large result sets, resizable panes, async diagnostics, saved layout, SSR, and recoverable failures in its existing frontend stack.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "define state ownership, event and data boundaries, persistence, cancellation, cleanup, hydration, and error recovery before component decomposition"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "preserve semantic keyboard operation, focus, alternate input, responsive and zoom behavior, partial results, empty states, and delayed diagnostics"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "bound DOM, render, subscription, virtualization, and async work using representative workload evidence"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "deriving component boundaries from boxes alone, swallowing async races, or treating client hiding as authorization"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "contract, interaction, keyboard, hydration, cancellation, failure, large-workload, responsive, and accessibility tests in representative browsers"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "ui-review-portfolio-evidence",
+                      "category":  "interface",
+                      "risk":  "standard",
+                      "primary_skill":  "interface-quality-reviewer",
+                      "prompt":  "Review a polished image-heavy creative portfolio with desktop screenshots, custom navigation, and scroll-linked motion when automated checks are green and the owner requests an immediate ship verdict.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "separate verified implementation and rendered observations from inferred design judgment, unknown states, and absent user evidence"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "report strengths and prioritized findings with locations, reproduction conditions, affected users, impact, severity, and concrete acceptance evidence"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "assess responsive, keyboard, focus, reduced motion, content, media, loading, failure, and performance coverage before readiness"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "issuing invented scores, compliance, or ship claims from desktop screenshots, aesthetics, or automated checks alone"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "source anchors and named rendered captures across viewports, inputs, motion preference, content states, failure states, and representative performance conditions"
+                                                }
+                                            ]
+                  },
+                  {
+                      "id":  "ui-review-saas-workflow",
+                      "category":  "interface",
+                      "risk":  "standard",
+                      "primary_skill":  "interface-quality-reviewer",
+                      "prompt":  "Audit a dense SaaS operations workflow for task clarity, permissions, delayed data, responsive behavior, visual hierarchy, design-system drift, accessibility, and release evidence.",
+                      "must_demonstrate":  [
+                                               {
+                                                   "id":  "demonstrate_1",
+                                                   "description":  "trace representative user tasks and states through implementation and rendered evidence instead of reviewing the happy-path screen in isolation"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_2",
+                                                   "description":  "distinguish UX, visual, interaction, accessibility, system, implementation, content, and evidence findings without duplicating or inflating severity"
+                                               },
+                                               {
+                                                   "id":  "demonstrate_3",
+                                                   "description":  "preserve good local patterns, identify blockers and gaps, and state a readiness verdict limited to observed environments and states"
+                                               }
+                                           ],
+                      "must_avoid":  [
+                                         {
+                                             "id":  "avoid_1",
+                                             "description":  "redesigning during a read-only audit, treating preferences as defects, or collapsing missing evidence into a pass"
+                                         }
+                                     ],
+                      "required_evidence":  [
+                                                {
+                                                    "id":  "evidence_1",
+                                                    "description":  "task-based source and runtime evidence covering roles, loading, stale, partial, empty, error, narrow, wide, keyboard, assistive-technology, and recovery states"
                                                 }
                                             ]
                   }

@@ -1003,7 +1003,21 @@ foreach ($match in $standaloneOutputs) {
     Add-Failure "Standalone rule or skill output remains at $($match.Path):$($match.LineNumber)"
 }
 
-$markdownFiles = @(Get-ChildItem -Recurse -File -LiteralPath $rootPath -Filter '*.md')
+$governedMarkdownRoots = @(
+    (Join-Path $rootPath 'rules'),
+    (Join-Path $rootPath 'skills'),
+    (Join-Path $rootPath 'overlays'),
+    (Join-Path $rootPath 'templates'),
+    (Join-Path $rootPath 'docs')
+)
+$markdownFiles = @(
+    Get-ChildItem -File -LiteralPath $rootPath -Filter '*.md'
+    foreach ($dir in $governedMarkdownRoots) {
+        if (Test-Path -LiteralPath $dir -PathType Container) {
+            Get-ChildItem -Recurse -File -LiteralPath $dir -Filter '*.md'
+        }
+    }
+)
 $referencePattern = '(?<![A-Za-z0-9_])(?<path>(?:rules/[A-Za-z0-9_-]+\.md|skills/[A-Za-z0-9_-]+/SKILL\.md|overlays/[A-Za-z0-9_./-]+\.md|templates/[A-Za-z0-9_.-]+\.(?:md|json)|schemas/[A-Za-z0-9_.-]+\.json|scripts/[A-Za-z0-9_.-]+\.(?:ps1|py)|tests/[A-Za-z0-9_.-]+\.(?:ps1|json)|requirements-governance\.txt|governance-manifest\.json))'
 foreach ($file in $markdownFiles) {
     $content = Read-Utf8 $file.FullName

@@ -206,6 +206,12 @@
       "recurring_or_bounded_operational_failure",
       "credible_high_impact_harm",
       "user_interface",
+      "user_interface_accessibility",
+      "user_interface_design_system",
+      "user_interface_frontend_implementation",
+      "user_interface_interaction_motion",
+      "user_interface_quality_review",
+      "user_interface_visual_design",
       "user_interface_with_data",
       "ai_product_behavior",
       "nontrivial_ai_assisted_work",
@@ -341,6 +347,10 @@
   ],
   "skills": [
     {
+      "name": "accessible-interface-engineer",
+      "path": "skills/accessible-interface-engineer/SKILL.md"
+    },
+    {
       "name": "adversarial-test-forge",
       "path": "skills/adversarial-test-forge/SKILL.md"
     },
@@ -372,6 +382,10 @@
       "path": "skills/debugging-strategist/SKILL.md"
     },
     {
+      "name": "design-system-engineer",
+      "path": "skills/design-system-engineer/SKILL.md"
+    },
+    {
       "name": "distributed-systems-engineer",
       "path": "skills/distributed-systems-engineer/SKILL.md",
       "ui_metadata": "skills/distributed-systems-engineer/agents/openai.yaml"
@@ -396,6 +410,10 @@
       "ui_metadata": "skills/formal-assurance-engineer/agents/openai.yaml"
     },
     {
+      "name": "frontend-interface-engineer",
+      "path": "skills/frontend-interface-engineer/SKILL.md"
+    },
+    {
       "name": "graceful-sunset-steward",
       "path": "skills/graceful-sunset-steward/SKILL.md"
     },
@@ -405,8 +423,16 @@
       "ui_metadata": "skills/incident-commander/agents/openai.yaml"
     },
     {
+      "name": "interaction-and-motion-designer",
+      "path": "skills/interaction-and-motion-designer/SKILL.md"
+    },
+    {
       "name": "interface-designer",
       "path": "skills/interface-designer/SKILL.md"
+    },
+    {
+      "name": "interface-quality-reviewer",
+      "path": "skills/interface-quality-reviewer/SKILL.md"
     },
     {
       "name": "observability-detective",
@@ -464,6 +490,10 @@
     {
       "name": "staff-architect",
       "path": "skills/staff-architect/SKILL.md"
+    },
+    {
+      "name": "visual-design-specialist",
+      "path": "skills/visual-design-specialist/SKILL.md"
     }
   ],
   "project_overlays": [
@@ -861,6 +891,69 @@
         "interface-and-accessibility-gate"
       ],
       "lead_skill": "interface-designer",
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "user_interface_accessibility": {
+      "description": "An interface, custom control, focus/navigation flow, assistive-technology support, or accessibility defect needs specialist inclusive-design engineering or compliance verification.",
+      "minimum_risk": "standard",
+      "rules": [
+        "interface-and-accessibility-gate"
+      ],
+      "lead_skill": "accessible-interface-engineer",
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "user_interface_design_system": {
+      "description": "Reusable UI components, semantic design tokens, component contracts, cross-surface design systems, token architecture, or design system governance and versioning change.",
+      "minimum_risk": "structural",
+      "rules": [
+        "interface-and-accessibility-gate",
+        "complexity-budget",
+        "evolutionary-stewardship"
+      ],
+      "lead_skill": "design-system-engineer",
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "user_interface_frontend_implementation": {
+      "description": "A resolved user interface design, screen, or component is implemented in frontend code with complete runtime states, responsiveness, and framework conventions.",
+      "minimum_risk": "standard",
+      "rules": [
+        "interface-and-accessibility-gate",
+        "testing-strategy"
+      ],
+      "lead_skill": "frontend-interface-engineer",
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "user_interface_interaction_motion": {
+      "description": "Micro-interactions, gestures, transitions, animations, spatial metaphors, layout choreography, physics, or motion hierarchy and reduced-motion behavior are designed or implemented.",
+      "minimum_risk": "standard",
+      "rules": [
+        "interface-and-accessibility-gate"
+      ],
+      "lead_skill": "interaction-and-motion-designer",
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "user_interface_quality_review": {
+      "description": "An existing user interface is reviewed, audited, or evaluated for UX, visual hierarchy, responsiveness, motion, accessibility, content integrity, or implementation evidence without making changes.",
+      "minimum_risk": "standard",
+      "rules": [
+        "interface-and-accessibility-gate"
+      ],
+      "lead_skill": "interface-quality-reviewer",
+      "supporting_skills": [],
+      "confirmation": "none"
+    },
+    "user_interface_visual_design": {
+      "description": "The primary unresolved decision is an interface's visual language: art direction, typography, hierarchy, composition, color, density, iconography, theming, or brand expression.",
+      "minimum_risk": "standard",
+      "rules": [
+        "interface-and-accessibility-gate"
+      ],
+      "lead_skill": "visual-design-specialist",
       "supporting_skills": [],
       "confirmation": "none"
     },
